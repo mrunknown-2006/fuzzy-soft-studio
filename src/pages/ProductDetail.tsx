@@ -326,9 +326,9 @@ export default function ProductDetail() {
   }
 
   return (
-    <div className="min-h-screen pt-6 pb-20 px-6 lg:px-10 max-w-7xl mx-auto w-full flex flex-col">
+    <div className="min-h-screen pt-6 pb-20 px-4 lg:px-10 max-w-7xl mx-auto w-full flex flex-col overflow-x-hidden">
       {/* Breadcrumbs */}
-      <div className="flex items-center gap-1.5 text-[11px] text-brand-body/50 font-sans tracking-wide mb-6 select-none animate-fade-in-up">
+      <div className="flex items-center gap-1.5 text-[11px] text-brand-body/50 font-sans tracking-wide mb-6 select-none">
         <Link to="/" className="hover:text-brand-accent transition-colors">Home</Link>
         <span>/</span>
         <Link to="/shop" className="hover:text-brand-accent transition-colors">Shop</Link>
@@ -339,7 +339,7 @@ export default function ProductDetail() {
       </div>
 
       {/* Main Layout (Grid) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 mt-4 items-start w-full">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 mt-4 items-start w-full overflow-hidden">
         {/* Left Side: Image Gallery (5 cols) */}
         <div className="lg:col-span-6 space-y-4">
           {/* Main Selected Image */}
@@ -408,39 +408,39 @@ export default function ProductDetail() {
           </p>
 
           {/* Highlights Section */}
-          <div className="grid grid-cols-2 gap-4 py-6 border-y border-brand-border/30 text-xs sm:text-sm font-sans text-brand-body/80 select-none">
-            <div className="flex items-center gap-3 bg-white/45 border border-brand-border/20 px-4 py-3 rounded-2xl shadow-xs hover:border-brand-accent/40 transition duration-300">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 py-6 border-y border-brand-border/30 text-xs sm:text-sm font-sans text-brand-body/80 select-none">
+            <div className="flex items-center gap-3 bg-white/45 border border-brand-border/20 px-4 py-3 rounded-2xl shadow-xs hover:border-brand-accent/40 transition duration-300 overflow-hidden">
               <div className="w-8 h-8 rounded-full bg-[#F6EBE2] flex items-center justify-center shrink-0 shadow-xs">
                 <Leaf size={14} className="text-[#8FA088]" />
               </div>
-              <span className="font-semibold text-brand-heading tracking-wide">
+              <span className="font-semibold text-brand-heading tracking-wide truncate">
                 {(Array.isArray(product.bullet_points) && product.bullet_points[0]) || '100% Handcrafted'}
               </span>
             </div>
             
-            <div className="flex items-center gap-3 bg-white/45 border border-brand-border/20 px-4 py-3 rounded-2xl shadow-xs hover:border-brand-accent/40 transition duration-300">
+            <div className="flex items-center gap-3 bg-white/45 border border-brand-border/20 px-4 py-3 rounded-2xl shadow-xs hover:border-brand-accent/40 transition duration-300 overflow-hidden">
               <div className="w-8 h-8 rounded-full bg-[#F6EBE2] flex items-center justify-center shrink-0 shadow-xs">
                 <Star size={14} className="text-[#C9A84C]" fill="#C9A84C" />
               </div>
-              <span className="font-semibold text-brand-heading tracking-wide">
+              <span className="font-semibold text-brand-heading tracking-wide truncate">
                 {(Array.isArray(product.bullet_points) && product.bullet_points[1]) || 'Long-lasting Bloom'}
               </span>
             </div>
             
-            <div className="flex items-center gap-3 bg-white/45 border border-brand-border/20 px-4 py-3 rounded-2xl shadow-xs hover:border-brand-accent/40 transition duration-300">
+            <div className="flex items-center gap-3 bg-white/45 border border-brand-border/20 px-4 py-3 rounded-2xl shadow-xs hover:border-brand-accent/40 transition duration-300 overflow-hidden">
               <div className="w-8 h-8 rounded-full bg-[#F6EBE2] flex items-center justify-center shrink-0 shadow-xs">
                 <ShieldCheck size={14} className="text-[#8FA088]" />
               </div>
-              <span className="font-semibold text-brand-heading tracking-wide">
+              <span className="font-semibold text-brand-heading tracking-wide truncate">
                 {(Array.isArray(product.bullet_points) && product.bullet_points[2]) || 'Customizable Order'}
               </span>
             </div>
             
-            <div className="flex items-center gap-3 bg-white/45 border border-brand-border/20 px-4 py-3 rounded-2xl shadow-xs hover:border-brand-accent/40 transition duration-300">
+            <div className="flex items-center gap-3 bg-white/45 border border-brand-border/20 px-4 py-3 rounded-2xl shadow-xs hover:border-brand-accent/40 transition duration-300 overflow-hidden">
               <div className="w-8 h-8 rounded-full bg-[#F6EBE2] flex items-center justify-center shrink-0 shadow-xs">
                 <Heart size={14} className="text-brand-accent" fill="currentColor" />
               </div>
-              <span className="font-semibold text-brand-heading tracking-wide">
+              <span className="font-semibold text-brand-heading tracking-wide truncate">
                 {(Array.isArray(product.bullet_points) && product.bullet_points[3]) || 'Allergen & Pet Safe'}
               </span>
             </div>
@@ -613,7 +613,7 @@ export default function ProductDetail() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start w-full">
             {showReviewForm ? (
               <div className="lg:col-span-8 lg:col-start-3">
-                <form onSubmit={handleSubmitReview} className="bg-white/60 border border-brand-border/40 rounded-2xl p-8 shadow-sm space-y-5 animate-fade-in-up">
+                <form onSubmit={handleSubmitReview} className="bg-white/60 border border-brand-border/40 rounded-2xl p-8 shadow-sm space-y-5">
                   <h3 className="font-serif text-lg font-bold text-brand-heading">
                     Write Your Review
                   </h3>
@@ -691,7 +691,7 @@ export default function ProductDetail() {
                 </form>
               </div>
             ) : (
-              <div className="lg:col-span-12 bg-white/40 border border-brand-border/25 rounded-2xl p-12 text-center space-y-6 shadow-sm animate-fade-in">
+              <div className="lg:col-span-12 bg-white/40 border border-brand-border/25 rounded-2xl p-12 text-center space-y-6 shadow-sm">
                 <div className="max-w-md mx-auto space-y-4">
                   <span className="text-[10px] tracking-[0.2em] text-[#8FA088] uppercase font-bold block select-none font-sans">
                     No Reviews Yet
@@ -706,7 +706,7 @@ export default function ProductDetail() {
                   <div className="pt-4">
                     <button
                       onClick={() => setShowReviewForm(true)}
-                      className="h-11 px-8 bg-[#DCA29A] hover:bg-[#D4938A] text-white rounded-full uppercase text-xs tracking-widest font-semibold transition shadow-xs hover:shadow-sm inline-flex items-center justify-center gap-2 cursor-pointer animate-fade-in"
+                      className="h-11 px-8 bg-[#DCA29A] hover:bg-[#D4938A] text-white rounded-full uppercase text-xs tracking-widest font-semibold transition shadow-xs hover:shadow-sm inline-flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <span>Write a Review</span>
                     </button>
@@ -724,7 +724,7 @@ export default function ProductDetail() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start w-full">
             {/* Rating Summary Block (4 cols) */}
-            <div className="lg:col-span-4 bg-white/40 border border-brand-border/25 rounded-2xl p-6 shadow-sm space-y-6 select-none animate-fade-in">
+            <div className="lg:col-span-4 bg-white/40 border border-brand-border/25 rounded-2xl p-6 shadow-sm space-y-6 select-none">
               <div>
                 <div className="text-4xl font-serif font-semibold text-brand-heading">{reviewsSummary.average}</div>
                 <div className="flex items-center gap-1 text-[#C9A84C] mt-1.5">
@@ -758,7 +758,7 @@ export default function ProductDetail() {
               <div className="pt-4 border-t border-brand-border/25">
                 <button
                   onClick={() => setShowReviewForm(!showReviewForm)}
-                  className="w-full h-11 bg-[#DCA29A] hover:bg-[#D4938A] text-white rounded-full uppercase text-xs tracking-widest font-semibold transition shadow-xs hover:shadow-sm flex items-center justify-center gap-2 cursor-pointer animate-fade-in"
+                  className="w-full h-11 bg-[#DCA29A] hover:bg-[#D4938A] text-white rounded-full uppercase text-xs tracking-widest font-semibold transition shadow-xs hover:shadow-sm flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <span>{showReviewForm ? 'Cancel Review' : 'Write a Review'}</span>
                 </button>
@@ -777,7 +777,7 @@ export default function ProductDetail() {
               
               {/* Write a review form */}
               {showReviewForm && (
-                <form onSubmit={handleSubmitReview} className="bg-white/60 border border-brand-border/40 rounded-2xl p-6 shadow-sm space-y-5 animate-fade-in-up">
+                <form onSubmit={handleSubmitReview} className="bg-white/60 border border-brand-border/40 rounded-2xl p-6 shadow-sm space-y-5">
                   <h3 className="font-serif text-lg font-bold text-brand-heading">
                     Write Your Review
                   </h3>
@@ -859,9 +859,9 @@ export default function ProductDetail() {
               {reviewsToDisplay.map((rev, idx) => (
                 <div 
                   key={idx} 
-                  className="bg-[#F6EBE2] border-l-4 border-[#74876E] rounded-r-2xl p-6 shadow-sm space-y-3 animate-fade-in-up"
+                  className="bg-[#F6EBE2] border-l-4 border-[#74876E] rounded-r-2xl p-6 shadow-sm space-y-3"
                 >
-                  <div className="flex justify-between items-start">
+                  <div className="flex justify-between items-start flex-nowrap">
                     <div>
                       <div className="flex items-center gap-0.5 text-[#C9A84C] mb-1">
                         {[...Array(rev.stars)].map((_, i) => (
