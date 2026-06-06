@@ -192,16 +192,29 @@ export default function Admin() {
     showToast('Uploading image to Supabase...', 'success');
 
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
-      const filePath = `products/${fileName}`;
+      const fileExt = file.name.split('.').pop() || 'jpg';
+      let fileName = '';
+      if (index === 10 || index === 20) {
+        fileName = `hero-banner`;
+      } else if (index === 11) {
+        fileName = `about-block1-image`;
+      } else if (index === 12) {
+        fileName = `about-block2-image`;
+      } else if (index >= 30 && index <= 35) {
+        fileName = `garden-image-${index}`;
+      } else if (index >= 1 && index <= 4) {
+        fileName = `product-image-${index}`;
+      } else {
+        fileName = `descriptive-image-${index}`;
+      }
+      const filePath = `products/${fileName}.${fileExt}`;
 
       // Upload to Supabase Storage bucket 'product-images'
       const { error } = await supabase.storage
         .from('product-images')
         .upload(filePath, file, {
           cacheControl: '3600',
-          upsert: false
+          upsert: true
         });
 
       if (error) {
@@ -2124,7 +2137,7 @@ export default function Admin() {
                 </div>
                 <button type="button" onClick={() => setStoreOpen(v => !v)}
                   className={`relative w-12 h-6 rounded-full transition-colors cursor-pointer ${ storeOpen ? 'bg-green-500' : 'bg-gray-300' }`}>
-                  <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${ storeOpen ? 'translate-x-7' : 'translate-x-1' }`} />
+                  <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${ storeOpen ? 'translate-x-6' : 'translate-x-1' }`} />
                 </button>
               </div>
               {!storeOpen && (
@@ -2242,7 +2255,7 @@ export default function Admin() {
                   </div>
                   <button type="button" onClick={() => setCodAvailable(v => !v)}
                     className={`relative w-12 h-6 rounded-full transition-colors cursor-pointer ${ codAvailable ? 'bg-green-500' : 'bg-gray-300' }`}>
-                    <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${ codAvailable ? 'translate-x-7' : 'translate-x-1' }`} />
+                    <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${ codAvailable ? 'translate-x-6' : 'translate-x-1' }`} />
                   </button>
                 </div>
 
@@ -2397,7 +2410,16 @@ export default function Admin() {
                     <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 10)} className="hidden" disabled={uploadingIndex !== null} />
                   </label>
                 </div>
-                {heroEditorBannerUrl && <div className="mt-2 aspect-[21/9] w-full rounded-xl overflow-hidden border border-brand-border/40"><img src={heroEditorBannerUrl} className="w-full h-full object-cover" alt="Banner Preview" /></div>}
+                {heroEditorBannerUrl && (
+                  <>
+                    <div className="mt-2 aspect-[21/9] w-full rounded-xl overflow-hidden border border-brand-border/40">
+                      <img src={heroEditorBannerUrl} className="w-full h-full object-cover" alt="Banner Preview" />
+                    </div>
+                    <p className="text-xs text-brand-body/50 mt-1">
+                      Upload a new image to replace the current one
+                    </p>
+                  </>
+                )}
               </div>
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading mb-2">Badge Text</label>
@@ -2452,9 +2474,14 @@ export default function Admin() {
                   <option value="8">8 Products</option>
                 </select>
               </div>
-              <div className="flex items-center gap-3 bg-brand-cream/25 border border-brand-border/20 p-4 rounded-xl">
-                <input type="checkbox" id="featuredVisible" checked={featuredSectionVisible} onChange={(e) => setFeaturedSectionVisible(e.target.checked)} className="w-4 h-4 accent-brand-accent cursor-pointer" />
-                <label htmlFor="featuredVisible" className="text-xs font-semibold uppercase tracking-wider text-brand-heading cursor-pointer">Show Featured Section on Homepage</label>
+              <div className="flex items-center justify-between bg-brand-cream/25 border border-brand-border/20 p-4 rounded-xl">
+                <div>
+                  <label htmlFor="featuredVisible" className="text-xs font-semibold uppercase tracking-wider text-brand-heading cursor-pointer">Show Featured Section on Homepage</label>
+                </div>
+                <button type="button" id="featuredVisible" onClick={() => setFeaturedSectionVisible(v => !v)}
+                  className={`relative w-12 h-6 rounded-full transition-colors cursor-pointer ${ featuredSectionVisible ? 'bg-green-500' : 'bg-gray-300' }`}>
+                  <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${ featuredSectionVisible ? 'translate-x-6' : 'translate-x-1' }`} />
+                </button>
               </div>
             </div>
             <button onClick={handleSaveFeatured} className="px-8 h-11 bg-[#DCA29A] hover:bg-[#D4938A] text-white rounded-full uppercase text-xs tracking-widest font-semibold shadow-xs cursor-pointer transition active:scale-95">Save Featured Section</button>
@@ -2639,9 +2666,14 @@ export default function Admin() {
                 <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading mb-2">Marquee Text</label>
                 <input type="text" value={offerLineEditor} onChange={(e) => setOfferLineEditor(e.target.value)} placeholder="🌸 Mother's Day Special: Use code BLOOM20 for 20% off!" className="w-full h-11 px-4 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none" />
               </div>
-              <div className="flex items-center gap-3 bg-brand-cream/25 border border-brand-border/20 p-4 rounded-xl">
-                <input type="checkbox" id="marqueeVisible" checked={marqueeVisibleEditor} onChange={(e) => setMarqueeVisibleEditor(e.target.checked)} className="w-4 h-4 accent-brand-accent cursor-pointer" />
-                <label htmlFor="marqueeVisible" className="text-xs font-semibold uppercase tracking-wider text-brand-heading cursor-pointer">Show Marquee Ticker on Homepage</label>
+              <div className="flex items-center justify-between bg-brand-cream/25 border border-brand-border/20 p-4 rounded-xl">
+                <div>
+                  <label htmlFor="marqueeVisible" className="text-xs font-semibold uppercase tracking-wider text-brand-heading cursor-pointer">Show Marquee Ticker on Homepage</label>
+                </div>
+                <button type="button" id="marqueeVisible" onClick={() => setMarqueeVisibleEditor(v => !v)}
+                  className={`relative w-12 h-6 rounded-full transition-colors cursor-pointer ${ marqueeVisibleEditor ? 'bg-green-500' : 'bg-gray-300' }`}>
+                  <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${ marqueeVisibleEditor ? 'translate-x-6' : 'translate-x-1' }`} />
+                </button>
               </div>
               <div className="space-y-1.5">
                 <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading mb-2">Banner Image URL</label>
@@ -2653,7 +2685,16 @@ export default function Admin() {
                     <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 10)} className="hidden" disabled={uploadingIndex !== null} />
                   </label>
                 </div>
-                {heroEditorBannerUrl && <div className="mt-2 aspect-[21/9] w-full rounded-xl overflow-hidden border border-brand-border/40"><img src={heroEditorBannerUrl} className="w-full h-full object-cover" alt="Banner Preview" /></div>}
+                {heroEditorBannerUrl && (
+                  <>
+                    <div className="mt-2 aspect-[21/9] w-full rounded-xl overflow-hidden border border-brand-border/40">
+                      <img src={heroEditorBannerUrl} className="w-full h-full object-cover" alt="Banner Preview" />
+                    </div>
+                    <p className="text-xs text-brand-body/50 mt-1">
+                      Upload a new image to replace the current one
+                    </p>
+                  </>
+                )}
               </div>
             </div>
 
@@ -2669,8 +2710,13 @@ export default function Admin() {
                       {banner.name}
                     </p>
                     {banner.image && (
-                      <img src={banner.image} alt={banner.name}
-                        className="w-full h-32 object-cover rounded-lg mb-3" />
+                      <>
+                        <img src={banner.image} alt={banner.name}
+                          className="w-full h-32 object-cover rounded-lg mb-3" />
+                        <p className="text-xs text-brand-body/50 mt-1 mb-3">
+                          Upload a new image to replace the current one
+                        </p>
+                      </>
                     )}
                     <label className="block text-xs text-brand-body/60 mb-1">
                       Image URL
@@ -2696,7 +2742,7 @@ export default function Admin() {
                       onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (!file) return;
-                        const fileName = `collection-${banner.slug}-${Date.now()}`;
+                        const fileName = `collection-${banner.slug}`;
                         const { error } = await supabase.storage
                           .from('product-images')
                           .upload(fileName, file, { upsert: true });
@@ -2761,6 +2807,11 @@ export default function Admin() {
                         <span className="text-[10px] text-brand-body/40">Empty Slot</span>
                       )}
                     </div>
+                    {imgUrl && (
+                      <p className="text-xs text-brand-body/50 mt-1">
+                        Upload a new image to replace the current one
+                      </p>
+                    )}
                     
                     <input
                       type="text"
@@ -3234,23 +3285,43 @@ export default function Admin() {
                   {/* Previews if URLs are filled */}
                   <div className="grid grid-cols-4 gap-2 pt-2">
                     {prodImage && (
-                      <div className="aspect-[3/4] rounded-lg overflow-hidden border border-brand-border bg-brand-cream/35">
-                        <img src={prodImage} className="w-full h-full object-cover" alt="Preview 1" />
+                      <div>
+                        <div className="aspect-[3/4] rounded-lg overflow-hidden border border-brand-border bg-brand-cream/35">
+                          <img src={prodImage} className="w-full h-full object-cover" alt="Preview 1" />
+                        </div>
+                        <p className="text-xs text-brand-body/50 mt-1">
+                          Upload a new image to replace the current one
+                        </p>
                       </div>
                     )}
                     {prodImage2 && (
-                      <div className="aspect-[3/4] rounded-lg overflow-hidden border border-brand-border bg-brand-cream/35">
-                        <img src={prodImage2} className="w-full h-full object-cover" alt="Preview 2" />
+                      <div>
+                        <div className="aspect-[3/4] rounded-lg overflow-hidden border border-brand-border bg-brand-cream/35">
+                          <img src={prodImage2} className="w-full h-full object-cover" alt="Preview 2" />
+                        </div>
+                        <p className="text-xs text-brand-body/50 mt-1">
+                          Upload a new image to replace the current one
+                        </p>
                       </div>
                     )}
                     {prodImage3 && (
-                      <div className="aspect-[3/4] rounded-lg overflow-hidden border border-brand-border bg-brand-cream/35">
-                        <img src={prodImage3} className="w-full h-full object-cover" alt="Preview 3" />
+                      <div>
+                        <div className="aspect-[3/4] rounded-lg overflow-hidden border border-brand-border bg-brand-cream/35">
+                          <img src={prodImage3} className="w-full h-full object-cover" alt="Preview 3" />
+                        </div>
+                        <p className="text-xs text-brand-body/50 mt-1">
+                          Upload a new image to replace the current one
+                        </p>
                       </div>
                     )}
                     {prodImage4 && (
-                      <div className="aspect-[3/4] rounded-lg overflow-hidden border border-brand-border bg-brand-cream/35">
-                        <img src={prodImage4} className="w-full h-full object-cover" alt="Preview 4" />
+                      <div>
+                        <div className="aspect-[3/4] rounded-lg overflow-hidden border border-brand-border bg-brand-cream/35">
+                          <img src={prodImage4} className="w-full h-full object-cover" alt="Preview 4" />
+                        </div>
+                        <p className="text-xs text-brand-body/50 mt-1">
+                          Upload a new image to replace the current one
+                        </p>
                       </div>
                     )}
                   </div>
@@ -3586,23 +3657,43 @@ export default function Admin() {
                   {/* Previews if URLs are filled */}
                   <div className="grid grid-cols-4 gap-2 pt-2">
                     {prodImage && (
-                      <div className="aspect-[3/4] rounded-lg overflow-hidden border border-brand-border bg-brand-cream/35">
-                        <img src={prodImage} className="w-full h-full object-cover" alt="Preview 1" />
+                      <div>
+                        <div className="aspect-[3/4] rounded-lg overflow-hidden border border-brand-border bg-brand-cream/35">
+                          <img src={prodImage} className="w-full h-full object-cover" alt="Preview 1" />
+                        </div>
+                        <p className="text-xs text-brand-body/50 mt-1">
+                          Upload a new image to replace the current one
+                        </p>
                       </div>
                     )}
                     {prodImage2 && (
-                      <div className="aspect-[3/4] rounded-lg overflow-hidden border border-brand-border bg-brand-cream/35">
-                        <img src={prodImage2} className="w-full h-full object-cover" alt="Preview 2" />
+                      <div>
+                        <div className="aspect-[3/4] rounded-lg overflow-hidden border border-brand-border bg-brand-cream/35">
+                          <img src={prodImage2} className="w-full h-full object-cover" alt="Preview 2" />
+                        </div>
+                        <p className="text-xs text-brand-body/50 mt-1">
+                          Upload a new image to replace the current one
+                        </p>
                       </div>
                     )}
                     {prodImage3 && (
-                      <div className="aspect-[3/4] rounded-lg overflow-hidden border border-brand-border bg-brand-cream/35">
-                        <img src={prodImage3} className="w-full h-full object-cover" alt="Preview 3" />
+                      <div>
+                        <div className="aspect-[3/4] rounded-lg overflow-hidden border border-brand-border bg-brand-cream/35">
+                          <img src={prodImage3} className="w-full h-full object-cover" alt="Preview 3" />
+                        </div>
+                        <p className="text-xs text-brand-body/50 mt-1">
+                          Upload a new image to replace the current one
+                        </p>
                       </div>
                     )}
                     {prodImage4 && (
-                      <div className="aspect-[3/4] rounded-lg overflow-hidden border border-brand-border bg-brand-cream/35">
-                        <img src={prodImage4} className="w-full h-full object-cover" alt="Preview 4" />
+                      <div>
+                        <div className="aspect-[3/4] rounded-lg overflow-hidden border border-brand-border bg-brand-cream/35">
+                          <img src={prodImage4} className="w-full h-full object-cover" alt="Preview 4" />
+                        </div>
+                        <p className="text-xs text-brand-body/50 mt-1">
+                          Upload a new image to replace the current one
+                        </p>
                       </div>
                     )}
                   </div>
