@@ -22,11 +22,13 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Admin from './pages/Admin';
 import AdminLogin from './pages/AdminLogin';
+import ScrollToTop from './components/ScrollToTop';
 import './App.css';
 
 export default function App() {
   return (
     <Router>
+      <ScrollToTop />
       <Routes>
         {/* Admin routes are completely separate from main website layout */}
         <Route path="/admin" element={<Admin />} />
