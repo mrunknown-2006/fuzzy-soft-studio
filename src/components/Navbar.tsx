@@ -69,7 +69,11 @@ export default function Navbar() {
           
           {/* Left: Logo */}
           <div className="flex-1 flex justify-start">
-            <Link to="/" className="inline-flex flex-col items-center leading-none select-none">
+            <Link 
+              to="/" 
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              className="inline-flex flex-col items-center leading-none select-none"
+            >
               <span className="font-script text-3xl text-brand-heading leading-none">
                 Fuzzy
               </span>
@@ -81,7 +85,13 @@ export default function Navbar() {
 
           {/* Center: Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-10 text-[13px] tracking-wide uppercase text-brand-heading font-sans font-normal">
-            <Link to="/" className="nav-link">Home</Link>
+            <Link 
+              to="/" 
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              className="nav-link"
+            >
+              Home
+            </Link>
             <Link to="/shop" className="nav-link">Shop</Link>
             <Link to="/about" className="nav-link">Our Story</Link>
             <Link to="/contact" className="nav-link">Contact</Link>
@@ -219,7 +229,10 @@ export default function Navbar() {
           <Link
             to="/"
             className="text-lg text-brand-heading hover:text-brand-accent font-sans font-medium py-2 border-b border-brand-border transition-colors duration-300"
-            onClick={() => setIsMobileMenuOpen(false)}
+            onClick={() => {
+              setIsMobileMenuOpen(false);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
           >
             Home
           </Link>

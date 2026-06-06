@@ -1,4 +1,6 @@
+import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { supabase } from './lib/supabaseClient';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import Shop from './pages/Shop';
@@ -26,6 +28,45 @@ import ScrollToTop from './components/ScrollToTop';
 import './App.css';
 
 export default function App() {
+  const [maintenance, setMaintenance] = useState(false);
+
+  useEffect(() => {
+    const checkMaintenance = async () => {
+      try {
+        const { data } = await supabase
+          .from('settings')
+          .select('value')
+          .eq('key', 'store_open')
+          .single();
+        if (data?.value === 'false') {
+          setMaintenance(true);
+        }
+      } catch (err) {
+        console.warn('Failed to fetch store status:', err);
+      }
+    };
+    checkMaintenance();
+  }, []);
+
+  const isAdminRoute = window.location.pathname.startsWith('/admin');
+
+  if (maintenance && !isAdminRoute) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-brand-bg text-center px-4">
+        <img src="/logo.png" className="h-16 mb-8" alt="Fuzzy Soft Studio Logo" />
+        <h1 className="font-serif text-4xl text-brand-heading mb-4">
+          We'll Be Back Soon 🌸
+        </h1>
+        <p className="text-brand-body/70 text-lg mb-2">
+          Our website is currently under maintenance.
+        </p>
+        <p className="text-brand-body/50 text-sm">
+          Follow us on Instagram @fuzzysoftstudio for updates.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <Router>
       <ScrollToTop />
