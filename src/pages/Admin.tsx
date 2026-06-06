@@ -246,6 +246,9 @@ export default function Admin() {
   const [settingsEmail, setSettingsEmail] = useState('');
   const [settingsOfferLine, setSettingsOfferLine] = useState('');
   const [settingsBannerUrl, setSettingsBannerUrl] = useState('');
+  const [codAvailable, setCodAvailable] = useState(false);
+  const [codCharge, setCodCharge] = useState(0);
+  const [expressCharge, setExpressCharge] = useState(0);
 
   const [categories, setCategories] = useState<string[]>(['Bouquets', 'Arrangements', 'Gift Boxes', 'Dried Flowers']);
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -592,6 +595,10 @@ export default function Admin() {
       if (loaded.store_open !== undefined) setStoreOpen(loaded.store_open !== 'false');
       if (loaded.store_closed_message) setStoreClosedMessage(loaded.store_closed_message);
       if (loaded.low_stock_threshold) setLowStockThreshold(Number(loaded.low_stock_threshold) || 5);
+
+      if (loaded.cod_available) setCodAvailable(loaded.cod_available === 'true');
+      if (loaded.cod_charge) setCodCharge(Number(loaded.cod_charge));
+      if (loaded.express_charge) setExpressCharge(Number(loaded.express_charge));
 
       if (loaded.collection_banners) {
         try {
@@ -1178,10 +1185,15 @@ export default function Admin() {
 
     // Save to Supabase settings key-value pair
     try {
-      const updateData = Object.entries(newSettings).map(([key, value]) => ({
-        key,
-        value: value ? value.toString() : ''
-      }));
+      const updateData = [
+        ...Object.entries(newSettings).map(([key, value]) => ({
+          key,
+          value: value ? value.toString() : ''
+        })),
+        { key: 'cod_available', value: String(codAvailable) },
+        { key: 'cod_charge', value: String(codCharge) },
+        { key: 'express_charge', value: String(expressCharge) }
+      ];
 
       const { error } = await supabase.from('settings').upsert(updateData, { onConflict: 'key' });
       if (error) throw error;
@@ -2203,49 +2215,73 @@ export default function Admin() {
                   />
                 </div>
               </div>
+
+              <button type="submit"
+                className="px-6 h-10 bg-[#DCA29A] hover:bg-[#D4938A] text-white 
+                rounded-full text-xs font-semibold uppercase tracking-wider 
+                cursor-pointer transition">
+                Save General Settings
+              </button>
             </div>
 
-            {/* Marquee Settings card */}
-            <div className="bg-white/60 border border-brand-border/40 rounded-2xl p-6 shadow-xs backdrop-blur-xs space-y-4">
+            {/* Shipping & Delivery card */}
+            <div className="bg-white/60 border border-brand-border/40 rounded-2xl p-6 shadow-xs backdrop-blur-xs space-y-6">
               <h3 className="font-serif text-lg font-bold text-brand-heading flex items-center gap-2 select-none">
-                <FileText size={16} className="text-[#C9A84C]" />
-                <span>Running Marquee Offer Text</span>
+                <Truck size={16} className="text-[#C9A84C]" />
+                <span>Shipping & Delivery</span>
               </h3>
 
-              <div>
-                <label htmlFor="marqueeText" className="block text-xs font-semibold uppercase tracking-wider text-brand-heading/85 mb-2 select-none">
-                  Marquee Line
-                </label>
-                <input
-                  type="text"
-                  id="marqueeText"
-                  value={settingsOfferLine}
-                  onChange={(e) => setSettingsOfferLine(e.target.value)}
-                  placeholder="Offer banner text..."
-                  className="w-full h-11 px-4 bg-white/95 rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition-all"
-                />
-              </div>
-            </div>
+              <div className="space-y-4">
+                {/* COD Available toggle */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading/85 select-none">
+                      COD Available
+                    </label>
+                    <p className="text-xs text-brand-body/60 font-sans mt-0.5">Allow Cash on Delivery at checkout</p>
+                  </div>
+                  <button type="button" onClick={() => setCodAvailable(v => !v)}
+                    className={`relative w-12 h-6 rounded-full transition-colors cursor-pointer ${ codAvailable ? 'bg-green-500' : 'bg-gray-300' }`}>
+                    <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${ codAvailable ? 'translate-x-7' : 'translate-x-1' }`} />
+                  </button>
+                </div>
 
-            {/* Banner URL settings card */}
-            <div className="bg-white/60 border border-brand-border/40 rounded-2xl p-6 shadow-xs backdrop-blur-xs space-y-4">
-              <h3 className="font-serif text-lg font-bold text-brand-heading flex items-center gap-2 select-none">
-                <Package size={16} className="text-[#C9A84C]" />
-                <span>Home Page Banner Image URL</span>
-              </h3>
+                {/* COD Extra Charge */}
+                {codAvailable && (
+                  <div className="space-y-1.5 animate-fade-in">
+                    <label htmlFor="codCharge" className="block text-xs font-semibold uppercase tracking-wider text-brand-heading/85 select-none">
+                      COD Extra Charge (₹)
+                    </label>
+                    <input
+                      type="number"
+                      id="codCharge"
+                      value={codCharge}
+                      min={0}
+                      onChange={(e) => setCodCharge(Number(e.target.value))}
+                      className="w-full h-11 px-4 bg-white/95 rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition-all"
+                    />
+                  </div>
+                )}
 
-              <div>
-                <label htmlFor="bannerUrl" className="block text-xs font-semibold uppercase tracking-wider text-brand-heading mb-2 select-none">
-                  Banner Image URL
-                </label>
-                <input
-                  type="text"
-                  id="bannerUrl"
-                  value={settingsBannerUrl}
-                  onChange={(e) => setSettingsBannerUrl(e.target.value)}
-                  placeholder="https://images.unsplash.com/..."
-                  className="w-full h-11 px-4 bg-white/95 rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition-all"
-                />
+                {/* Express Delivery Charge */}
+                <div className="space-y-1.5">
+                  <label htmlFor="expressCharge" className="block text-xs font-semibold uppercase tracking-wider text-brand-heading/85 select-none">
+                    Express Delivery Charge (₹)
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      id="expressCharge"
+                      value={expressCharge}
+                      min={0}
+                      onChange={(e) => setExpressCharge(Number(e.target.value))}
+                      className="w-full h-11 px-4 bg-white/95 rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition-all"
+                    />
+                    <span className="text-xs text-brand-body/55 font-sans whitespace-nowrap">
+                      {expressCharge === 0 ? 'Disabled' : `₹${expressCharge}`}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
 
