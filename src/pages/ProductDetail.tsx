@@ -12,9 +12,11 @@ export default function ProductDetail() {
   const { slug } = useParams<{ slug: string }>();
   const location = useLocation();
   const [products, setProducts] = useState<any[]>(staticProducts);
+  const [isLoadingProduct, setIsLoadingProduct] = useState(true);
 
   useEffect(() => {
     const loadProducts = async () => {
+      setIsLoadingProduct(true);
       try {
         const { data, error } = await supabase
           .from('products')
@@ -31,6 +33,8 @@ export default function ProductDetail() {
       } catch (err) {
         console.warn('Failed to load products in details view:', err);
         setProducts(staticProducts);
+      } finally {
+        setIsLoadingProduct(false);
       }
     };
     loadProducts();
@@ -304,6 +308,14 @@ export default function ProductDetail() {
       comment: r.comment
     }));
   }, [dbReviews, product]);
+
+  if (isLoadingProduct) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-brand-bg">
+        <div className="w-8 h-8 border-2 border-brand-accent border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   if (!product) {
     return (

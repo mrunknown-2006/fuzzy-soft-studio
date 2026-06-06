@@ -10,6 +10,7 @@ export default function Home() {
   const [email, setEmail] = useState('');
   const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
   const [products, setProducts] = useState<any[]>(staticProducts);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Announcement state from Settings
   const [offerText, setOfferText] = useState("Mother's Day Special: Use code BLOOM20 for 20% off all bouquets!");
@@ -176,7 +177,10 @@ export default function Home() {
       color: colors[Math.floor(Math.random() * colors.length)]
     }));
     setPetals(generated);
-  }, []);
+    if (isLoading) {
+      setIsLoading(false);
+    }
+  }, [isLoading]);
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
