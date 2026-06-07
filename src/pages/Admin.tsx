@@ -281,8 +281,21 @@ export default function Admin() {
 
       // Load Categories from database
       const { data: catsData } = await supabase.from('categories').select('*').order('name', { ascending: true });
-      if (catsData) {
+      if (catsData && catsData.length > 0) {
         setCategories(catsData.map((c: any) => c.name));
+      } else {
+        const defaults = ['Bouquets', 'Arrangements', 'Gift Boxes', 'Dried Flowers'];
+        const toInsert = defaults.map(name => ({
+          name,
+          slug: name.toLowerCase().replace(/\s+/g, '-')
+        }));
+        try {
+          await supabase.from('categories').insert(toInsert);
+          setCategories(defaults);
+        } catch (catSeedErr) {
+          console.warn('Auto-seed of categories failed:', catSeedErr);
+          setCategories(defaults);
+        }
       }
 
       // Load Discount Codes from database

@@ -55,11 +55,11 @@ export default function Products() {
     try {
       const { error } = await supabase
         .from('products')
-        .update({ active: true })
+        .update({ active: true, is_active: true })
         .in('id', selectedProducts);
       if (error) throw error;
 
-      setProducts(products.map(p => selectedProducts.includes(p.id) ? { ...p, active: true } : p));
+      setProducts(products.map(p => selectedProducts.includes(p.id) ? { ...p, active: true, is_active: true } : p));
       setSelectedProducts([]);
       showToast(`Activated ${selectedProducts.length} products`, 'success');
     } catch (err: any) {
@@ -71,11 +71,11 @@ export default function Products() {
     try {
       const { error } = await supabase
         .from('products')
-        .update({ active: false })
+        .update({ active: false, is_active: false })
         .in('id', selectedProducts);
       if (error) throw error;
 
-      setProducts(products.map(p => selectedProducts.includes(p.id) ? { ...p, active: false } : p));
+      setProducts(products.map(p => selectedProducts.includes(p.id) ? { ...p, active: false, is_active: false } : p));
       setSelectedProducts([]);
       showToast(`Deactivated ${selectedProducts.length} products`, 'success');
     } catch (err: any) {
@@ -150,11 +150,11 @@ export default function Products() {
     try {
       const { error } = await supabase
         .from('products')
-        .update({ active: newActiveState })
+        .update({ active: newActiveState, is_active: newActiveState })
         .eq('id', product.id);
       if (error) throw error;
 
-      setProducts(products.map(p => p.id === product.id ? { ...p, active: newActiveState } : p));
+      setProducts(products.map(p => p.id === product.id ? { ...p, active: newActiveState, is_active: newActiveState } : p));
       showToast(`Product ${newActiveState ? 'activated' : 'deactivated'}`, 'success');
     } catch (err: any) {
       showToast(`Failed: ${err.message}`, 'error');
