@@ -24,6 +24,17 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Admin from './pages/Admin';
 import AdminLogin from './pages/AdminLogin';
+import Dashboard from './pages/admin/Dashboard';
+import Products from './pages/admin/Products';
+import ProductForm from './pages/admin/ProductForm';
+import Orders from './pages/admin/Orders';
+import Customers from './pages/admin/Customers';
+import Reviews from './pages/admin/Reviews';
+import Categories from './pages/admin/Categories';
+import Discounts from './pages/admin/Discounts';
+import ContentManager from './pages/admin/ContentManager';
+import Analytics from './pages/admin/Analytics';
+import Settings from './pages/admin/Settings';
 import ScrollToTop from './components/ScrollToTop';
 import './App.css';
 
@@ -72,7 +83,20 @@ export default function App() {
       <ScrollToTop />
       <Routes>
         {/* Admin routes are completely separate from main website layout */}
-        <Route path="/admin" element={<Admin />} />
+        <Route path="/admin" element={<Admin />}>
+          <Route index element={<Dashboard />} />
+          <Route path="products" element={<Products />} />
+          <Route path="products/new" element={<ProductForm />} />
+          <Route path="products/edit/:id" element={<ProductForm />} />
+          <Route path="orders" element={<Orders />} />
+          <Route path="customers" element={<Customers />} />
+          <Route path="reviews" element={<Reviews />} />
+          <Route path="categories" element={<Categories />} />
+          <Route path="discounts" element={<Discounts />} />
+          <Route path="content" element={<ContentManager />} />
+          <Route path="analytics" element={<Analytics />} />
+          <Route path="settings" element={<Settings />} />
+        </Route>
         <Route path="/admin/login" element={<AdminLogin />} />
         
         <Route path="/" element={<Layout />}>
