@@ -3,11 +3,35 @@ import { Outlet } from 'react-router-dom';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import { useStore } from '../store/useStore';
+import { supabase } from '../lib/supabaseClient';
 
 export default function Layout() {
   const [cursorPos, setCursorPos] = useState({ x: -100, y: -100 });
   const toast = useStore((state) => state.toast);
   const hideToast = useStore((state) => state.hideToast);
+  const [whatsappNumber, setWhatsappNumber] = useState('6386422660');
+
+  useEffect(() => {
+    const loadWhatsAppSettings = async () => {
+      try {
+        const { data } = await supabase.from('settings').select('*');
+        if (data) {
+          const whatsappSetting = data.find(
+            (s) => s.key === 'whatsapp_number' || s.key === 'contact_whatsapp'
+          );
+          if (whatsappSetting && whatsappSetting.value) {
+            const digits = whatsappSetting.value.replace(/[^0-9]/g, '');
+            if (digits && digits.length >= 10) {
+              setWhatsappNumber(digits.slice(-10));
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to load WhatsApp settings:', err);
+      }
+    };
+    loadWhatsAppSettings();
+  }, []);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -51,7 +75,7 @@ export default function Layout() {
 
       {/* Overhauled WhatsApp Button */}
       <a
-        href="https://wa.me/916386422660"
+        href={`https://wa.me/91${whatsappNumber}`}
         target="_blank"
         rel="noopener noreferrer"
         className="fixed bottom-6 right-6 z-40 bg-brand-accent text-white w-[52px] h-[52px] rounded-full flex items-center justify-center shadow-[0_4px_12px_rgba(196,160,160,0.4)] hover:bg-brand-accent-hover transition-all duration-300 group"
