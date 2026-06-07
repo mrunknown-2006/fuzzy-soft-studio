@@ -168,10 +168,10 @@ export default function Cart() {
             {cart.map((item) => (
               <div
                 key={item.id}
-                className="flex flex-col sm:flex-row items-center sm:items-stretch gap-6 py-6 first:pt-0 last:pb-0 border-b border-brand-border/30 last:border-0"
+                className="flex flex-row gap-3 items-start py-6 first:pt-0 last:pb-0 border-b border-brand-border/30 last:border-0"
               >
                 {/* Product Image */}
-                <div className="w-24 h-32 shrink-0 rounded-xl overflow-hidden bg-brand-cream border border-brand-border/30 shadow-xs select-none">
+                <div className="w-20 h-[90px] shrink-0 rounded-lg overflow-hidden bg-brand-cream border border-brand-border/30 shadow-xs select-none">
                   <img
                     src={item.image}
                     alt={item.name}
@@ -179,65 +179,62 @@ export default function Cart() {
                   />
                 </div>
 
-                {/* Product Info & Adjusters */}
-                <div className="flex-grow flex flex-col justify-between text-center sm:text-left py-1 w-full sm:w-auto">
-                  <div className="space-y-1.5">
-                    <h3 className="font-serif text-lg font-bold text-brand-heading hover:text-brand-accent transition-colors">
-                      <Link to={`/product/${getProductSlug(item.id, item.slug)}`}>
-                        {item.name}
-                      </Link>
-                    </h3>
-                    <p className="text-xs text-brand-body/60 font-sans line-clamp-1">
-                      {item.description || 'Hand-crafted luxury arrangement'}
-                    </p>
+                {/* Right side: all product details (name, description, price, quantity controls, delete button) */}
+                <div className="flex-grow flex-1 flex flex-col justify-between min-w-0 py-0.5">
+                  {/* Title, Description & Price */}
+                  <div className="flex justify-between items-start gap-3 w-full">
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <h3 className="font-serif text-sm sm:text-base md:text-lg font-bold text-brand-heading hover:text-brand-accent transition-colors truncate">
+                        <Link to={`/product/${getProductSlug(item.id, item.slug)}`}>
+                          {item.name}
+                        </Link>
+                      </h3>
+                      <p className="text-[11px] sm:text-xs text-brand-body/60 font-sans truncate">
+                        {item.description || 'Hand-crafted luxury arrangement'}
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0 font-sans font-semibold text-brand-heading">
+                      <span className="text-sm sm:text-base">₹{(item.price * item.quantity).toLocaleString('en-IN')}</span>
+                      {item.quantity > 1 && (
+                        <div className="text-[9px] sm:text-[10px] text-brand-body/50 font-normal font-sans">
+                          ₹{item.price.toLocaleString('en-IN')} each
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 sm:mt-0 select-none">
+                  {/* Quantity selector & remove button */}
+                  <div className="flex items-center justify-between mt-3 select-none w-full">
                     {/* Quantity Selector */}
-                    <div className="flex items-center justify-between border border-brand-border bg-white rounded-full h-9 w-28 px-2.5 shadow-xs">
+                    <div className="flex items-center justify-between border border-brand-border bg-white rounded-full h-8 w-24 px-2 shadow-xs">
                       <button
                         onClick={() => updateCartQuantity(item.id, item.quantity - 1)}
                         disabled={item.quantity <= 1}
-                        className={`w-6 h-6 flex items-center justify-center rounded-full hover:bg-brand-cream text-brand-heading transition ${
+                        className={`w-5 h-5 flex items-center justify-center rounded-full hover:bg-brand-cream text-brand-heading transition ${
                           item.quantity <= 1 ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer active:scale-90'
                         }`}
                         aria-label="Decrease quantity"
                       >
-                        <Minus size={12} />
+                        <Minus size={10} />
                       </button>
                       <span className="font-sans font-semibold text-xs text-brand-heading">{item.quantity}</span>
                       <button
                         onClick={() => updateCartQuantity(item.id, item.quantity + 1)}
-                        className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-brand-cream text-brand-heading cursor-pointer transition active:scale-90"
+                        className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-brand-cream text-brand-heading cursor-pointer transition active:scale-90"
                         aria-label="Increase quantity"
                       >
-                        <Plus size={12} />
+                        <Plus size={10} />
                       </button>
                     </div>
 
                     {/* Remove Button */}
-                    <div className="flex items-center gap-6">
-                      <button
-                        onClick={() => removeFromCart(item.id)}
-                        className="text-brand-body/40 hover:text-red-500 hover:scale-105 transition-all p-1.5 cursor-pointer"
-                        title="Remove item"
-                      >
-                        <Trash2 size={16} strokeWidth={1.5} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Subtotal for Item */}
-                <div className="flex sm:flex-col justify-between sm:justify-start items-center sm:items-end gap-1.5 shrink-0 py-1 font-sans font-semibold text-brand-heading w-full sm:w-auto border-t sm:border-0 border-brand-border/20 pt-4 sm:pt-1">
-                  <span className="text-xs text-brand-body/55 sm:hidden font-normal uppercase tracking-wider">Total</span>
-                  <div className="text-right">
-                    <span className="text-base">₹{(item.price * item.quantity).toLocaleString('en-IN')}</span>
-                    {item.quantity > 1 && (
-                      <div className="text-[10px] text-brand-body/50 font-normal">
-                        ₹{item.price.toLocaleString('en-IN')} each
-                      </div>
-                    )}
+                    <button
+                      onClick={() => removeFromCart(item.id)}
+                      className="text-brand-body/40 hover:text-red-500 hover:scale-105 transition-all p-1.5 cursor-pointer"
+                      title="Remove item"
+                    >
+                      <Trash2 size={15} strokeWidth={1.5} />
+                    </button>
                   </div>
                 </div>
               </div>
