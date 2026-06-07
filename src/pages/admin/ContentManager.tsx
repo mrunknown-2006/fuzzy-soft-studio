@@ -83,13 +83,17 @@ export default function ContentManager() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const { data, error } = await supabase.from('settings').select('*');
+        const { data, error } = await supabase.from('site_content').select('*');
         if (error) throw error;
         
         const loaded: any = {};
         if (data) {
-          data.forEach((s: any) => {
-            loaded[s.key] = s.value;
+          data.forEach((row: any) => {
+            if (row.content) {
+              Object.entries(row.content).forEach(([k, v]) => {
+                loaded[k] = v;
+              });
+            }
           });
         }
 
@@ -106,7 +110,7 @@ export default function ContentManager() {
         setFeaturedTitle(loaded.featured_section_title || '');
         setFeaturedSubtitle(loaded.featured_section_subtitle || '');
         setFeaturedCount(loaded.featured_section_count || '4');
-        setFeaturedVisible(loaded.featured_section_visible !== 'false');
+        setFeaturedVisible(loaded.featured_section_visible !== 'false' && loaded.featured_section_visible !== false);
 
         // About
         setAboutHeroTitle(loaded.about_hero_title || '');
@@ -141,14 +145,26 @@ export default function ContentManager() {
 
         // Announcements
         setOfferLine(loaded.offer_line || '');
-        setMarqueeVisible(loaded.marquee_visible !== 'false');
+        setMarqueeVisible(loaded.marquee_visible !== 'false' && loaded.marquee_visible !== false);
         setHomeBannerUrl(loaded.banner_url || '');
 
         if (loaded.collection_banners) {
-          try { setAdminCollectionBanners(JSON.parse(loaded.collection_banners)); } catch {}
+          try {
+            if (Array.isArray(loaded.collection_banners)) {
+              setAdminCollectionBanners(loaded.collection_banners);
+            } else {
+              setAdminCollectionBanners(JSON.parse(loaded.collection_banners));
+            }
+          } catch {}
         }
         if (loaded.garden_images) {
-          try { setGardenImages(JSON.parse(loaded.garden_images)); } catch {}
+          try {
+            if (Array.isArray(loaded.garden_images)) {
+              setGardenImages(loaded.garden_images);
+            } else {
+              setGardenImages(JSON.parse(loaded.garden_images));
+            }
+          } catch {}
         }
       } catch (err: any) {
         showToast(`Error fetching content: ${err.message}`, 'error');
@@ -208,10 +224,10 @@ export default function ContentManager() {
       else if (index >= 30 && index <= 35) fileName = `garden-image-${index - 30 + 1}.webp`;
       else fileName = `descriptive-content-${index}.webp`;
 
-      const filePath = `content/${fileName}`;
+      const filePath = fileName;
 
       const { error } = await supabase.storage
-        .from('product-images')
+        .from('content')
         .upload(filePath, webpBlob, {
           contentType: 'image/webp',
           cacheControl: '3600',
@@ -221,7 +237,7 @@ export default function ContentManager() {
       if (error) throw error;
 
       const { data: { publicUrl } } = supabase.storage
-        .from('product-images')
+        .from('content')
         .getPublicUrl(filePath);
 
       if (index === 10) setHeroBannerUrl(publicUrl);
@@ -255,10 +271,10 @@ export default function ContentManager() {
     try {
       const webpBlob = await convertToWebP(file);
       const fileName = `collection-${slug}.webp`;
-      const filePath = `content/${fileName}`;
+      const filePath = fileName;
 
       const { error } = await supabase.storage
-        .from('product-images')
+        .from('content')
         .upload(filePath, webpBlob, {
           contentType: 'image/webp',
           cacheControl: '3600',
@@ -268,7 +284,7 @@ export default function ContentManager() {
       if (error) throw error;
 
       const { data: { publicUrl } } = supabase.storage
-        .from('product-images')
+        .from('content')
         .getPublicUrl(filePath);
 
       const updated = [...adminCollectionBanners];
@@ -283,13 +299,17 @@ export default function ContentManager() {
     }
   };
 
-  // Save changes wrapper
-  const handleSaveSettings = async (keysValues: { key: string; value: string }[], successMsg: string) => {
+  // Save section helper
+  const handleSaveSection = async (sectionId: string, content: Record<string, any>, successMsg: string) => {
     setLoading(true);
     try {
       const { error } = await supabase
-        .from('settings')
-        .upsert(keysValues, { onConflict: 'key' });
+        .from('site_content')
+        .upsert({
+          id: sectionId,
+          content,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' });
       if (error) throw error;
       showToast(successMsg, 'success');
     } catch (err: any) {
@@ -301,79 +321,79 @@ export default function ContentManager() {
 
   // 1. Save Hero
   const handleSaveHero = () => {
-    handleSaveSettings([
-      { key: 'hero_banner_url', value: heroBannerUrl },
-      { key: 'hero_badge', value: heroBadge },
-      { key: 'hero_title_1', value: heroTitle1 },
-      { key: 'hero_title_2', value: heroTitle2 },
-      { key: 'hero_title_3', value: heroTitle3 },
-      { key: 'hero_tagline', value: heroTagline },
-      { key: 'hero_cta_text', value: heroCta },
-    ], 'Homepage Hero Saved!');
+    handleSaveSection('hero', {
+      hero_banner_url: heroBannerUrl,
+      hero_badge: heroBadge,
+      hero_title_1: heroTitle1,
+      hero_title_2: heroTitle2,
+      hero_title_3: heroTitle3,
+      hero_tagline: heroTagline,
+      hero_cta_text: heroCta,
+    }, 'Homepage Hero Saved!');
   };
 
   // 2. Save Featured
   const handleSaveFeatured = () => {
-    handleSaveSettings([
-      { key: 'featured_section_title', value: featuredTitle },
-      { key: 'featured_section_subtitle', value: featuredSubtitle },
-      { key: 'featured_section_count', value: featuredCount },
-      { key: 'featured_section_visible', value: featuredVisible ? 'true' : 'false' },
-    ], 'Featured Products Section Saved!');
+    handleSaveSection('featured', {
+      featured_section_title: featuredTitle,
+      featured_section_subtitle: featuredSubtitle,
+      featured_section_count: Number(featuredCount) || 4,
+      featured_section_visible: featuredVisible,
+    }, 'Featured Products Section Saved!');
   };
 
   // 3. Save About
   const handleSaveAbout = () => {
-    handleSaveSettings([
-      { key: 'about_hero_title', value: aboutHeroTitle },
-      { key: 'about_hero_subtitle', value: aboutHeroSubtitle },
-      { key: 'about_block1_title', value: aboutBlock1Title },
-      { key: 'about_block1_text1', value: aboutBlock1Text1 },
-      { key: 'about_block1_text2', value: aboutBlock1Text2 },
-      { key: 'about_block1_image', value: aboutBlock1Image },
-      { key: 'about_block2_title', value: aboutBlock2Title },
-      { key: 'about_block2_text1', value: aboutBlock2Text1 },
-      { key: 'about_block2_text2', value: aboutBlock2Text2 },
-      { key: 'about_block2_image', value: aboutBlock2Image },
-    ], 'About Page Content Saved!');
+    handleSaveSection('about', {
+      about_hero_title: aboutHeroTitle,
+      about_hero_subtitle: aboutHeroSubtitle,
+      about_block1_title: aboutBlock1Title,
+      about_block1_text1: aboutBlock1Text1,
+      about_block1_text2: aboutBlock1Text2,
+      about_block1_image: aboutBlock1Image,
+      about_block2_title: aboutBlock2Title,
+      about_block2_text1: aboutBlock2Text1,
+      about_block2_text2: aboutBlock2Text2,
+      about_block2_image: aboutBlock2Image,
+    }, 'About Page Content Saved!');
   };
 
   // 4. Save Contact
   const handleSaveContact = () => {
-    handleSaveSettings([
-      { key: 'contact_title', value: contactTitle },
-      { key: 'contact_intro', value: contactIntro },
-      { key: 'contact_whatsapp', value: contactWhatsapp },
-      { key: 'contact_email', value: contactEmail },
-      { key: 'contact_location', value: contactLocation },
-      { key: 'contact_hours', value: contactHours },
-      { key: 'contact_map_url', value: contactMapUrl },
-    ], 'Contact Page Saved!');
+    handleSaveSection('contact', {
+      contact_title: contactTitle,
+      contact_intro: contactIntro,
+      contact_whatsapp: contactWhatsapp,
+      contact_email: contactEmail,
+      contact_location: contactLocation,
+      contact_hours: contactHours,
+      contact_map_url: contactMapUrl,
+    }, 'Contact Page Saved!');
   };
 
   // 5. Save Footer
   const handleSaveFooter = () => {
-    handleSaveSettings([
-      { key: 'footer_tagline', value: footerTagline },
-      { key: 'footer_about_text', value: footerAboutText },
-      { key: 'footer_instagram', value: footerInstagram },
-      { key: 'footer_facebook', value: footerFacebook },
-      { key: 'footer_pinterest', value: footerPinterest },
-      { key: 'footer_whatsapp_url', value: footerWhatsappUrl },
-      { key: 'footer_copyright', value: footerCopyright },
-      { key: 'footer_note', value: footerNote },
-    ], 'Footer Settings Saved!');
+    handleSaveSection('footer', {
+      footer_tagline: footerTagline,
+      footer_about_text: footerAboutText,
+      footer_instagram: footerInstagram,
+      footer_facebook: footerFacebook,
+      footer_pinterest: footerPinterest,
+      footer_whatsapp_url: footerWhatsappUrl,
+      footer_copyright: footerCopyright,
+      footer_note: footerNote,
+    }, 'Footer Settings Saved!');
   };
 
   // 6. Save Announcements, Collection Banners & Garden Images
   const handleSaveAnnouncements = () => {
-    handleSaveSettings([
-      { key: 'offer_line', value: offerLine },
-      { key: 'marquee_visible', value: marqueeVisible ? 'true' : 'false' },
-      { key: 'banner_url', value: homeBannerUrl },
-      { key: 'collection_banners', value: JSON.stringify(adminCollectionBanners) },
-      { key: 'garden_images', value: JSON.stringify(gardenImages) }
-    ], 'Announcements & Banner Assets Saved!');
+    handleSaveSection('announcements', {
+      offer_line: offerLine,
+      marquee_visible: marqueeVisible,
+      banner_url: homeBannerUrl,
+      collection_banners: adminCollectionBanners,
+      garden_images: gardenImages
+    }, 'Announcements & Banner Assets Saved!');
   };
 
   return (

@@ -133,3 +133,13 @@ CREATE POLICY "Admin Upload Access" ON storage.objects
         bucket_id = 'product-images' AND 
         (auth.jwt() ->> 'email') = 'angrybird@fuzzysoftstudio.com'
     );
+
+-- ----------------------------------------------------
+-- Schema Updates
+-- ----------------------------------------------------
+ALTER TABLE public.discounts 
+ADD COLUMN IF NOT EXISTS min_order_value NUMERIC;
+
+ALTER TABLE public.reviews
+ADD COLUMN IF NOT EXISTS customer_email TEXT;
+

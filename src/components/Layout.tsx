@@ -14,13 +14,13 @@ export default function Layout() {
   useEffect(() => {
     const loadWhatsAppSettings = async () => {
       try {
-        const { data } = await supabase.from('settings').select('*');
+        const { data } = await supabase.from('store_settings').select('*');
         if (data) {
           const whatsappSetting = data.find(
             (s) => s.key === 'whatsapp_number' || s.key === 'contact_whatsapp'
           );
           if (whatsappSetting && whatsappSetting.value) {
-            const digits = whatsappSetting.value.replace(/[^0-9]/g, '');
+            const digits = String(whatsappSetting.value).replace(/[^0-9]/g, '');
             if (digits && digits.length >= 10) {
               setWhatsappNumber(digits.slice(-10));
             }

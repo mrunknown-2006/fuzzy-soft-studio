@@ -35,14 +35,14 @@ export default function Cart() {
   // Discount code state
   const [showDiscountInput, setShowDiscountInput] = useState(false);
   const [discountCodeInput, setDiscountCodeInput] = useState('');
-  const [appliedDiscount, setAppliedDiscount] = useState<{ code: string; percent: number } | null>(null);
+  const [appliedDiscount, setAppliedDiscount] = useState<{ code: string; percent: number; min_order_value?: number } | null>(null);
   const [discountError, setDiscountError] = useState('');
   const [applyingCode, setApplyingCode] = useState(false);
 
   useEffect(() => {
     const loadCartSettings = async () => {
       try {
-        const { data } = await supabase.from('settings').select('*');
+        const { data } = await supabase.from('store_settings').select('*');
         if (data && data.length > 0) {
           const thresholdSetting = data.find(s => s.key === 'free_delivery_threshold');
           if (thresholdSetting) {
@@ -86,21 +86,28 @@ export default function Cart() {
     setApplyingCode(true);
     try {
       const { data, error } = await supabase
-        .from('settings')
+        .from('discounts')
         .select('*')
-        .eq('key', 'discount_codes')
-        .single();
-      if (error) throw error;
-      const codes: Array<{ code: string; percent: number; expiry?: string }> = JSON.parse(data.value);
-      const found = codes.find(
-        (c) => c.code.toLowerCase() === discountCodeInput.trim().toLowerCase()
-      );
-      if (!found) {
+        .eq('code', discountCodeInput.trim().toUpperCase())
+        .maybeSingle();
+
+      if (error || !data) {
         setDiscountError('Invalid discount code. Please try again.');
-      } else if (found.expiry && new Date(found.expiry) < new Date()) {
+        return;
+      }
+
+      if (data.is_active === false) {
+        setDiscountError('This discount code is currently inactive.');
+      } else if (data.expiry_date && new Date(data.expiry_date) < new Date()) {
         setDiscountError('This code has expired.');
+      } else if (data.min_order_value && subtotal < Number(data.min_order_value)) {
+        setDiscountError(`This code requires a minimum order value of ₹${Number(data.min_order_value).toLocaleString('en-IN')}.`);
       } else {
-        setAppliedDiscount({ code: found.code, percent: found.percent });
+        setAppliedDiscount({ 
+          code: data.code, 
+          percent: Number(data.value) || 0,
+          min_order_value: data.min_order_value ? Number(data.min_order_value) : undefined
+        });
         setDiscountCodeInput('');
         setShowDiscountInput(false);
       }
@@ -125,6 +132,9 @@ export default function Cart() {
   // Discount amount
   const discountAmount = useMemo(() => {
     if (!appliedDiscount) return 0;
+    if (appliedDiscount.min_order_value && subtotal < appliedDiscount.min_order_value) {
+      return 0;
+    }
     return Math.round(subtotal * appliedDiscount.percent / 100);
   }, [subtotal, appliedDiscount]);
 
@@ -285,7 +295,9 @@ export default function Cart() {
                     <Check size={12} className="shrink-0" />
                     <span className="font-semibold">{appliedDiscount.code} ({appliedDiscount.percent}% off)</span>
                   </div>
-                  <span className="font-semibold">-₹{discountAmount.toLocaleString('en-IN')}</span>
+                  <span className="font-semibold">
+                    {discountAmount > 0 ? `-₹${discountAmount.toLocaleString('en-IN')}` : '₹0 (Min order not met)'}
+                  </span>
                 </div>
               )}
             </div>
@@ -295,11 +307,18 @@ export default function Cart() {
               {appliedDiscount ? (
                 /* Code successfully applied — show green confirmation */
                 <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-4 py-3">
-                  <div className="flex items-center gap-2 text-green-700">
-                    <Tag size={13} />
-                    <span className="text-xs font-semibold font-sans">
-                      Code <strong>{appliedDiscount.code}</strong> applied!
-                    </span>
+                  <div className="flex flex-col text-green-700">
+                    <div className="flex items-center gap-2">
+                      <Tag size={13} />
+                      <span className="text-xs font-semibold font-sans">
+                        Code <strong>{appliedDiscount.code}</strong> applied!
+                      </span>
+                    </div>
+                    {appliedDiscount.min_order_value && subtotal < appliedDiscount.min_order_value && (
+                      <span className="text-[10px] text-red-500 font-semibold font-sans mt-0.5 ml-5">
+                        Add ₹{(appliedDiscount.min_order_value - subtotal).toLocaleString('en-IN')} more to qualify.
+                      </span>
+                    )}
                   </div>
                   <button
                     onClick={() => { setAppliedDiscount(null); }}

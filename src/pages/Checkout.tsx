@@ -8,14 +8,14 @@ export default function Checkout() {
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const { data } = await supabase.from('settings').select('*');
+        const { data } = await supabase.from('store_settings').select('*');
         if (data) {
           const whatsappSetting = data.find(
-            (s) => s.key === 'contact_whatsapp' || s.key === 'footer_whatsapp'
+            (s) => s.key === 'contact_whatsapp' || s.key === 'footer_whatsapp' || s.key === 'whatsapp_number'
           );
           if (whatsappSetting && whatsappSetting.value) {
             // Strip everything except digits
-            const digits = whatsappSetting.value.replace(/[^0-9]/g, '');
+            const digits = String(whatsappSetting.value).replace(/[^0-9]/g, '');
             // Only use if it looks like a valid number, otherwise keep the default placeholder
             if (digits && digits.length >= 10 && !digits.includes('X')) {
               setWhatsappNumber(digits);

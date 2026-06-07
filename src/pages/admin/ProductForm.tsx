@@ -295,6 +295,7 @@ export default function ProductForm() {
       sku: sku.trim() || undefined,
       low_stock_threshold: parseInt(lowStockThreshold) || 5,
       active: isActive,
+      is_active: isActive,
       is_featured: isFeatured,
       show_in_related: showInRelated,
       image: imageUrls[0],

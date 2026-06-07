@@ -100,11 +100,11 @@ export default function Admin() {
         const fileName = `collection-${b.slug}.png`;
         
         await supabase.storage
-          .from('product-images')
+          .from('content')
           .upload(fileName, file, { upsert: true });
           
         const { data: { publicUrl } } = supabase.storage
-          .from('product-images')
+          .from('content')
           .getPublicUrl(fileName);
           
         updated.push({
@@ -113,9 +113,20 @@ export default function Admin() {
           image: publicUrl
         });
       }
-      await supabase.from('settings').upsert(
-        { key: 'collection_banners', value: JSON.stringify(updated) },
-        { onConflict: 'key' }
+      
+      const { data: existingAnn } = await supabase.from('site_content').select('*').eq('id', 'announcements').single();
+      const existingContent = (existingAnn && existingAnn.content) || {};
+
+      await supabase.from('site_content').upsert(
+        { 
+          id: 'announcements', 
+          content: {
+            ...existingContent,
+            collection_banners: updated
+          },
+          updated_at: new Date().toISOString()
+        },
+        { onConflict: 'id' }
       );
       localStorage.setItem('fss_banners_uploaded', 'true');
       showToast('Collection banners auto-uploaded!', 'success');
@@ -258,80 +269,96 @@ export default function Admin() {
 
   const loadSettings = async () => {
     try {
-      const { data, error } = await supabase.from('settings').select('*');
-      if (error) throw error;
+      const { data: settingsData, error: settingsError } = await supabase.from('store_settings').select('*');
+      if (settingsError) throw settingsError;
       
       const loaded: any = {};
-      if (data && data.length > 0) {
-        data.forEach((s: any) => {
+      if (settingsData && settingsData.length > 0) {
+        settingsData.forEach((s: any) => {
           loaded[s.key] = s.value;
         });
       }
 
+      // Load Categories from database
+      const { data: catsData } = await supabase.from('categories').select('*').order('name', { ascending: true });
+      if (catsData) {
+        setCategories(catsData.map((c: any) => c.name));
+      }
+
+      // Load Discount Codes from database
+      const { data: discsData } = await supabase.from('discounts').select('*').order('created_at', { ascending: false });
+      if (discsData) {
+        setDiscountCodes(discsData.map((d: any) => ({
+          id: d.id,
+          code: d.code,
+          percent: Number(d.value) || 0,
+          expiry: d.expiry_date || '',
+          limit: d.max_uses || undefined,
+          active: d.is_active !== undefined ? d.is_active : true,
+          min_order_value: d.min_order_value || undefined
+        })));
+      }
+
+      // Load Reviews from database
+      const { data: revsData } = await supabase.from('reviews').select('*').order('created_at', { ascending: false });
+      if (revsData) {
+        setReviews(revsData.map((r: any) => ({
+          id: r.id,
+          product_id: r.product_id,
+          name: r.customer_name,
+          email: r.customer_email || '',
+          quote: r.review_text,
+          rating: Number(r.rating) || 5,
+          approved: r.status === 'approved',
+          status: r.status,
+          created_at: r.created_at
+        })));
+      }
+
+      // Load Site Content from database
+      const { data: contentData } = await supabase.from('site_content').select('*');
+      const contentLoaded: any = {};
+      if (contentData) {
+        contentData.forEach((row: any) => {
+          if (row.content) {
+            Object.entries(row.content).forEach(([k, v]) => {
+              contentLoaded[k] = v;
+            });
+          }
+        });
+
+        const announcementsRow = contentData.find((row: any) => row.id === 'announcements');
+        if (announcementsRow && announcementsRow.content) {
+          const c = announcementsRow.content;
+          if (c.collection_banners) {
+            setAdminCollectionBanners(c.collection_banners);
+          }
+          if (c.garden_images) {
+            setGardenImages(c.garden_images);
+          }
+        }
+      }
+
       const newSettings = {
-        free_delivery_threshold: Number(loaded.free_delivery_threshold) || 999,
-        shipping_charges: Number(loaded.shipping_charges) || 99,
+        free_delivery_threshold: loaded.free_delivery_threshold !== undefined ? Number(loaded.free_delivery_threshold) : 999,
+        shipping_charges: loaded.shipping_charges !== undefined ? Number(loaded.shipping_charges) : 99,
         whatsapp_number: loaded.whatsapp_number || '+91-XXXXX-XXXXX',
         contact_email: loaded.contact_email || 'hello@fuzzysoftstudio.com',
-        offer_line: loaded.offer_line || '🌸 Mother\'s Day Special: Use code BLOOM20 for 20% off all bouquets! 🌸',
-        banner_url: loaded.banner_url || ''
+        offer_line: contentLoaded.offer_line || '🌸 Mother\'s Day Special: Use code BLOOM20 for 20% off all bouquets! 🌸',
+        banner_url: contentLoaded.banner_url || ''
       };
 
       setSettings(newSettings);
 
-      // Load Categories
-      if (loaded.store_categories) {
-        try {
-          const parsed = JSON.parse(loaded.store_categories);
-          if (Array.isArray(parsed)) {
-            setCategories(parsed);
-          } else {
-            setCategories(loaded.store_categories.split(',').map((c: string) => c.trim()).filter(Boolean));
-          }
-        } catch {
-          setCategories(loaded.store_categories.split(',').map((c: string) => c.trim()).filter(Boolean));
-        }
-      }
-
-      // Load Discount Codes
-      const dcRow = data && data.find((s: any) => s.key === 'discount_codes');
-      if (dcRow) {
-        try { setDiscountCodes(JSON.parse(dcRow.value)); } catch {}
-      }
-
       // Load store status
-      if (loaded.store_open !== undefined) setStoreOpen(loaded.store_open !== 'false');
-      if (loaded.store_closed_message) setStoreClosedMessage(loaded.store_closed_message);
-      if (loaded.low_stock_threshold) setLowStockThreshold(Number(loaded.low_stock_threshold) || 5);
+      if (loaded.store_open !== undefined) setStoreOpen(loaded.store_open === true || loaded.store_open === 'true');
+      if (loaded.store_closed_message) setStoreClosedMessage(String(loaded.store_closed_message));
+      if (loaded.low_stock_threshold !== undefined) setLowStockThreshold(Number(loaded.low_stock_threshold) || 5);
 
-      if (loaded.cod_available) setCodAvailable(loaded.cod_available === 'true');
-      if (loaded.cod_charge) setCodCharge(Number(loaded.cod_charge) || 0);
-      if (loaded.express_charge) setExpressCharge(Number(loaded.express_charge) || 0);
+      if (loaded.cod_available !== undefined) setCodAvailable(loaded.cod_available === true || loaded.cod_available === 'true');
+      if (loaded.cod_charge !== undefined) setCodCharge(Number(loaded.cod_charge) || 0);
+      if (loaded.express_charge !== undefined) setExpressCharge(Number(loaded.express_charge) || 0);
 
-      if (loaded.collection_banners) {
-        try { setAdminCollectionBanners(JSON.parse(loaded.collection_banners)); } catch {}
-      }
-
-      // Load Garden Images
-      if (loaded.garden_images) {
-        try {
-          const parsed = JSON.parse(loaded.garden_images);
-          if (Array.isArray(parsed)) {
-            const padded = [...parsed, ...Array(6).fill('')].slice(0, 6);
-            setGardenImages(padded);
-          } else {
-            setGardenImages(Array(6).fill(''));
-          }
-        } catch {
-          setGardenImages(Array(6).fill(''));
-        }
-      }
-
-      // Load Reviews
-      const rvRow = data && data.find((s: any) => s.key === 'homepage_testimonials');
-      if (rvRow) { 
-        try { setReviews(JSON.parse(rvRow.value)); } catch {} 
-      }
     } catch (e: any) {
       console.warn('Error loading settings from Supabase:', e.message);
     }

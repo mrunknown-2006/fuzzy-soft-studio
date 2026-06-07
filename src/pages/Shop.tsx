@@ -35,20 +35,16 @@ export default function Shop() {
       }
 
       try {
-        const { data, error } = await supabase
-          .from('settings')
+        const { data: catsData, error: catsError } = await supabase
+          .from('categories')
           .select('*')
-          .eq('key', 'store_categories')
-          .single();
-        if (error) throw error;
-        if (data && data.value) {
-          const parsed = JSON.parse(data.value);
-          if (Array.isArray(parsed)) {
-            setDbCategories(parsed);
-          }
+          .order('name', { ascending: true });
+        if (catsError) throw catsError;
+        if (catsData) {
+          setDbCategories(catsData.map((c: any) => c.name));
         }
       } catch (err) {
-        console.warn('Failed to load categories list from settings:', err);
+        console.warn('Failed to load categories list from database:', err);
       } finally {
         setIsLoading(false);
       }

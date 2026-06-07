@@ -6,11 +6,13 @@ import { supabase } from '../../lib/supabaseClient';
 import Toggle from '../../components/ui/Toggle';
 
 interface Coupon {
+  id?: string;
   code: string;
   percent: number;
   expiry?: string;
   limit?: number;
   active?: boolean;
+  min_order_value?: number;
 }
 
 export default function Discounts() {
@@ -21,6 +23,7 @@ export default function Discounts() {
   const [newDiscountPercent, setNewDiscountPercent] = useState(10);
   const [newDiscountExpiry, setNewDiscountExpiry] = useState('');
   const [newDiscountLimit, setNewDiscountLimit] = useState('');
+  const [newDiscountMinOrderValue, setNewDiscountMinOrderValue] = useState('');
   const [newDiscountActive, setNewDiscountActive] = useState(true);
   const [loading, setLoading] = useState(false);
 
@@ -31,22 +34,6 @@ export default function Discounts() {
       active: d.active !== undefined ? d.active : true
     }));
   }, [discountCodes]);
-
-  const saveCouponsToSupabase = async (updatedList: Coupon[]) => {
-    try {
-      const { error } = await supabase
-        .from('settings')
-        .upsert({ 
-          key: 'discount_codes', 
-          value: JSON.stringify(updatedList) 
-        }, { onConflict: 'key' });
-      if (error) throw error;
-      setDiscountCodes(updatedList);
-    } catch (err: any) {
-      showToast(`Failed to save coupon: ${err.message}`, 'error');
-      throw err;
-    }
-  };
 
   const handleCreateDiscount = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,50 +47,90 @@ export default function Discounts() {
     if (exists) return showToast('Discount code already exists', 'error');
 
     setLoading(true);
-    const newCoupon: Coupon = {
+    
+    const newCouponDb = {
       code: cleanCode,
-      percent: newDiscountPercent,
-      expiry: newDiscountExpiry || undefined,
-      limit: newDiscountLimit ? parseInt(newDiscountLimit) : undefined,
-      active: newDiscountActive
+      value: newDiscountPercent,
+      expiry_date: newDiscountExpiry || null,
+      max_uses: newDiscountLimit ? parseInt(newDiscountLimit) : null,
+      is_active: newDiscountActive,
+      min_order_value: newDiscountMinOrderValue ? parseFloat(newDiscountMinOrderValue) : null,
+      discount_type: 'percentage'
     };
 
-    const updated = [...coupons, newCoupon];
     try {
-      await saveCouponsToSupabase(updated);
+      const { data, error } = await supabase
+        .from('discounts')
+        .insert(newCouponDb)
+        .select()
+        .single();
+      
+      if (error) throw error;
+
+      if (data) {
+        const newCoupon: Coupon = {
+          id: data.id,
+          code: data.code,
+          percent: data.value,
+          expiry: data.expiry_date,
+          limit: data.max_uses,
+          active: data.is_active,
+          min_order_value: data.min_order_value
+        };
+        setDiscountCodes([newCoupon, ...discountCodes]);
+      }
+
       setNewDiscountCode('');
       setNewDiscountPercent(10);
       setNewDiscountExpiry('');
       setNewDiscountLimit('');
+      setNewDiscountMinOrderValue('');
       setNewDiscountActive(true);
       showToast('Discount code created successfully!', 'success');
-    } catch (err) {
-      // Error handled in save function
+    } catch (err: any) {
+      showToast(`Failed to create coupon: ${err.message}`, 'error');
     } finally {
       setLoading(false);
     }
   };
 
   const handleToggleCouponActive = async (index: number) => {
-    const updated = coupons.map((c, idx) => {
-      if (idx === index) {
-        return { ...c, active: !c.active };
-      }
-      return c;
-    });
+    const target = coupons[index];
     try {
-      await saveCouponsToSupabase(updated);
+      const { error } = await supabase
+        .from('discounts')
+        .update({ is_active: !target.active })
+        .eq('code', target.code);
+      if (error) throw error;
+
+      const updated = discountCodes.map((c, idx) => {
+        if (idx === index) {
+          return { ...c, active: !c.active };
+        }
+        return c;
+      });
+      setDiscountCodes(updated);
       showToast('Coupon status updated', 'success');
-    } catch {}
+    } catch (err: any) {
+      showToast(`Failed to update coupon status: ${err.message}`, 'error');
+    }
   };
 
   const handleDeleteDiscount = async (code: string) => {
     if (!window.confirm(`Delete discount code ${code}?`)) return;
-    const updated = coupons.filter(d => d.code !== code);
     try {
-      await saveCouponsToSupabase(updated);
+      const { error } = await supabase
+        .from('discounts')
+        .delete()
+        .eq('code', code);
+      if (error) throw error;
+
+      const updated = discountCodes.filter(d => d.code !== code);
+      setDiscountCodes(updated);
       showToast('Discount code deleted', 'success');
-    } catch {}
+    } catch (err: any) {
+      showToast(`Failed to delete coupon: ${err.message}`, 'error');
+    }
   };
 
   return (
@@ -173,6 +200,19 @@ export default function Discounts() {
               />
             </div>
 
+            {/* Minimum Order Value */}
+            <div className="space-y-1.5">
+              <label className="block text-[10px] font-semibold uppercase tracking-wider text-brand-heading">Min Order Value (Optional)</label>
+              <input
+                type="number"
+                min={0}
+                value={newDiscountMinOrderValue}
+                onChange={(e) => setNewDiscountMinOrderValue(e.target.value)}
+                placeholder="e.g. 499 (leaves empty if none)"
+                className="w-full h-11 px-4 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition shadow-xs"
+              />
+            </div>
+
             {/* Active Switcher */}
             <div className="flex items-center justify-between bg-brand-cream/15 p-3 rounded-xl border border-brand-border/10 select-none">
               <div>
@@ -212,6 +252,7 @@ export default function Discounts() {
                     <th className="pb-3 px-2 text-right">Discount</th>
                     <th className="pb-3 px-2 text-center">Expiry</th>
                     <th className="pb-3 px-2 text-center">Limit</th>
+                    <th className="pb-3 px-2 text-right">Min Order</th>
                     <th className="pb-3 px-2 text-center">Status</th>
                     <th className="pb-3 pl-2 text-right">Delete</th>
                   </tr>
@@ -245,6 +286,9 @@ export default function Discounts() {
                         <td className="py-4 px-2 text-center font-mono text-brand-body/60">
                           {coupon.limit ? `${coupon.limit} uses` : 'Unlimited'}
                         </td>
+                        <td className="py-4 px-2 text-right font-semibold text-brand-heading">
+                          {coupon.min_order_value ? `₹${coupon.min_order_value.toLocaleString('en-IN')}` : 'None'}
+                        </td>
                         <td className="py-4 px-2 text-center select-none" onClick={e => e.stopPropagation()}>
                           <div className="flex flex-col items-center gap-1.5">
                             <span className={`inline-block px-2 py-0.5 rounded-full font-bold uppercase tracking-wider text-[7px] border ${
@@ -277,7 +321,7 @@ export default function Discounts() {
                   })}
                   {coupons.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="py-8 text-center text-brand-body/55 italic">
+                      <td colSpan={7} className="py-8 text-center text-brand-body/55 italic">
                         No coupons defined yet. Add one on the left.
                       </td>
                     </tr>

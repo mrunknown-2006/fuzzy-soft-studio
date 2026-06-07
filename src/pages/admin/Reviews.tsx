@@ -5,12 +5,16 @@ import type { AdminContext } from './types';
 import { supabase } from '../../lib/supabaseClient';
 
 interface Testimonial {
+  id?: string;
   name: string;
   quote: string;
   rating: number;
   location?: string;
   verified?: boolean;
   approved?: boolean; // Optional flag for moderation
+  email?: string;
+  status?: string;
+  created_at?: string;
 }
 
 export default function Reviews() {
@@ -20,6 +24,7 @@ export default function Reviews() {
   const [filter, setFilter] = useState<'all' | 'approved' | 'pending'>('all');
   const [newReviewName, setNewReviewName] = useState('');
   const [newReviewLocation, setNewReviewLocation] = useState('');
+  const [newReviewEmail, setNewReviewEmail] = useState('');
   const [newReviewRating, setNewReviewRating] = useState(5);
   const [newReviewQuote, setNewReviewQuote] = useState('');
   const [newReviewVerified, setNewReviewVerified] = useState(false);
@@ -50,23 +55,6 @@ export default function Reviews() {
     };
   }, [testimonials]);
 
-  // Save changes helper
-  const saveReviewsToSupabase = async (updatedList: Testimonial[]) => {
-    try {
-      const { error } = await supabase
-        .from('settings')
-        .upsert({ 
-          key: 'homepage_testimonials', 
-          value: JSON.stringify(updatedList) 
-        }, { onConflict: 'key' });
-      if (error) throw error;
-      setReviews(updatedList);
-    } catch (err: any) {
-      showToast(`Failed: ${err.message}`, 'error');
-      throw err;
-    }
-  };
-
   // Add review handler
   const handleAddReview = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,26 +63,51 @@ export default function Reviews() {
     }
 
     setSubmitting(true);
-    const newTestimonial: Testimonial = {
-      name: newReviewName.trim(),
-      quote: newReviewQuote.trim(),
-      rating: newReviewRating,
-      location: newReviewLocation.trim() || undefined,
-      verified: newReviewVerified,
-      approved: true // Manually added by admin is pre-approved
-    };
 
-    const updated = [...testimonials, newTestimonial];
     try {
-      await saveReviewsToSupabase(updated);
+      const newTestimonial = {
+        product_id: 'general', // Default identifier
+        customer_name: newReviewName.trim(),
+        customer_email: newReviewEmail.trim() || null,
+        review_text: newReviewQuote.trim(),
+        rating: newReviewRating,
+        status: 'approved'
+      };
+
+      const { data, error } = await supabase
+        .from('reviews')
+        .insert(newTestimonial)
+        .select()
+        .single();
+      
+      if (error) throw error;
+
+      if (data) {
+        setReviews([
+          {
+            id: data.id,
+            product_id: data.product_id,
+            name: data.customer_name,
+            email: data.customer_email || '',
+            quote: data.review_text,
+            rating: data.rating,
+            approved: true,
+            status: 'approved',
+            created_at: data.created_at
+          },
+          ...reviews
+        ]);
+      }
+
       setNewReviewName('');
       setNewReviewLocation('');
+      setNewReviewEmail('');
       setNewReviewRating(5);
       setNewReviewQuote('');
       setNewReviewVerified(false);
       showToast('Testimonial added and published!', 'success');
-    } catch (err) {
-      // Error handled in save function
+    } catch (err: any) {
+      showToast(`Failed to add testimonial: ${err.message}`, 'error');
     } finally {
       setSubmitting(false);
     }
@@ -103,36 +116,52 @@ export default function Reviews() {
   // Single Approve
   const handleApprove = async (indexInFiltered: number) => {
     const target = filteredReviews[indexInFiltered];
-    const updated = testimonials.map(t => {
-      if (t.name === target.name && t.quote === target.quote) {
-        return { ...t, approved: true };
-      }
-      return t;
-    });
     try {
-      await saveReviewsToSupabase(updated);
+      const { error } = await supabase
+        .from('reviews')
+        .update({ status: 'approved' })
+        .eq('id', target.id);
+      if (error) throw error;
+
+      setReviews(reviews.map(r => r.id === target.id ? { ...r, approved: true, status: 'approved' } : r));
       showToast('Review approved!', 'success');
-    } catch {}
+    } catch (err: any) {
+      showToast(`Failed: ${err.message}`, 'error');
+    }
   };
 
   // Single Delete / Reject
   const handleDelete = async (indexInFiltered: number) => {
     const target = filteredReviews[indexInFiltered];
     if (!confirm('Are you sure you want to remove this review?')) return;
-    const updated = testimonials.filter(t => !(t.name === target.name && t.quote === target.quote));
     try {
-      await saveReviewsToSupabase(updated);
+      const { error } = await supabase
+        .from('reviews')
+        .delete()
+        .eq('id', target.id);
+      if (error) throw error;
+
+      setReviews(reviews.filter(r => r.id !== target.id));
       showToast('Review removed', 'success');
-    } catch {}
+    } catch (err: any) {
+      showToast(`Failed: ${err.message}`, 'error');
+    }
   };
 
   // Bulk Approve
   const handleApproveAllPending = async () => {
-    const updated = testimonials.map(t => ({ ...t, approved: true }));
     try {
-      await saveReviewsToSupabase(updated);
+      const { error } = await supabase
+        .from('reviews')
+        .update({ status: 'approved' })
+        .eq('status', 'pending');
+      if (error) throw error;
+
+      setReviews(reviews.map(r => r.status === 'pending' ? { ...r, approved: true, status: 'approved' } : r));
       showToast(`Approved all pending reviews!`, 'success');
-    } catch {}
+    } catch (err: any) {
+      showToast(`Failed: ${err.message}`, 'error');
+    }
   };
 
   return (
@@ -275,6 +304,17 @@ export default function Reviews() {
                   className="w-full h-10 px-3 bg-white border border-brand-border/60 rounded-xl text-xs font-sans focus:outline-none" 
                 />
               </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-[10px] font-semibold uppercase tracking-wider text-brand-heading">Author Email</label>
+              <input 
+                type="email" 
+                value={newReviewEmail}
+                onChange={e => setNewReviewEmail(e.target.value)}
+                placeholder="e.g. priya@example.com"
+                className="w-full h-10 px-3 bg-white border border-brand-border/60 rounded-xl text-xs font-sans focus:outline-none" 
+              />
             </div>
 
             <div className="space-y-1.5">

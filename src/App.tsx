@@ -45,11 +45,11 @@ export default function App() {
     const checkMaintenance = async () => {
       try {
         const { data } = await supabase
-          .from('settings')
+          .from('store_settings')
           .select('value')
           .eq('key', 'store_open')
           .single();
-        if (data?.value === 'false') {
+        if (data && (data.value === false || data.value === 'false')) {
           setMaintenance(true);
         }
       } catch (err) {

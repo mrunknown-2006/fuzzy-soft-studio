@@ -20,13 +20,10 @@ export default function About() {
     const loadAboutContent = async () => {
       setIsLoading(true);
       try {
-        const { data, error } = await supabase.from('settings').select('*');
+        const { data, error } = await supabase.from('site_content').select('*').eq('id', 'about').single();
         if (error) throw error;
-        if (data && data.length > 0) {
-          const loaded: any = {};
-          data.forEach((s: any) => {
-            loaded[s.key] = s.value;
-          });
+        if (data && data.content) {
+          const loaded = data.content;
           if (loaded.about_hero_title) setHeroTitle(loaded.about_hero_title);
           if (loaded.about_hero_subtitle) setHeroSubtitle(loaded.about_hero_subtitle);
           if (loaded.about_block1_title) setBlock1Title(loaded.about_block1_title);

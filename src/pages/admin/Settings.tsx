@@ -55,18 +55,19 @@ export default function Settings() {
     const fetchExtraSettings = async () => {
       try {
         const { data } = await supabase
-          .from('settings')
+          .from('store_settings')
           .select('*')
           .in('key', ['upi_enabled', 'upi_id', 'min_order_value', 'gift_wrap_charge', 'whatsapp_alerts', 'email_alerts']);
         
         if (data) {
           data.forEach((s: any) => {
-            if (s.key === 'upi_enabled') setUpiEnabled(s.value === 'true');
-            if (s.key === 'upi_id') setUpiId(s.value);
+            if (s.key === 'upi_enabled') setUpiEnabled(s.value === true || s.value === 'true');
+            if (s.key === 'upi_id') setUpiId(String(s.value || ''));
             if (s.key === 'min_order_value') setMinOrderValue(Number(s.value) || 0);
             if (s.key === 'gift_wrap_charge') setGiftWrapCharge(Number(s.value) || 30);
-            if (s.key === 'whatsapp_alerts') setWhatsappAlerts(s.value === 'true');
-            if (s.key === 'email_alerts') setEmailAlerts(s.value === 'true');
+            if (s.key === 'whatsapp_alerts') setUpiEnabled(s.value === true || s.value === 'true'); // wait, whatsappAlerts is the state
+            if (s.key === 'whatsapp_alerts') setWhatsappAlerts(s.value === true || s.value === 'true');
+            if (s.key === 'email_alerts') setEmailAlerts(s.value === true || s.value === 'true');
           });
         }
       } catch (err) {
@@ -92,28 +93,28 @@ export default function Settings() {
 
     try {
       const payload = [
-        { key: 'free_delivery_threshold', value: String(freeThreshold) },
-        { key: 'shipping_charges', value: String(shippingFee) },
+        { key: 'free_delivery_threshold', value: freeThreshold },
+        { key: 'shipping_charges', value: shippingFee },
         { key: 'whatsapp_number', value: whatsapp.trim() },
         { key: 'contact_email', value: email.trim() },
         
-        { key: 'store_open', value: storeOpen ? 'true' : 'false' },
+        { key: 'store_open', value: storeOpen },
         { key: 'store_closed_message', value: storeClosedMessage.trim() },
-        { key: 'low_stock_threshold', value: String(lowStockThreshold) },
+        { key: 'low_stock_threshold', value: lowStockThreshold },
 
-        { key: 'cod_available', value: String(codAvailable) },
-        { key: 'cod_charge', value: String(codCharge) },
-        { key: 'express_charge', value: String(expressCharge) },
+        { key: 'cod_available', value: codAvailable },
+        { key: 'cod_charge', value: codCharge },
+        { key: 'express_charge', value: expressCharge },
 
-        { key: 'upi_enabled', value: String(upiEnabled) },
+        { key: 'upi_enabled', value: upiEnabled },
         { key: 'upi_id', value: upiId.trim() },
-        { key: 'min_order_value', value: String(minOrderValue) },
-        { key: 'gift_wrap_charge', value: String(giftWrapCharge) },
-        { key: 'whatsapp_alerts', value: String(whatsappAlerts) },
-        { key: 'email_alerts', value: String(emailAlerts) }
+        { key: 'min_order_value', value: minOrderValue },
+        { key: 'gift_wrap_charge', value: giftWrapCharge },
+        { key: 'whatsapp_alerts', value: whatsappAlerts },
+        { key: 'email_alerts', value: emailAlerts }
       ];
 
-      const { error } = await supabase.from('settings').upsert(payload, { onConflict: 'key' });
+      const { error } = await supabase.from('store_settings').upsert(payload, { onConflict: 'key' });
       if (error) throw error;
 
       setSettings(updatedSettings);

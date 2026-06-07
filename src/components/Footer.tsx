@@ -15,20 +15,37 @@ export default function Footer() {
   const [footerNote, setFooterNote] = useState('Made with love in Lucknow 🌸');
 
   useEffect(() => {
-    supabase.from('settings').select('*').then(({ data }) => {
-      if (!data) return;
-      const s: Record<string, string> = {};
-      data.forEach((r: any) => { s[r.key] = r.value; });
-      if (s.footer_tagline) setFooterTagline(s.footer_tagline);
-      if (s.footer_about_text) setFooterAbout(s.footer_about_text);
-      if (s.footer_instagram) setFooterInstagram(s.footer_instagram);
-      if (s.footer_facebook) setFooterFacebook(s.footer_facebook);
-      if (s.footer_pinterest) setFooterPinterest(s.footer_pinterest);
-      if (s.footer_whatsapp_url) setFooterWhatsapp(s.footer_whatsapp_url);
-      if (s.contact_email) setFooterEmail(s.contact_email);
-      if (s.footer_copyright) setFooterCopyright(s.footer_copyright);
-      if (s.footer_note) setFooterNote(s.footer_note);
-    });
+    // Fetch footer site content
+    supabase
+      .from('site_content')
+      .select('*')
+      .eq('id', 'footer')
+      .single()
+      .then(({ data }) => {
+        if (data && data.content) {
+          const s = data.content;
+          if (s.footer_tagline) setFooterTagline(s.footer_tagline);
+          if (s.footer_about_text) setFooterAbout(s.footer_about_text);
+          if (s.footer_instagram) setFooterInstagram(s.footer_instagram);
+          if (s.footer_facebook) setFooterFacebook(s.footer_facebook);
+          if (s.footer_pinterest) setFooterPinterest(s.footer_pinterest);
+          if (s.footer_whatsapp_url) setFooterWhatsapp(s.footer_whatsapp_url);
+          if (s.footer_copyright) setFooterCopyright(s.footer_copyright);
+          if (s.footer_note) setFooterNote(s.footer_note);
+        }
+      });
+
+    // Fetch contact email from store_settings
+    supabase
+      .from('store_settings')
+      .select('*')
+      .eq('key', 'contact_email')
+      .single()
+      .then(({ data }) => {
+        if (data && data.value) {
+          setFooterEmail(String(data.value));
+        }
+      });
   }, []);
 
   return (

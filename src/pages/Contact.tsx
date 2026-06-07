@@ -26,14 +26,9 @@ export default function Contact() {
     const loadContactContent = async () => {
       setIsLoading(true);
       try {
-        const { data, error } = await supabase.from('settings').select('*');
+        const { data, error } = await supabase.from('site_content').select('*').eq('id', 'contact').single();
         if (error) throw error;
-        const loaded: any = {};
-        if (data && data.length > 0) {
-          data.forEach((s: any) => {
-            loaded[s.key] = s.value;
-          });
-        }
+        const loaded = (data && data.content) || {};
         setTitle(loaded.contact_title || 'Contact Us');
         setIntro(loaded.contact_intro || 'Have questions about custom crochet orders, shipping timelines, or care tips? Drop us a line and our artisan team will write back to you shortly.');
         setWhatsapp(loaded.contact_whatsapp || '+91 95062 28972');

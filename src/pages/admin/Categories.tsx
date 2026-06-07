@@ -12,23 +12,6 @@ export default function Categories() {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingValue, setEditingValue] = useState('');
 
-  const saveCategoriesToDB = async (updatedCats: string[]) => {
-    try {
-      const { error } = await supabase
-        .from('settings')
-        .upsert({ 
-          key: 'store_categories', 
-          value: JSON.stringify(updatedCats) 
-        }, { onConflict: 'key' });
-      
-      if (error) throw error;
-      setCategories(updatedCats);
-      showToast('Categories updated successfully!', 'success');
-    } catch (err: any) {
-      showToast(`Failed to save categories: ${err.message}`, 'error');
-    }
-  };
-
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = newCategoryName.trim();
@@ -38,9 +21,16 @@ export default function Categories() {
       return showToast('Category already exists!', 'error');
     }
 
-    const updated = [...categories, trimmed];
-    await saveCategoriesToDB(updated);
-    setNewCategoryName('');
+    try {
+      const slug = trimmed.toLowerCase().replace(/\s+/g, '-');
+      const { error } = await supabase.from('categories').insert({ name: trimmed, slug });
+      if (error) throw error;
+      setCategories([...categories, trimmed]);
+      setNewCategoryName('');
+      showToast('Category added successfully!', 'success');
+    } catch (err: any) {
+      showToast(`Failed to add category: ${err.message}`, 'error');
+    }
   };
 
   const handleStartEdit = (index: number, value: string) => {
@@ -56,16 +46,40 @@ export default function Categories() {
       return showToast('Category already exists!', 'error');
     }
 
-    const updated = [...categories];
-    updated[index] = trimmed;
-    await saveCategoriesToDB(updated);
-    setEditingIndex(null);
+    const oldName = categories[index];
+    try {
+      const slug = trimmed.toLowerCase().replace(/\s+/g, '-');
+      const { error } = await supabase
+        .from('categories')
+        .update({ name: trimmed, slug })
+        .eq('name', oldName);
+      if (error) throw error;
+
+      const updated = [...categories];
+      updated[index] = trimmed;
+      setCategories(updated);
+      setEditingIndex(null);
+      showToast('Category updated successfully!', 'success');
+    } catch (err: any) {
+      showToast(`Failed to rename category: ${err.message}`, 'error');
+    }
   };
 
   const handleDeleteCategory = async (catToDelete: string) => {
     if (!confirm(`Are you sure you want to delete category "${catToDelete}"?`)) return;
-    const updated = categories.filter(c => c !== catToDelete);
-    await saveCategoriesToDB(updated);
+    try {
+      const { error } = await supabase
+        .from('categories')
+        .delete()
+        .eq('name', catToDelete);
+      if (error) throw error;
+
+      const updated = categories.filter(c => c !== catToDelete);
+      setCategories(updated);
+      showToast('Category deleted successfully!', 'success');
+    } catch (err: any) {
+      showToast(`Failed to delete category: ${err.message}`, 'error');
+    }
   };
 
   return (

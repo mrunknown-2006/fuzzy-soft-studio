@@ -75,44 +75,72 @@ export default function Home() {
   useEffect(() => {
     const loadHomeData = async () => {
       try {
-        const { data } = await supabase.from('settings').select('*');
-        const s: Record<string, string> = {};
-        if (data && data.length > 0) {
-          // Build lookup map
-          data.forEach((row: any) => { s[row.key] = row.value; });
-
-          if (s.garden_images) {
-            try { setGardenImages(JSON.parse(s.garden_images)); } catch {}
-          }
-          if (s.footer_instagram) setInstagramUrl(s.footer_instagram);
-
-          // Offer line / banner
-          if (s.offer_line) setOfferText(s.offer_line);
-          if (s.banner_url) setBannerUrl(s.banner_url);
-
-          // Featured section
-          if (s.featured_section_title) setFeaturedSectionTitle(s.featured_section_title);
-          if (s.featured_section_subtitle) setFeaturedSectionSubtitle(s.featured_section_subtitle);
-          if (s.featured_section_count) setFeaturedCount(Number(s.featured_section_count));
-
-          // Collections section
-          if (s.collections_section_title) setCollectionsTitle(s.collections_section_title);
-          if (s.collection_banners) {
-            try { setCollectionBanners(JSON.parse(s.collection_banners)); } catch {}
-          }
-
-          // Dynamic testimonials (from admin Reviews tab)
-          if (s.homepage_testimonials) {
-            try {
-              const parsed = JSON.parse(s.homepage_testimonials);
-              if (Array.isArray(parsed) && parsed.length > 0) setDynamicTestimonials(parsed);
-            } catch {}
-          }
-        } else {
-          loadLocalSettings();
+        const { data: siteData } = await supabase.from('site_content').select('*');
+        const s: Record<string, any> = {};
+        if (siteData) {
+          siteData.forEach((row: any) => {
+            if (row.content) {
+              Object.entries(row.content).forEach(([k, v]) => {
+                s[k] = v;
+              });
+            }
+          });
         }
 
-        // Apply hero content (either loaded from settings or default fallback values)
+        if (s.garden_images) {
+          try {
+            if (Array.isArray(s.garden_images)) {
+              setGardenImages(s.garden_images);
+            } else {
+              setGardenImages(JSON.parse(s.garden_images));
+            }
+          } catch {}
+        }
+        if (s.footer_instagram) setInstagramUrl(s.footer_instagram);
+
+        // Offer line / banner
+        if (s.offer_line) setOfferText(s.offer_line);
+        if (s.banner_url) setBannerUrl(s.banner_url);
+
+        // Featured section
+        if (s.featured_section_title) setFeaturedSectionTitle(s.featured_section_title);
+        if (s.featured_section_subtitle) setFeaturedSectionSubtitle(s.featured_section_subtitle);
+        if (s.featured_section_count) setFeaturedCount(Number(s.featured_section_count));
+
+        // Collections section
+        if (s.collections_section_title) setCollectionsTitle(s.collections_section_title);
+        if (s.collection_banners) {
+          try {
+            if (Array.isArray(s.collection_banners)) {
+              setCollectionBanners(s.collection_banners);
+            } else {
+              setCollectionBanners(JSON.parse(s.collection_banners));
+            }
+          } catch {}
+        }
+
+        // Dynamic testimonials from reviews table (status = approved)
+        try {
+          const { data: reviewsData } = await supabase
+            .from('reviews')
+            .select('*')
+            .eq('status', 'approved')
+            .order('created_at', { ascending: false });
+          if (reviewsData && reviewsData.length > 0) {
+            const mappedReviews = reviewsData.map((r: any) => ({
+              name: r.customer_name,
+              quote: r.review_text,
+              rating: Number(r.rating) || 5,
+              location: 'Verified Buyer',
+              verified: true
+            }));
+            setDynamicTestimonials(mappedReviews);
+          }
+        } catch (revErr) {
+          console.warn('Failed to load testimonials from reviews table:', revErr);
+        }
+
+        // Apply hero content (either loaded from site_content or default fallback values)
         setHeroBadge(s.hero_badge || 'FLORAL LIFESTYLE · EST. 2026');
         setHeroTitle1(s.hero_title_1 || 'Fuzzy');
         setHeroTitle2(s.hero_title_2 || 'Soft');
@@ -120,7 +148,7 @@ export default function Home() {
         setHeroTagline(s.hero_tagline || 'Where Every Petal Tells a Story');
         setHeroCta(s.hero_cta_text || 'SHOP NOW');
         if (s.hero_banner_url) setBannerUrl(s.hero_banner_url);
-        if (s.marquee_visible === 'false') setMarqueeVisible(false);
+        if (s.marquee_visible === false || s.marquee_visible === 'false') setMarqueeVisible(false);
 
       } catch (err) {
         loadLocalSettings();

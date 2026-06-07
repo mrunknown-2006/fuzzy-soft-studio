@@ -55,7 +55,11 @@ export interface SupabaseSetting {
 }
 
 export interface DiscountCode {
+  id?: string;
   code: string;
   percent: number;
   expiry?: string; // ISO date string or empty
+  limit?: number;
+  active?: boolean;
+  min_order_value?: number;
 }
