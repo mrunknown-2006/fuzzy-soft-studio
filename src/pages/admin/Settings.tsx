@@ -90,6 +90,7 @@ export default function Settings() {
 
   // Combined Save Settings Handler
   const handleSaveAllSettings = async (e: React.FormEvent) => {
+    console.log("Supabase client:", supabase);
     e.preventDefault();
     setSaving(true);
 
@@ -135,11 +136,16 @@ export default function Settings() {
         .select();
       
       console.log('Settings saved:', data, error);
-      if (error) throw error;
+      if (error) {
+        alert(JSON.stringify(error));
+        throw error;
+      }
 
       setSettings(updatedSettings);
+      alert("Saved successfully!");
       showToast('All settings updated successfully!', 'success');
     } catch (err: any) {
+      alert(JSON.stringify(err));
       showToast(`Failed to save settings: ${err.message}`, 'error');
     } finally {
       setSaving(false);
