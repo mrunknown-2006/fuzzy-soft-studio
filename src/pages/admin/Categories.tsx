@@ -47,11 +47,18 @@ export default function Categories() {
         .insert({ name: trimmed, slug, is_active: true })
         .select();
       console.log('Category CRUD result (create):', data, error);
-      if (error) throw error;
+      if (error) {
+        alert('Operation failed: ' + error.message);
+        throw error;
+      }
       await fetchDbCategories();
       setNewCategoryName('');
+      alert('Saved successfully!');
       showToast('Saved successfully!', 'success');
     } catch (err: any) {
+      if (err.message && !err.message.includes('Operation failed')) {
+        alert('Operation failed: ' + err.message);
+      }
       showToast(err.message || 'Failed to add category', 'error');
     }
   };
@@ -80,12 +87,19 @@ export default function Categories() {
         .eq('id', targetCategory.id)
         .select();
       console.log('Category CRUD result (update):', data, error);
-      if (error) throw error;
+      if (error) {
+        alert('Operation failed: ' + error.message);
+        throw error;
+      }
 
       await fetchDbCategories();
       setEditingIndex(null);
+      alert('Saved successfully!');
       showToast('Saved successfully!', 'success');
     } catch (err: any) {
+      if (err.message && !err.message.includes('Operation failed')) {
+        alert('Operation failed: ' + err.message);
+      }
       showToast(err.message || 'Failed to rename category', 'error');
     }
   };
@@ -99,11 +113,18 @@ export default function Categories() {
         .eq('id', catToDelete.id)
         .select();
       console.log('Category CRUD result (delete):', data, error);
-      if (error) throw error;
+      if (error) {
+        alert('Operation failed: ' + error.message);
+        throw error;
+      }
 
       await fetchDbCategories();
+      alert('Saved successfully!');
       showToast('Saved successfully!', 'success');
     } catch (err: any) {
+      if (err.message && !err.message.includes('Operation failed')) {
+        alert('Operation failed: ' + err.message);
+      }
       showToast(err.message || 'Failed to delete category', 'error');
     }
   };

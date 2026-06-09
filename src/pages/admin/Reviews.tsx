@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Star, Trash2, Check, MessageSquare, X } from 'lucide-react';
 import type { AdminContext } from './types';
@@ -29,6 +29,35 @@ export default function Reviews() {
   const [newReviewQuote, setNewReviewQuote] = useState('');
   const [newReviewVerified, setNewReviewVerified] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  const fetchReviews = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('reviews')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      if (data) {
+        setReviews(data.map((r: any) => ({
+          id: r.id,
+          product_id: r.product_id,
+          name: r.customer_name,
+          email: r.customer_email || '',
+          quote: r.review_text,
+          rating: Number(r.rating) || 5,
+          approved: r.status === 'approved',
+          status: r.status,
+          created_at: r.created_at
+        })));
+      }
+    } catch (err: any) {
+      console.error('Failed to load reviews:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchReviews();
+  }, []);
 
   // Cast reviews from context safely
   const testimonials = useMemo<Testimonial[]>(() => {
@@ -80,24 +109,12 @@ export default function Reviews() {
         .single();
       console.log('Review CRUD result (create):', data, error);
       
-      if (error) throw error;
-
-      if (data) {
-        setReviews([
-          {
-            id: data.id,
-            product_id: data.product_id,
-            name: data.customer_name,
-            email: data.customer_email || '',
-            quote: data.review_text,
-            rating: data.rating,
-            approved: true,
-            status: 'approved',
-            created_at: data.created_at
-          },
-          ...reviews
-        ]);
+      if (error) {
+        alert('Operation failed: ' + error.message);
+        throw error;
       }
+
+      await fetchReviews();
 
       setNewReviewName('');
       setNewReviewLocation('');
@@ -105,8 +122,12 @@ export default function Reviews() {
       setNewReviewRating(5);
       setNewReviewQuote('');
       setNewReviewVerified(false);
+      alert('Saved successfully!');
       showToast('Saved successfully!', 'success');
     } catch (err: any) {
+      if (err.message && !err.message.includes('Operation failed')) {
+        alert('Operation failed: ' + err.message);
+      }
       showToast(err.message || 'Failed to add testimonial', 'error');
     } finally {
       setSubmitting(false);
@@ -123,11 +144,18 @@ export default function Reviews() {
         .eq('id', target.id)
         .select();
       console.log('Review CRUD result (approve):', data, error);
-      if (error) throw error;
+      if (error) {
+        alert('Operation failed: ' + error.message);
+        throw error;
+      }
 
-      setReviews(reviews.map(r => r.id === target.id ? { ...r, approved: true, status: 'approved' } : r));
+      await fetchReviews();
+      alert('Saved successfully!');
       showToast('Saved successfully!', 'success');
     } catch (err: any) {
+      if (err.message && !err.message.includes('Operation failed')) {
+        alert('Operation failed: ' + err.message);
+      }
       showToast(err.message || 'Failed to approve review', 'error');
     }
   };
@@ -142,11 +170,18 @@ export default function Reviews() {
         .eq('id', target.id)
         .select();
       console.log('Review CRUD result (reject):', data, error);
-      if (error) throw error;
+      if (error) {
+        alert('Operation failed: ' + error.message);
+        throw error;
+      }
 
-      setReviews(reviews.map(r => r.id === target.id ? { ...r, approved: false, status: 'rejected' } : r));
+      await fetchReviews();
+      alert('Saved successfully!');
       showToast('Saved successfully!', 'success');
     } catch (err: any) {
+      if (err.message && !err.message.includes('Operation failed')) {
+        alert('Operation failed: ' + err.message);
+      }
       showToast(err.message || 'Failed to reject review', 'error');
     }
   };
@@ -162,11 +197,18 @@ export default function Reviews() {
         .eq('id', target.id)
         .select();
       console.log('Review CRUD result (delete):', data, error);
-      if (error) throw error;
+      if (error) {
+        alert('Operation failed: ' + error.message);
+        throw error;
+      }
 
-      setReviews(reviews.filter(r => r.id !== target.id));
+      await fetchReviews();
+      alert('Saved successfully!');
       showToast('Saved successfully!', 'success');
     } catch (err: any) {
+      if (err.message && !err.message.includes('Operation failed')) {
+        alert('Operation failed: ' + err.message);
+      }
       showToast(err.message || 'Failed to remove review', 'error');
     }
   };
@@ -180,11 +222,18 @@ export default function Reviews() {
         .eq('status', 'pending')
         .select();
       console.log('Review CRUD result (approve-all):', data, error);
-      if (error) throw error;
+      if (error) {
+        alert('Operation failed: ' + error.message);
+        throw error;
+      }
 
-      setReviews(reviews.map(r => r.status === 'pending' ? { ...r, approved: true, status: 'approved' } : r));
+      await fetchReviews();
+      alert('Saved successfully!');
       showToast('Saved successfully!', 'success');
     } catch (err: any) {
+      if (err.message && !err.message.includes('Operation failed')) {
+        alert('Operation failed: ' + err.message);
+      }
       showToast(err.message || 'Failed to approve pending reviews', 'error');
     }
   };

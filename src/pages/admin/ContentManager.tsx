@@ -301,31 +301,10 @@ export default function ContentManager() {
     }
   };
 
-  // Save section helper
-  const handleSaveSection = async (sectionId: string, content: Record<string, any>, successMsg: string) => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('site_content')
-        .upsert({
-          id: sectionId,
-          content,
-          updated_at: new Date().toISOString()
-        })
-        .select();
-      console.log('Site Content section upsert:', sectionId, data, error, successMsg);
-      if (error) throw error;
-      showToast('Saved successfully!', 'success');
-    } catch (err: any) {
-      showToast(err.message || 'Save failed', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // 1. Save Hero
-  const handleSaveHero = () => {
-    handleSaveSection('hero', {
+  const handleSaveHero = async () => {
+    setLoading(true);
+    const sectionPayload = {
       hero_banner_url: heroBannerUrl,
       hero_badge: heroBadge,
       hero_title_1: heroTitle1,
@@ -333,22 +312,60 @@ export default function ContentManager() {
       hero_title_3: heroTitle3,
       hero_tagline: heroTagline,
       hero_cta_text: heroCta,
-    }, 'Homepage Hero Saved!');
+    };
+
+    const { data, error } = await supabase
+      .from('site_content')
+      .upsert(
+        { id: 'hero', content: sectionPayload, updated_at: new Date().toISOString() },
+        { onConflict: 'id' }
+      )
+      .select();
+
+    if (error) {
+      console.error('CONTENT SAVE ERROR:', error);
+      alert('Save failed: ' + error.message);
+      setLoading(false);
+      return;
+    }
+    console.log('CONTENT SAVED:', data);
+    alert('Saved successfully!');
+    setLoading(false);
   };
 
   // 2. Save Featured
-  const handleSaveFeatured = () => {
-    handleSaveSection('featured', {
+  const handleSaveFeatured = async () => {
+    setLoading(true);
+    const sectionPayload = {
       featured_section_title: featuredTitle,
       featured_section_subtitle: featuredSubtitle,
       featured_section_count: Number(featuredCount) || 4,
       featured_section_visible: featuredVisible,
-    }, 'Featured Products Section Saved!');
+    };
+
+    const { data, error } = await supabase
+      .from('site_content')
+      .upsert(
+        { id: 'featured', content: sectionPayload, updated_at: new Date().toISOString() },
+        { onConflict: 'id' }
+      )
+      .select();
+
+    if (error) {
+      console.error('CONTENT SAVE ERROR:', error);
+      alert('Save failed: ' + error.message);
+      setLoading(false);
+      return;
+    }
+    console.log('CONTENT SAVED:', data);
+    alert('Saved successfully!');
+    setLoading(false);
   };
 
   // 3. Save About
-  const handleSaveAbout = () => {
-    handleSaveSection('about', {
+  const handleSaveAbout = async () => {
+    setLoading(true);
+    const sectionPayload = {
       about_hero_title: aboutHeroTitle,
       about_hero_subtitle: aboutHeroSubtitle,
       about_block1_title: aboutBlock1Title,
@@ -359,12 +376,31 @@ export default function ContentManager() {
       about_block2_text1: aboutBlock2Text1,
       about_block2_text2: aboutBlock2Text2,
       about_block2_image: aboutBlock2Image,
-    }, 'About Page Content Saved!');
+    };
+
+    const { data, error } = await supabase
+      .from('site_content')
+      .upsert(
+        { id: 'about', content: sectionPayload, updated_at: new Date().toISOString() },
+        { onConflict: 'id' }
+      )
+      .select();
+
+    if (error) {
+      console.error('CONTENT SAVE ERROR:', error);
+      alert('Save failed: ' + error.message);
+      setLoading(false);
+      return;
+    }
+    console.log('CONTENT SAVED:', data);
+    alert('Saved successfully!');
+    setLoading(false);
   };
 
   // 4. Save Contact
-  const handleSaveContact = () => {
-    handleSaveSection('contact', {
+  const handleSaveContact = async () => {
+    setLoading(true);
+    const sectionPayload = {
       contact_title: contactTitle,
       contact_intro: contactIntro,
       contact_whatsapp: contactWhatsapp,
@@ -372,12 +408,31 @@ export default function ContentManager() {
       contact_location: contactLocation,
       contact_hours: contactHours,
       contact_map_url: contactMapUrl,
-    }, 'Contact Page Saved!');
+    };
+
+    const { data, error } = await supabase
+      .from('site_content')
+      .upsert(
+        { id: 'contact', content: sectionPayload, updated_at: new Date().toISOString() },
+        { onConflict: 'id' }
+      )
+      .select();
+
+    if (error) {
+      console.error('CONTENT SAVE ERROR:', error);
+      alert('Save failed: ' + error.message);
+      setLoading(false);
+      return;
+    }
+    console.log('CONTENT SAVED:', data);
+    alert('Saved successfully!');
+    setLoading(false);
   };
 
   // 5. Save Footer
-  const handleSaveFooter = () => {
-    handleSaveSection('footer', {
+  const handleSaveFooter = async () => {
+    setLoading(true);
+    const sectionPayload = {
       footer_tagline: footerTagline,
       footer_about_text: footerAboutText,
       footer_instagram: footerInstagram,
@@ -386,18 +441,55 @@ export default function ContentManager() {
       footer_whatsapp_url: footerWhatsappUrl,
       footer_copyright: footerCopyright,
       footer_note: footerNote,
-    }, 'Footer Settings Saved!');
+    };
+
+    const { data, error } = await supabase
+      .from('site_content')
+      .upsert(
+        { id: 'footer', content: sectionPayload, updated_at: new Date().toISOString() },
+        { onConflict: 'id' }
+      )
+      .select();
+
+    if (error) {
+      console.error('CONTENT SAVE ERROR:', error);
+      alert('Save failed: ' + error.message);
+      setLoading(false);
+      return;
+    }
+    console.log('CONTENT SAVED:', data);
+    alert('Saved successfully!');
+    setLoading(false);
   };
 
   // 6. Save Announcements, Collection Banners & Garden Images
-  const handleSaveAnnouncements = () => {
-    handleSaveSection('announcements', {
+  const handleSaveAnnouncements = async () => {
+    setLoading(true);
+    const sectionPayload = {
       offer_line: offerLine,
       marquee_visible: marqueeVisible,
       banner_url: homeBannerUrl,
       collection_banners: adminCollectionBanners,
       garden_images: gardenImages
-    }, 'Announcements & Banner Assets Saved!');
+    };
+
+    const { data, error } = await supabase
+      .from('site_content')
+      .upsert(
+        { id: 'announcements', content: sectionPayload, updated_at: new Date().toISOString() },
+        { onConflict: 'id' }
+      )
+      .select();
+
+    if (error) {
+      console.error('CONTENT SAVE ERROR:', error);
+      alert('Save failed: ' + error.message);
+      setLoading(false);
+      return;
+    }
+    console.log('CONTENT SAVED:', data);
+    alert('Saved successfully!');
+    setLoading(false);
   };
 
   return (

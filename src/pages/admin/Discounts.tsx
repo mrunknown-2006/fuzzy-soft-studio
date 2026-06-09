@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Percent, Plus, Trash2, Calendar } from 'lucide-react';
 import type { AdminContext } from './types';
@@ -28,6 +28,34 @@ export default function Discounts() {
   const [newDiscountMinOrderValue, setNewDiscountMinOrderValue] = useState('');
   const [newDiscountActive, setNewDiscountActive] = useState(true);
   const [loading, setLoading] = useState(false);
+
+  const fetchDiscounts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('discounts')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      if (data) {
+        setDiscountCodes(data.map((d: any) => ({
+          id: d.id,
+          code: d.code,
+          percent: Number(d.value) || 0,
+          expiry: d.expiry_date || '',
+          limit: d.max_uses || undefined,
+          active: d.is_active !== undefined ? d.is_active : true,
+          min_order_value: d.min_order_value || undefined,
+          discount_type: d.discount_type || 'percentage'
+        })));
+      }
+    } catch (err: any) {
+      console.error('Failed to load discount codes:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchDiscounts();
+  }, []);
 
   // Cast discountCodes safely
   const coupons = useMemo<Coupon[]>(() => {
@@ -76,21 +104,12 @@ export default function Discounts() {
         .single();
       console.log('Discount CRUD result (create):', data, error);
       
-      if (error) throw error;
-
-      if (data) {
-        const newCoupon: Coupon = {
-          id: data.id,
-          code: data.code,
-          percent: data.value,
-          expiry: data.expiry_date,
-          limit: data.max_uses,
-          active: data.is_active,
-          min_order_value: data.min_order_value,
-          discount_type: data.discount_type
-        };
-        setDiscountCodes([newCoupon, ...discountCodes]);
+      if (error) {
+        alert('Operation failed: ' + error.message);
+        throw error;
       }
+
+      await fetchDiscounts();
 
       setNewDiscountCode('');
       setNewDiscountType('percentage');
@@ -99,8 +118,12 @@ export default function Discounts() {
       setNewDiscountLimit('');
       setNewDiscountMinOrderValue('');
       setNewDiscountActive(true);
+      alert('Saved successfully!');
       showToast('Saved successfully!', 'success');
     } catch (err: any) {
+      if (err.message && !err.message.includes('Operation failed')) {
+        alert('Operation failed: ' + err.message);
+      }
       showToast(err.message || 'Failed to create coupon', 'error');
     } finally {
       setLoading(false);
@@ -117,17 +140,18 @@ export default function Discounts() {
         .eq('id', target.id)
         .select();
       console.log('Discount CRUD result (toggle):', data, error);
-      if (error) throw error;
+      if (error) {
+        alert('Operation failed: ' + error.message);
+        throw error;
+      }
 
-      const updated = discountCodes.map((c, idx) => {
-        if (idx === index) {
-          return { ...c, active: !c.active };
-        }
-        return c;
-      });
-      setDiscountCodes(updated);
+      await fetchDiscounts();
+      alert('Saved successfully!');
       showToast('Saved successfully!', 'success');
     } catch (err: any) {
+      if (err.message && !err.message.includes('Operation failed')) {
+        alert('Operation failed: ' + err.message);
+      }
       showToast(err.message || 'Failed to update coupon status', 'error');
     }
   };
@@ -141,12 +165,18 @@ export default function Discounts() {
         .eq('id', id)
         .select();
       console.log('Discount CRUD result (delete):', data, error);
-      if (error) throw error;
+      if (error) {
+        alert('Operation failed: ' + error.message);
+        throw error;
+      }
 
-      const updated = discountCodes.filter(d => d.id !== id);
-      setDiscountCodes(updated);
+      await fetchDiscounts();
+      alert('Saved successfully!');
       showToast('Saved successfully!', 'success');
     } catch (err: any) {
+      if (err.message && !err.message.includes('Operation failed')) {
+        alert('Operation failed: ' + err.message);
+      }
       showToast(err.message || 'Failed to delete coupon', 'error');
     }
   };

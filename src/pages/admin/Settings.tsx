@@ -7,19 +7,14 @@ import Toggle from '../../components/ui/Toggle';
 
 export default function Settings() {
   const { 
-    showToast,
     storeOpen,
     setStoreOpen,
-    storeClosedMessage,
-    setStoreClosedMessage,
     lowStockThreshold,
     setLowStockThreshold,
     codAvailable,
     setCodAvailable,
     codCharge,
     setCodCharge,
-    expressCharge,
-    setExpressCharge,
     settings,
     setSettings
   } = useOutletContext<AdminContext>();
@@ -45,34 +40,35 @@ export default function Settings() {
     setEmail(settings.contact_email);
 
     // Fetch extra custom settings keys
-    const fetchExtraSettings = async () => {
+    const fetchSettingsFromDB = async () => {
       try {
         const { data, error } = await supabase
           .from('store_settings')
           .select('*');
-        console.log('Settings page fetchExtraSettings:', data, error);
+        console.log('Settings page fetchSettingsFromDB:', data, error);
         
         if (data) {
           const generalSetting = data.find((s: any) => s.key === 'general');
           if (generalSetting && generalSetting.value) {
             const val = generalSetting.value;
+            if (val.store_open !== undefined) setStoreOpen(val.store_open === true || val.store_open === 'true');
+            if (val.low_stock_threshold !== undefined) setLowStockThreshold(Number(val.low_stock_threshold) || 5);
+            if (val.free_delivery_threshold !== undefined) setFreeThreshold(Number(val.free_delivery_threshold) || 999);
+            if (val.shipping_charges !== undefined) setShippingFee(Number(val.shipping_charges) || 99);
+            if (val.whatsapp_number !== undefined) setWhatsapp(String(val.whatsapp_number || ''));
+            if (val.contact_email !== undefined) setEmail(String(val.contact_email || ''));
+            if (val.cod_available !== undefined) setCodAvailable(val.cod_available === true || val.cod_available === 'true');
+            if (val.cod_charge !== undefined) setCodCharge(Number(val.cod_charge) || 0);
             if (val.whatsapp_alerts !== undefined) setWhatsappAlerts(val.whatsapp_alerts === true || val.whatsapp_alerts === 'true');
             if (val.email_alerts !== undefined) setEmailAlerts(val.email_alerts === true || val.email_alerts === 'true');
             if (val.order_id_prefix !== undefined) setOrderIdPrefix(String(val.order_id_prefix || 'FSS-'));
           }
-          
-          // Fallback check of individual keys
-          data.forEach((s: any) => {
-            if (s.key === 'whatsapp_alerts') setWhatsappAlerts(s.value === true || s.value === 'true');
-            if (s.key === 'email_alerts') setEmailAlerts(s.value === true || s.value === 'true');
-            if (s.key === 'order_id_prefix') setOrderIdPrefix(String(s.value || 'FSS-'));
-          });
         }
       } catch (err) {
-        console.warn('Could not load extra settings values:', err);
+        console.warn('Could not load settings values:', err);
       }
     };
-    fetchExtraSettings();
+    fetchSettingsFromDB();
   }, [settings]);
 
   // Combined Save Settings Handler
@@ -80,29 +76,15 @@ export default function Settings() {
     console.log("Supabase client:", supabase);
     setSaving(true);
 
-    const updatedSettings = {
-      free_delivery_threshold: freeThreshold,
-      shipping_charges: shippingFee,
-      whatsapp_number: whatsapp.trim(),
-      contact_email: email.trim(),
-      offer_line: settings.offer_line,
-      banner_url: settings.banner_url
-    };
-
-    const payload = {
-      free_delivery_threshold: freeThreshold,
-      shipping_charges: shippingFee,
-      whatsapp_number: whatsapp.trim(),
-      contact_email: email.trim(),
-      
+    const payloadObject = {
       store_open: storeOpen,
-      store_closed_message: storeClosedMessage.trim(),
       low_stock_threshold: lowStockThreshold,
-
+      free_delivery_threshold: freeThreshold,
+      shipping_charges: shippingFee,
+      whatsapp_number: whatsapp.trim(),
+      contact_email: email.trim(),
       cod_available: codAvailable,
       cod_charge: codCharge,
-      express_charge: expressCharge,
-
       whatsapp_alerts: whatsappAlerts,
       email_alerts: emailAlerts,
       order_id_prefix: orderIdPrefix.trim()
@@ -111,25 +93,32 @@ export default function Settings() {
     try {
       const { data, error } = await supabase
         .from('store_settings')
-        .upsert({
-          key: 'general',
-          value: payload,
-          updated_at: new Date().toISOString()
-        })
+        .upsert(
+          { key: 'general', value: payloadObject, updated_at: new Date().toISOString() },
+          { onConflict: 'key' }
+        )
         .select();
-      
-      console.log('Settings saved:', data, error);
-      if (error) {
-        alert(JSON.stringify(error));
-        throw error;
-      }
 
-      setSettings(updatedSettings);
-      localStorage.setItem('fuzzy-soft-studio-settings', JSON.stringify(payload));
-      showToast('Saved successfully!', 'success');
+      if (error) {
+        console.error('SAVE ERROR:', error);
+        alert('Save failed: ' + error.message);
+        return;
+      }
+      console.log('SAVED:', data);
+      alert('Saved successfully!');
+
+      setSettings({
+        free_delivery_threshold: freeThreshold,
+        shipping_charges: shippingFee,
+        whatsapp_number: whatsapp.trim(),
+        contact_email: email.trim(),
+        offer_line: settings.offer_line,
+        banner_url: settings.banner_url
+      });
+      localStorage.setItem('fuzzy-soft-studio-settings', JSON.stringify(payloadObject));
     } catch (err: any) {
-      alert(JSON.stringify(err));
-      showToast(err.message || 'Failed to save settings', 'error');
+      console.error('SAVE EXCEPTION:', err);
+      alert('Save failed: ' + err.message);
     } finally {
       setSaving(false);
     }
@@ -152,18 +141,6 @@ export default function Settings() {
           </div>
           <Toggle checked={storeOpen} onChange={setStoreOpen} />
         </div>
-
-        {!storeOpen && (
-          <div className="space-y-1.5 animate-fade-in">
-            <label className="block text-[10px] font-semibold uppercase tracking-wider text-brand-heading">Closed Message</label>
-            <input 
-              type="text" 
-              value={storeClosedMessage} 
-              onChange={e => setStoreClosedMessage(e.target.value)}
-              className="w-full h-11 px-4 bg-white border border-brand-border/60 rounded-xl text-xs font-sans focus:outline-none" 
-            />
-          </div>
-        )}
 
         <div className="space-y-1.5 pt-2">
           <label className="block text-[10px] font-semibold uppercase tracking-wider text-brand-heading">Global Low Stock Alert Threshold</label>
@@ -294,22 +271,6 @@ export default function Settings() {
               />
             </div>
           )}
-
-          <div className="space-y-1.5">
-            <label className="block text-[10px] font-semibold uppercase tracking-wider text-brand-heading">Express Delivery Charge (₹)</label>
-            <div className="flex items-center gap-3">
-              <input
-                type="number"
-                value={expressCharge}
-                min={0}
-                onChange={(e) => setExpressCharge(Number(e.target.value))}
-                className="w-48 h-11 px-4 bg-white rounded-xl border border-brand-border/70 text-xs font-sans focus:outline-none"
-              />
-              <span className="text-xs text-brand-body/55 font-sans">
-                {expressCharge === 0 ? 'Disabled (Express option hidden)' : `₹${expressCharge} surcharge`}
-              </span>
-            </div>
-          </div>
         </div>
 
         <div className="flex justify-end pt-2">
