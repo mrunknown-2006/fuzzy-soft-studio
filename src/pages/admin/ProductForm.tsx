@@ -401,7 +401,7 @@ export default function ProductForm() {
               </div>
 
               {/* Price & Compare-at Price */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">Price (₹) *</label>
                   <input
@@ -427,7 +427,7 @@ export default function ProductForm() {
               </div>
 
               {/* Categories & Collections */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">Category *</label>
                   <select
@@ -456,7 +456,7 @@ export default function ProductForm() {
               </div>
 
               {/* Stock, SKU & Low Stock Threshold */}
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="space-y-1.5">
                   <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">Stock Qty *</label>
                   <input
@@ -468,7 +468,7 @@ export default function ProductForm() {
                     className="w-full h-11 px-4 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition"
                   />
                 </div>
-                <div className="space-y-1.5 col-span-2">
+                <div className="space-y-1.5 sm:col-span-2">
                   <div className="flex justify-between">
                     <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">SKU</label>
                     <button 

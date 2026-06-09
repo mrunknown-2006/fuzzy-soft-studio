@@ -168,26 +168,26 @@ export default function Categories() {
                       <button 
                         type="button"
                         onClick={() => handleSaveEdit(idx)}
-                        className="text-green-600 hover:text-green-700 transition shrink-0 p-1"
+                        className="text-green-600 hover:text-green-700 transition shrink-0 p-2 min-h-[44px] min-w-[44px] flex items-center justify-center"
                       >
                         <Check size={16} />
                       </button>
                       <button 
                         type="button"
                         onClick={() => setEditingIndex(null)}
-                        className="text-red-500 hover:text-red-650 transition shrink-0 p-1"
+                        className="text-red-500 hover:text-red-650 transition shrink-0 p-2 min-h-[44px] min-w-[44px] flex items-center justify-center"
                       >
                         <X size={16} />
                       </button>
                     </div>
                   ) : (
                     <>
-                      <span className="font-sans text-sm text-brand-heading font-medium truncate max-w-[75%]">{cat.name}</span>
-                      <div className="flex gap-1.5 shrink-0 select-none">
+                      <span className="font-sans text-sm text-brand-heading font-medium truncate max-w-[70%]">{cat.name}</span>
+                      <div className="flex gap-1 shrink-0 select-none items-center">
                         <button
                           type="button"
                           onClick={() => handleStartEdit(idx, cat.name)}
-                          className="text-brand-body/40 hover:text-brand-accent transition p-1 hover:scale-105 cursor-pointer"
+                          className="text-brand-body/40 hover:text-brand-accent transition p-2 hover:scale-105 cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
                           title="Rename category"
                         >
                           <Edit2 size={13} />
@@ -195,7 +195,7 @@ export default function Categories() {
                         <button
                           type="button"
                           onClick={() => handleDeleteCategory(cat)}
-                          className="text-brand-body/40 hover:text-red-500 transition p-1 hover:scale-105 cursor-pointer"
+                          className="text-brand-body/40 hover:text-red-500 transition p-2 hover:scale-105 cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
                           title="Delete category"
                         >
                           <Trash2 size={13} />

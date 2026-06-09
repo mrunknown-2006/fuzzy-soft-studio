@@ -8,11 +8,12 @@ import Toggle from '../../components/ui/Toggle';
 interface Coupon {
   id?: string;
   code: string;
-  percent: number;
+  percent: number; // stores numerical discount value
   expiry?: string;
   limit?: number;
   active?: boolean;
   min_order_value?: number;
+  discount_type?: string;
 }
 
 export default function Discounts() {
@@ -20,7 +21,8 @@ export default function Discounts() {
 
   // State
   const [newDiscountCode, setNewDiscountCode] = useState('');
-  const [newDiscountPercent, setNewDiscountPercent] = useState(10);
+  const [newDiscountType, setNewDiscountType] = useState<'percentage' | 'fixed'>('percentage');
+  const [newDiscountValue, setNewDiscountValue] = useState(10);
   const [newDiscountExpiry, setNewDiscountExpiry] = useState('');
   const [newDiscountLimit, setNewDiscountLimit] = useState('');
   const [newDiscountMinOrderValue, setNewDiscountMinOrderValue] = useState('');
@@ -31,7 +33,8 @@ export default function Discounts() {
   const coupons = useMemo<Coupon[]>(() => {
     return (discountCodes || []).map(d => ({
       ...d,
-      active: d.active !== undefined ? d.active : true
+      active: d.active !== undefined ? d.active : true,
+      discount_type: d.discount_type || 'percentage'
     }));
   }, [discountCodes]);
 
@@ -39,8 +42,15 @@ export default function Discounts() {
     e.preventDefault();
     const cleanCode = newDiscountCode.replace(/\s/g, '').toUpperCase();
     if (!cleanCode) return showToast('Enter a valid discount code', 'error');
-    if (newDiscountPercent < 1 || newDiscountPercent > 100) {
-      return showToast('Percent must be between 1 and 100', 'error');
+    
+    if (newDiscountType === 'percentage') {
+      if (newDiscountValue < 1 || newDiscountValue > 100) {
+        return showToast('Percent must be between 1 and 100', 'error');
+      }
+    } else {
+      if (newDiscountValue <= 0) {
+        return showToast('Discount value must be greater than 0', 'error');
+      }
     }
 
     const exists = coupons.some(d => d.code.toLowerCase() === cleanCode.toLowerCase());
@@ -50,12 +60,12 @@ export default function Discounts() {
     
     const newCouponDb = {
       code: cleanCode,
-      value: newDiscountPercent,
+      value: newDiscountValue,
       expiry_date: newDiscountExpiry || null,
       max_uses: newDiscountLimit ? parseInt(newDiscountLimit) : null,
       is_active: newDiscountActive,
       min_order_value: newDiscountMinOrderValue ? parseFloat(newDiscountMinOrderValue) : null,
-      discount_type: 'percentage'
+      discount_type: newDiscountType
     };
 
     try {
@@ -76,13 +86,15 @@ export default function Discounts() {
           expiry: data.expiry_date,
           limit: data.max_uses,
           active: data.is_active,
-          min_order_value: data.min_order_value
+          min_order_value: data.min_order_value,
+          discount_type: data.discount_type
         };
         setDiscountCodes([newCoupon, ...discountCodes]);
       }
 
       setNewDiscountCode('');
-      setNewDiscountPercent(10);
+      setNewDiscountType('percentage');
+      setNewDiscountValue(10);
       setNewDiscountExpiry('');
       setNewDiscountLimit('');
       setNewDiscountMinOrderValue('');
@@ -140,10 +152,10 @@ export default function Discounts() {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl animate-fade-in-up">
+    <div className="space-y-6 max-w-4xl animate-fade-in-up pb-12">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Side: Create New Coupon (5 Columns) */}
-        <div className="lg:col-span-5 bg-white/60 border border-brand-border/40 rounded-2xl p-6 shadow-xs backdrop-blur-xs space-y-4 sticky top-6">
+        <div className="lg:col-span-5 bg-white/60 border border-brand-border/40 rounded-2xl p-6 shadow-xs backdrop-blur-xs space-y-4">
           <h3 className="font-serif text-lg font-bold text-brand-heading flex items-center gap-2 select-none border-b border-brand-border/25 pb-2">
             <Percent size={16} className="text-[#C9A84C]" />
             <span>Create Coupon</span>
@@ -163,20 +175,41 @@ export default function Discounts() {
               />
             </div>
 
-            {/* Discount % */}
+            {/* Discount Type */}
             <div className="space-y-1.5">
-              <label className="block text-[10px] font-semibold uppercase tracking-wider text-brand-heading">Discount Percentage *</label>
+              <label className="block text-[10px] font-semibold uppercase tracking-wider text-brand-heading">Discount Type</label>
+              <select
+                value={newDiscountType}
+                onChange={(e) => {
+                  const type = e.target.value as 'percentage' | 'fixed';
+                  setNewDiscountType(type);
+                  setNewDiscountValue(type === 'percentage' ? 10 : 100);
+                }}
+                className="w-full h-11 px-4 bg-white rounded-xl border border-brand-border/70 text-xs font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition shadow-xs"
+              >
+                <option value="percentage">Percentage (%)</option>
+                <option value="fixed">Fixed Amount (₹)</option>
+              </select>
+            </div>
+
+            {/* Discount Value */}
+            <div className="space-y-1.5">
+              <label className="block text-[10px] font-semibold uppercase tracking-wider text-brand-heading">
+                {newDiscountType === 'percentage' ? 'Discount Percentage *' : 'Discount Value (₹) *'}
+              </label>
               <div className="relative">
                 <input
                   type="number"
                   required
                   min={1}
-                  max={100}
-                  value={newDiscountPercent}
-                  onChange={(e) => setNewDiscountPercent(Number(e.target.value))}
+                  max={newDiscountType === 'percentage' ? 100 : undefined}
+                  value={newDiscountValue}
+                  onChange={(e) => setNewDiscountValue(Number(e.target.value))}
                   className="w-full h-11 pl-4 pr-8 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition shadow-xs"
                 />
-                <span className="absolute right-3 top-3 text-brand-body/60 text-sm font-bold">%</span>
+                <span className="absolute right-3 top-3 text-brand-body/60 text-sm font-bold">
+                  {newDiscountType === 'percentage' ? '%' : '₹'}
+                </span>
               </div>
             </div>
 
@@ -232,7 +265,7 @@ export default function Discounts() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full h-11 bg-[#DCA29A] hover:bg-[#D4938A] text-white rounded-full uppercase text-xs tracking-widest font-semibold shadow-xs hover:shadow-sm cursor-pointer transition active:scale-95 flex items-center justify-center gap-1.5"
+              className="w-full h-11 bg-[#DCA29A] hover:bg-[#D4938A] text-white rounded-full uppercase text-xs tracking-widest font-semibold shadow-xs hover:shadow-sm cursor-pointer transition active:scale-95 flex items-center justify-center gap-1.5 min-h-[44px]"
             >
               <Plus size={14} />
               <span>{loading ? 'Creating...' : 'Create Code'}</span>
@@ -249,8 +282,9 @@ export default function Discounts() {
             </span>
           </div>
 
-          <div className="bg-white/60 border border-brand-border/40 rounded-2xl p-6 shadow-xs backdrop-blur-xs">
-            <div className="overflow-x-auto">
+          <div className="bg-white/60 border border-brand-border/40 rounded-2xl p-4 md:p-6 shadow-xs backdrop-blur-xs">
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full border-collapse text-left text-xs font-sans">
                 <thead>
                   <tr className="border-b border-brand-border/30 text-brand-body/55 uppercase font-semibold tracking-wider select-none">
@@ -274,7 +308,7 @@ export default function Discounts() {
                           {coupon.code}
                         </td>
                         <td className="py-4 px-2 text-right font-semibold text-brand-heading">
-                          {coupon.percent}% Off
+                          {coupon.discount_type === 'fixed' ? `Fixed ₹${coupon.percent}` : `${coupon.percent}% Off`}
                         </td>
                         <td className="py-4 px-2 text-center text-brand-body/60 font-sans">
                           {coupon.expiry ? (
@@ -315,8 +349,9 @@ export default function Discounts() {
                         </td>
                         <td className="py-4 pl-2 text-right select-none">
                           <button
+                            type="button"
                             onClick={() => handleDeleteDiscount(coupon.id || '', coupon.code)}
-                            className="text-brand-body/40 hover:text-red-500 p-1.5 hover:scale-105 transition cursor-pointer"
+                            className="text-brand-body/40 hover:text-red-500 p-1.5 hover:scale-105 transition cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
                             title="Delete Coupon"
                           >
                             <Trash2 size={13} strokeWidth={1.8} />
@@ -334,6 +369,88 @@ export default function Discounts() {
                   )}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile Card List View */}
+            <div className="block md:hidden space-y-4">
+              {coupons.map((coupon, idx) => {
+                const isExpired = coupon.expiry && new Date(coupon.expiry) < new Date();
+                const statusText = isExpired ? 'Expired' : coupon.active ? 'Active' : 'Inactive';
+                return (
+                  <div key={idx} className="bg-white/60 border border-brand-border/30 rounded-xl p-4 space-y-3 shadow-xs">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className="font-mono font-bold text-brand-heading tracking-widest text-base uppercase">
+                          {coupon.code}
+                        </span>
+                        <div className="text-[10px] text-brand-body/60 mt-1 uppercase tracking-wider">
+                          Type: <span className="font-semibold">{coupon.discount_type || 'percentage'}</span>
+                        </div>
+                      </div>
+                      <span className={`inline-block px-2 py-0.5 rounded-full font-bold uppercase tracking-wider text-[8px] border ${
+                        isExpired 
+                          ? 'bg-red-50 text-red-700 border-red-200' 
+                          : coupon.active 
+                            ? 'bg-green-50 text-green-700 border-green-200' 
+                            : 'bg-gray-100 text-gray-500 border-gray-300'
+                      }`}>
+                        {statusText}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs border-t border-b border-brand-border/10 py-2">
+                      <div>
+                        <span className="text-brand-body/55 block text-[10px] uppercase">Discount</span>
+                        <span className="font-semibold text-brand-heading">
+                          {coupon.discount_type === 'fixed' ? `₹${coupon.percent}` : `${coupon.percent}%`} Off
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-brand-body/55 block text-[10px] uppercase">Expiry</span>
+                        <span className="text-brand-heading">
+                          {coupon.expiry ? new Date(coupon.expiry).toLocaleDateString('en-IN') : 'Never'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-brand-body/55 block text-[10px] uppercase">Limit</span>
+                        <span className="text-brand-heading font-mono">
+                          {coupon.limit ? `${coupon.limit} uses` : 'Unlimited'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-brand-body/55 block text-[10px] uppercase">Min Order</span>
+                        <span className="text-brand-heading font-semibold">
+                          {coupon.min_order_value ? `₹${coupon.min_order_value}` : 'None'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between items-center pt-1">
+                      {!isExpired && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] uppercase font-bold tracking-wider text-brand-body/55">Status:</span>
+                          <div className="scale-90 origin-left">
+                            <Toggle checked={!!coupon.active} onChange={() => handleToggleCouponActive(idx)} />
+                          </div>
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteDiscount(coupon.id || '', coupon.code)}
+                        className="text-brand-body/40 hover:text-red-500 p-2 border border-brand-border/20 rounded-lg hover:bg-red-50 transition min-h-[44px] min-w-[44px] flex items-center justify-center ml-auto"
+                        title="Delete Coupon"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+              {coupons.length === 0 && (
+                <div className="py-8 text-center text-brand-body/55 italic">
+                  No coupons defined yet. Add one on the left.
+                </div>
+              )}
             </div>
           </div>
         </div>

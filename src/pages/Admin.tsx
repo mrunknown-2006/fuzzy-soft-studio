@@ -70,7 +70,6 @@ export default function Admin() {
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
 
   // Mobile Layout Drawer state
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [moreDrawerOpen, setMoreDrawerOpen] = useState(false);
 
   // Auto-hide toast after 4 seconds
@@ -320,7 +319,8 @@ export default function Admin() {
           expiry: d.expiry_date || '',
           limit: d.max_uses || undefined,
           active: d.is_active !== undefined ? d.is_active : true,
-          min_order_value: d.min_order_value || undefined
+          min_order_value: d.min_order_value || undefined,
+          discount_type: d.discount_type || 'percentage'
         })));
       }
 
@@ -568,8 +568,8 @@ export default function Admin() {
           <div className="flex items-center gap-3">
             {/* Mobile hamburger menu toggle */}
             <button 
-              onClick={() => setMobileMenuOpen(true)}
-              className="md:hidden w-8 h-8 rounded-full border border-brand-border flex items-center justify-center bg-white hover:bg-brand-cream cursor-pointer"
+              onClick={() => setMoreDrawerOpen(true)}
+              className="md:hidden w-11 h-11 rounded-full border border-brand-border flex items-center justify-center bg-white hover:bg-brand-cream cursor-pointer min-h-[44px] min-w-[44px]"
             >
               <Menu size={16} />
             </button>
@@ -600,7 +600,7 @@ export default function Admin() {
             <div className="h-5 w-[1px] bg-brand-border/40 mx-1"></div>
             <button
               onClick={handleSignOut}
-              className="text-brand-body/60 hover:text-red-500 transition cursor-pointer p-1"
+              className="text-brand-body/60 hover:text-red-500 transition cursor-pointer p-1 min-h-[44px] min-w-[44px] flex items-center justify-center"
               title="Log Out"
             >
               <LogOut size={15} />
@@ -669,60 +669,6 @@ export default function Admin() {
           </Link>
         </nav>
 
-        {/* E: Mobile Left Sidebar Slide-out Drawer */}
-        {mobileMenuOpen && (
-          <>
-            <div 
-              onClick={() => setMobileMenuOpen(false)} 
-              className="md:hidden fixed inset-0 bg-black/40 z-50 transition-opacity animate-fade-in" 
-            />
-            <aside className="md:hidden fixed top-0 bottom-0 left-0 w-64 bg-[#F5EDE6] border-r border-brand-border/40 z-50 flex flex-col justify-between select-none animate-slide-in-left">
-              <div className="p-5 space-y-6">
-                <div className="flex justify-between items-center border-b border-brand-border/20 pb-3">
-                  <div>
-                    <span className="font-script text-2xl text-brand-heading block leading-none">Admin</span>
-                    <span className="text-[8px] tracking-[0.25em] font-sans font-bold text-brand-heading/60 uppercase">Fuzzy Soft Studio</span>
-                  </div>
-                  <button onClick={() => setMobileMenuOpen(false)} className="p-1 hover:bg-brand-cream rounded-full">
-                    <X size={16} />
-                  </button>
-                </div>
-
-                <nav className="space-y-1 text-xs font-semibold tracking-wider uppercase text-brand-body/80">
-                  {navItems.map(item => {
-                    const active = item.path === '/admin' 
-                      ? location.pathname === '/admin' 
-                      : location.pathname.startsWith(item.path);
-                    return (
-                      <Link
-                        key={item.label}
-                        to={item.path}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={`w-full h-10 px-4 rounded-xl flex items-center gap-3 transition-colors ${
-                          active ? 'bg-[#DCA29A]/15 text-[#B07870] font-bold' : 'hover:bg-brand-cream/60'
-                        }`}
-                      >
-                        {item.icon}
-                        <span>{item.label}</span>
-                      </Link>
-                    );
-                  })}
-                </nav>
-              </div>
-
-              <div className="p-5 border-t border-brand-border/25 bg-brand-cream/15 text-center flex flex-col gap-2">
-                <Link to="/" onClick={() => setMobileMenuOpen(false)} className="text-[10px] font-bold uppercase tracking-widest text-[#B07870]">
-                  &larr; Visit Website
-                </Link>
-                <button onClick={handleSignOut} className="text-[10px] font-bold uppercase tracking-widest text-red-500 cursor-pointer flex items-center justify-center gap-1">
-                  <LogOut size={12} />
-                  <span>Log Out</span>
-                </button>
-              </div>
-            </aside>
-          </>
-        )}
-
         {/* F: Mobile "More" Slide-up Drawer Overlay */}
         {moreDrawerOpen && (
           <>
@@ -734,8 +680,11 @@ export default function Admin() {
               
               <div className="flex justify-between items-center border-b border-brand-border/20 pb-3">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-brand-body/55">More Actions</span>
-                <button onClick={() => setMoreDrawerOpen(false)} className="p-1 hover:bg-brand-cream rounded-full">
-                  <X size={15} />
+                <button 
+                  onClick={() => setMoreDrawerOpen(false)} 
+                  className="p-2 hover:bg-brand-cream rounded-full min-h-[44px] min-w-[44px] flex items-center justify-center"
+                >
+                  <X size={18} />
                 </button>
               </div>
 
@@ -754,7 +703,7 @@ export default function Admin() {
                       key={item.label}
                       to={item.path}
                       onClick={() => setMoreDrawerOpen(false)}
-                      className={`h-11 px-4 rounded-xl border border-brand-border/30 flex items-center justify-between transition-colors text-xs font-semibold uppercase tracking-wider text-brand-heading ${
+                      className={`h-11 px-4 rounded-xl border border-brand-border/30 flex items-center justify-between transition-colors text-xs font-semibold uppercase tracking-wider text-brand-heading min-h-[44px] ${
                         active ? 'bg-[#DCA29A]/15 text-[#B07870] font-bold border-brand-accent' : 'bg-white hover:bg-brand-cream/45'
                       }`}
                     >

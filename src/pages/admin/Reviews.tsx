@@ -264,8 +264,13 @@ export default function Reviews() {
                         </span>
                       )}
                       {r.status === 'pending' && (
-                        <span className="text-[7px] bg-amber-50 text-amber-700 px-1.5 py-0.2 rounded-full font-bold uppercase tracking-wider border border-amber-100 shrink-0">
+                        <span className="text-[7px] bg-yellow-50 text-yellow-700 px-1.5 py-0.2 rounded-full font-bold uppercase tracking-wider border border-yellow-200 shrink-0">
                           Pending Approval
+                        </span>
+                      )}
+                      {r.status === 'approved' && (
+                        <span className="text-[7px] bg-green-50 text-green-700 px-1.5 py-0.2 rounded-full font-bold uppercase tracking-wider border border-green-200 shrink-0">
+                          Approved
                         </span>
                       )}
                       {r.status === 'rejected' && (
@@ -286,29 +291,29 @@ export default function Reviews() {
                       <button 
                         type="button"
                         onClick={() => handleApprove(idx)}
-                        className="w-7 h-7 bg-green-50 hover:bg-green-100 text-green-600 border border-green-200 rounded-full flex items-center justify-center transition active:scale-90 cursor-pointer"
+                        className="w-11 h-11 bg-green-50 hover:bg-green-100 text-green-600 border border-green-200 rounded-full flex items-center justify-center transition active:scale-90 cursor-pointer min-h-[44px] min-w-[44px]"
                         title="Approve Review"
                       >
-                        <Check size={13} />
+                        <Check size={16} />
                       </button>
                     )}
                     {r.status !== 'rejected' && (
                       <button 
                         type="button"
                         onClick={() => handleReject(idx)}
-                        className="w-7 h-7 bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-200 rounded-full flex items-center justify-center transition active:scale-90 cursor-pointer"
+                        className="w-11 h-11 bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-200 rounded-full flex items-center justify-center transition active:scale-90 cursor-pointer min-h-[44px] min-w-[44px]"
                         title="Reject Review"
                       >
-                        <X size={13} />
+                        <X size={16} />
                       </button>
                     )}
                     <button 
                       type="button"
                       onClick={() => handleDelete(idx)}
-                      className="w-7 h-7 bg-red-50 hover:bg-red-100 text-red-650 border border-red-200 rounded-full flex items-center justify-center transition active:scale-90 cursor-pointer"
+                      className="w-11 h-11 bg-red-50 hover:bg-red-100 text-red-650 border border-red-200 rounded-full flex items-center justify-center transition active:scale-90 cursor-pointer min-h-[44px] min-w-[44px]"
                       title="Delete Review"
                     >
-                      <Trash2 size={13} />
+                      <Trash2 size={16} />
                     </button>
                   </div>
                 </div>
@@ -324,7 +329,7 @@ export default function Reviews() {
           </h3>
 
           <form onSubmit={handleAddReview} className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <label className="block text-[10px] font-semibold uppercase tracking-wider text-brand-heading">Author Name *</label>
                 <input 

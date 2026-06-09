@@ -35,7 +35,7 @@ export default function Cart() {
   // Discount code state
   const [showDiscountInput, setShowDiscountInput] = useState(false);
   const [discountCodeInput, setDiscountCodeInput] = useState('');
-  const [appliedDiscount, setAppliedDiscount] = useState<{ code: string; percent: number; min_order_value?: number } | null>(null);
+  const [appliedDiscount, setAppliedDiscount] = useState<{ code: string; value: number; discount_type: string; min_order_value?: number } | null>(null);
   const [discountError, setDiscountError] = useState('');
   const [applyingCode, setApplyingCode] = useState(false);
 
@@ -111,12 +111,15 @@ export default function Cart() {
         setDiscountError('This discount code is currently inactive.');
       } else if (data.expiry_date && new Date(data.expiry_date) < new Date()) {
         setDiscountError('This code has expired.');
+      } else if (data.max_uses !== null && (data.used_count || 0) >= data.max_uses) {
+        setDiscountError('This code has reached its maximum usage limit.');
       } else if (data.min_order_value && subtotal < Number(data.min_order_value)) {
         setDiscountError(`This code requires a minimum order value of ₹${Number(data.min_order_value).toLocaleString('en-IN')}.`);
       } else {
         setAppliedDiscount({ 
           code: data.code, 
-          percent: Number(data.value) || 0,
+          value: Number(data.value) || 0,
+          discount_type: data.discount_type || 'percentage',
           min_order_value: data.min_order_value ? Number(data.min_order_value) : undefined
         });
         setDiscountCodeInput('');
@@ -146,7 +149,10 @@ export default function Cart() {
     if (appliedDiscount.min_order_value && subtotal < appliedDiscount.min_order_value) {
       return 0;
     }
-    return Math.round(subtotal * appliedDiscount.percent / 100);
+    if (appliedDiscount.discount_type === 'fixed') {
+      return Math.min(subtotal, appliedDiscount.value);
+    }
+    return Math.round(subtotal * appliedDiscount.value / 100);
   }, [subtotal, appliedDiscount]);
 
   const total = subtotal + deliveryCharge - discountAmount;
@@ -304,10 +310,12 @@ export default function Cart() {
                 <div className="flex justify-between items-center text-green-700">
                   <div className="flex items-center gap-1.5">
                     <Check size={12} className="shrink-0" />
-                    <span className="font-semibold">{appliedDiscount.code} ({appliedDiscount.percent}% off)</span>
+                    <span className="font-semibold">
+                      {appliedDiscount.code} ({appliedDiscount.discount_type === 'fixed' ? `₹${appliedDiscount.value}` : `${appliedDiscount.value}%`} off)
+                    </span>
                   </div>
                   <span className="font-semibold">
-                    {discountAmount > 0 ? `-₹${discountAmount.toLocaleString('en-IN')}` : '₹0 (Min order not met)'}
+                    {discountAmount > 0 ? `-₹${discountAmount.toLocaleString('en-IN')}` : '₹0'}
                   </span>
                 </div>
               )}
@@ -332,6 +340,7 @@ export default function Cart() {
                     )}
                   </div>
                   <button
+                    type="button"
                     onClick={() => { setAppliedDiscount(null); }}
                     className="text-xs text-green-600 hover:text-red-500 font-semibold underline underline-offset-2 cursor-pointer transition-colors"
                   >
@@ -388,7 +397,7 @@ export default function Cart() {
             </div>
 
             <button
-              onClick={() => navigate('/checkout')}
+              onClick={() => navigate('/checkout', { state: { appliedDiscount } })}
               className="w-full h-12 bg-[#DCA29A] hover:bg-[#D4938A] text-white rounded-full uppercase text-xs tracking-widest font-semibold transition duration-300 cursor-pointer shadow-sm hover:shadow-md active:scale-[0.98] flex items-center justify-center gap-2 select-none"
             >
               <span>Proceed to Checkout</span>

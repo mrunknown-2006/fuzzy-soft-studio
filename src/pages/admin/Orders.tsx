@@ -445,19 +445,19 @@ export default function Orders() {
 
             {/* Right details sidebar drawer */}
             {viewingOrder && (
-              <div className="lg:col-span-5 bg-white border border-brand-border/40 rounded-2xl p-6 shadow-md backdrop-blur-xs space-y-6 animate-fade-in sticky top-6">
+              <div className="fixed inset-0 z-50 bg-[#FDFBF9] overflow-y-auto p-6 lg:static lg:block lg:col-span-5 lg:bg-white lg:border lg:border-brand-border/40 lg:rounded-2xl lg:shadow-md lg:backdrop-blur-xs space-y-6 lg:animate-fade-in lg:sticky lg:top-6">
                 
                 {/* Drawer Header */}
                 <div className="flex justify-between items-start border-b border-brand-border/20 pb-4">
                   <div>
-                    <span className="text-[9px] uppercase tracking-widest text-brand-body/50 font-bold block">Transaction Details</span>
+                    <span className="text-[9px] uppercase tracking-widest text-brand-body/55 font-bold block">Transaction Details</span>
                     <h3 className="font-mono font-bold text-brand-heading text-lg mt-0.5">#{viewingOrder.order_id}</h3>
                   </div>
                   <button 
                     onClick={() => setViewingOrder(null)} 
-                    className="p-1.5 hover:bg-brand-cream rounded-full transition text-brand-body/50 hover:text-brand-heading cursor-pointer"
+                    className="p-2 hover:bg-brand-cream rounded-full transition text-brand-body/50 hover:text-brand-heading cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
                   >
-                    <X size={16} />
+                    <X size={18} />
                   </button>
                 </div>
 
