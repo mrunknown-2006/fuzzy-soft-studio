@@ -79,6 +79,7 @@ export default function Reviews() {
         .insert(newTestimonial)
         .select()
         .single();
+      console.log('Review CRUD result (create):', data, error);
       
       if (error) throw error;
 
@@ -117,10 +118,12 @@ export default function Reviews() {
   const handleApprove = async (indexInFiltered: number) => {
     const target = filteredReviews[indexInFiltered];
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('reviews')
         .update({ status: 'approved' })
-        .eq('id', target.id);
+        .eq('id', target.id)
+        .select();
+      console.log('Review CRUD result (approve):', data, error);
       if (error) throw error;
 
       setReviews(reviews.map(r => r.id === target.id ? { ...r, approved: true, status: 'approved' } : r));
@@ -135,10 +138,12 @@ export default function Reviews() {
     const target = filteredReviews[indexInFiltered];
     if (!confirm('Are you sure you want to remove this review?')) return;
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('reviews')
         .delete()
-        .eq('id', target.id);
+        .eq('id', target.id)
+        .select();
+      console.log('Review CRUD result (delete):', data, error);
       if (error) throw error;
 
       setReviews(reviews.filter(r => r.id !== target.id));
@@ -151,10 +156,12 @@ export default function Reviews() {
   // Bulk Approve
   const handleApproveAllPending = async () => {
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('reviews')
         .update({ status: 'approved' })
-        .eq('status', 'pending');
+        .eq('status', 'pending')
+        .select();
+      console.log('Review CRUD result (approve-all):', data, error);
       if (error) throw error;
 
       setReviews(reviews.map(r => r.status === 'pending' ? { ...r, approved: true, status: 'approved' } : r));

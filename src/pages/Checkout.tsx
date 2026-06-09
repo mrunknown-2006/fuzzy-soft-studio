@@ -10,16 +10,22 @@ export default function Checkout() {
       try {
         const { data } = await supabase.from('store_settings').select('*');
         if (data) {
-          const whatsappSetting = data.find(
-            (s) => s.key === 'contact_whatsapp' || s.key === 'footer_whatsapp' || s.key === 'whatsapp_number'
-          );
-          if (whatsappSetting && whatsappSetting.value) {
-            // Strip everything except digits
-            const digits = String(whatsappSetting.value).replace(/[^0-9]/g, '');
-            // Only use if it looks like a valid number, otherwise keep the default placeholder
-            if (digits && digits.length >= 10 && !digits.includes('X')) {
-              setWhatsappNumber(digits);
+          const generalSetting = data.find(s => s.key === 'general');
+          let whatsappVal = '';
+          if (generalSetting && generalSetting.value) {
+            whatsappVal = generalSetting.value.whatsapp_number || generalSetting.value.contact_whatsapp || '';
+          }
+          if (!whatsappVal) {
+            const whatsappSetting = data.find(
+              (s) => s.key === 'contact_whatsapp' || s.key === 'footer_whatsapp' || s.key === 'whatsapp_number'
+            );
+            if (whatsappSetting && whatsappSetting.value) {
+              whatsappVal = String(whatsappSetting.value);
             }
+          }
+          const digits = whatsappVal.replace(/[^0-9]/g, '');
+          if (digits && digits.length >= 10 && !digits.includes('X')) {
+            setWhatsappNumber(digits);
           }
         }
       } catch (err) {

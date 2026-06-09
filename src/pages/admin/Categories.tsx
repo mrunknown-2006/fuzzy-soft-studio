@@ -23,7 +23,11 @@ export default function Categories() {
 
     try {
       const slug = trimmed.toLowerCase().replace(/\s+/g, '-');
-      const { error } = await supabase.from('categories').insert({ name: trimmed, slug });
+      const { data, error } = await supabase
+        .from('categories')
+        .insert({ name: trimmed, slug })
+        .select();
+      console.log('Category CRUD result (create):', data, error);
       if (error) throw error;
       setCategories([...categories, trimmed]);
       setNewCategoryName('');
@@ -49,10 +53,12 @@ export default function Categories() {
     const oldName = categories[index];
     try {
       const slug = trimmed.toLowerCase().replace(/\s+/g, '-');
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('categories')
         .update({ name: trimmed, slug })
-        .eq('name', oldName);
+        .eq('name', oldName)
+        .select();
+      console.log('Category CRUD result (update):', data, error);
       if (error) throw error;
 
       const updated = [...categories];
@@ -68,10 +74,12 @@ export default function Categories() {
   const handleDeleteCategory = async (catToDelete: string) => {
     if (!confirm(`Are you sure you want to delete category "${catToDelete}"?`)) return;
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('categories')
         .delete()
-        .eq('name', catToDelete);
+        .eq('name', catToDelete)
+        .select();
+      console.log('Category CRUD result (delete):', data, error);
       if (error) throw error;
 
       const updated = categories.filter(c => c !== catToDelete);

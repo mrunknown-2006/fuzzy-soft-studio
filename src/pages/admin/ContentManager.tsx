@@ -226,13 +226,14 @@ export default function ContentManager() {
 
       const filePath = fileName;
 
-      const { error } = await supabase.storage
+      const { data, error } = await supabase.storage
         .from('content')
         .upload(filePath, webpBlob, {
           contentType: 'image/webp',
           cacheControl: '3600',
           upsert: true
         });
+      console.log('Content image upload result:', data, error);
 
       if (error) throw error;
 
@@ -273,13 +274,14 @@ export default function ContentManager() {
       const fileName = `collection-${slug}.webp`;
       const filePath = fileName;
 
-      const { error } = await supabase.storage
+      const { data, error } = await supabase.storage
         .from('content')
         .upload(filePath, webpBlob, {
           contentType: 'image/webp',
           cacheControl: '3600',
           upsert: true
         });
+      console.log('Collection banner upload result:', data, error);
 
       if (error) throw error;
 
@@ -303,13 +305,15 @@ export default function ContentManager() {
   const handleSaveSection = async (sectionId: string, content: Record<string, any>, successMsg: string) => {
     setLoading(true);
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('site_content')
         .upsert({
           id: sectionId,
           content,
           updated_at: new Date().toISOString()
-        }, { onConflict: 'id' });
+        })
+        .select();
+      console.log('Site Content section upsert:', sectionId, data, error);
       if (error) throw error;
       showToast(successMsg, 'success');
     } catch (err: any) {

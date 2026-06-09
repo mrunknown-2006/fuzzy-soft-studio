@@ -16,14 +16,22 @@ export default function Layout() {
       try {
         const { data } = await supabase.from('store_settings').select('*');
         if (data) {
-          const whatsappSetting = data.find(
-            (s) => s.key === 'whatsapp_number' || s.key === 'contact_whatsapp'
-          );
-          if (whatsappSetting && whatsappSetting.value) {
-            const digits = String(whatsappSetting.value).replace(/[^0-9]/g, '');
-            if (digits && digits.length >= 10) {
-              setWhatsappNumber(digits.slice(-10));
+          const generalSetting = data.find(s => s.key === 'general');
+          let whatsappVal = '';
+          if (generalSetting && generalSetting.value) {
+            whatsappVal = generalSetting.value.whatsapp_number || generalSetting.value.contact_whatsapp || '';
+          }
+          if (!whatsappVal) {
+            const whatsappSetting = data.find(
+              (s) => s.key === 'whatsapp_number' || s.key === 'contact_whatsapp'
+            );
+            if (whatsappSetting && whatsappSetting.value) {
+              whatsappVal = String(whatsappSetting.value);
             }
+          }
+          const digits = whatsappVal.replace(/[^0-9]/g, '');
+          if (digits && digits.length >= 10) {
+            setWhatsappNumber(digits.slice(-10));
           }
         }
       } catch (err) {

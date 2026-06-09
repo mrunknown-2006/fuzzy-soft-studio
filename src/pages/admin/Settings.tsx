@@ -54,18 +54,29 @@ export default function Settings() {
     // Fetch extra custom settings keys
     const fetchExtraSettings = async () => {
       try {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('store_settings')
-          .select('*')
-          .in('key', ['upi_enabled', 'upi_id', 'min_order_value', 'gift_wrap_charge', 'whatsapp_alerts', 'email_alerts']);
+          .select('*');
+        console.log('Settings page fetchExtraSettings:', data, error);
         
         if (data) {
+          const generalSetting = data.find((s: any) => s.key === 'general');
+          if (generalSetting && generalSetting.value) {
+            const val = generalSetting.value;
+            if (val.upi_enabled !== undefined) setUpiEnabled(val.upi_enabled === true || val.upi_enabled === 'true');
+            if (val.upi_id !== undefined) setUpiId(String(val.upi_id || ''));
+            if (val.min_order_value !== undefined) setMinOrderValue(Number(val.min_order_value) || 0);
+            if (val.gift_wrap_charge !== undefined) setGiftWrapCharge(Number(val.gift_wrap_charge) || 30);
+            if (val.whatsapp_alerts !== undefined) setWhatsappAlerts(val.whatsapp_alerts === true || val.whatsapp_alerts === 'true');
+            if (val.email_alerts !== undefined) setEmailAlerts(val.email_alerts === true || val.email_alerts === 'true');
+          }
+          
+          // Fallback check of individual keys
           data.forEach((s: any) => {
             if (s.key === 'upi_enabled') setUpiEnabled(s.value === true || s.value === 'true');
             if (s.key === 'upi_id') setUpiId(String(s.value || ''));
             if (s.key === 'min_order_value') setMinOrderValue(Number(s.value) || 0);
             if (s.key === 'gift_wrap_charge') setGiftWrapCharge(Number(s.value) || 30);
-            if (s.key === 'whatsapp_alerts') setUpiEnabled(s.value === true || s.value === 'true'); // wait, whatsappAlerts is the state
             if (s.key === 'whatsapp_alerts') setWhatsappAlerts(s.value === true || s.value === 'true');
             if (s.key === 'email_alerts') setEmailAlerts(s.value === true || s.value === 'true');
           });
@@ -92,29 +103,38 @@ export default function Settings() {
     };
 
     try {
-      const payload = [
-        { key: 'free_delivery_threshold', value: freeThreshold },
-        { key: 'shipping_charges', value: shippingFee },
-        { key: 'whatsapp_number', value: whatsapp.trim() },
-        { key: 'contact_email', value: email.trim() },
+      const payload = {
+        free_delivery_threshold: freeThreshold,
+        shipping_charges: shippingFee,
+        whatsapp_number: whatsapp.trim(),
+        contact_email: email.trim(),
         
-        { key: 'store_open', value: storeOpen },
-        { key: 'store_closed_message', value: storeClosedMessage.trim() },
-        { key: 'low_stock_threshold', value: lowStockThreshold },
+        store_open: storeOpen,
+        store_closed_message: storeClosedMessage.trim(),
+        low_stock_threshold: lowStockThreshold,
 
-        { key: 'cod_available', value: codAvailable },
-        { key: 'cod_charge', value: codCharge },
-        { key: 'express_charge', value: expressCharge },
+        cod_available: codAvailable,
+        cod_charge: codCharge,
+        express_charge: expressCharge,
 
-        { key: 'upi_enabled', value: upiEnabled },
-        { key: 'upi_id', value: upiId.trim() },
-        { key: 'min_order_value', value: minOrderValue },
-        { key: 'gift_wrap_charge', value: giftWrapCharge },
-        { key: 'whatsapp_alerts', value: whatsappAlerts },
-        { key: 'email_alerts', value: emailAlerts }
-      ];
+        upi_enabled: upiEnabled,
+        upi_id: upiId.trim(),
+        min_order_value: minOrderValue,
+        gift_wrap_charge: giftWrapCharge,
+        whatsapp_alerts: whatsappAlerts,
+        email_alerts: emailAlerts
+      };
 
-      const { error } = await supabase.from('store_settings').upsert(payload, { onConflict: 'key' });
+      const { data, error } = await supabase
+        .from('store_settings')
+        .upsert({
+          key: 'general',
+          value: payload,
+          updated_at: new Date().toISOString()
+        })
+        .select();
+      
+      console.log('Settings saved:', data, error);
       if (error) throw error;
 
       setSettings(updatedSettings);

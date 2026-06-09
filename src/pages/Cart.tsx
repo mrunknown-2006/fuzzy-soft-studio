@@ -44,14 +44,25 @@ export default function Cart() {
       try {
         const { data } = await supabase.from('store_settings').select('*');
         if (data && data.length > 0) {
-          const thresholdSetting = data.find(s => s.key === 'free_delivery_threshold');
-          if (thresholdSetting) {
-            setFreeThreshold(Number(thresholdSetting.value) || 999);
+          const generalSetting = data.find(s => s.key === 'general');
+          let threshold = 999;
+          let fee = 99;
+          if (generalSetting && generalSetting.value) {
+            const val = generalSetting.value;
+            if (val.free_delivery_threshold !== undefined) threshold = Number(val.free_delivery_threshold);
+            if (val.shipping_charges !== undefined) fee = Number(val.shipping_charges);
+          } else {
+            const thresholdSetting = data.find(s => s.key === 'free_delivery_threshold');
+            if (thresholdSetting) {
+              threshold = Number(thresholdSetting.value) || 999;
+            }
+            const shippingSetting = data.find(s => s.key === 'shipping_charges');
+            if (shippingSetting) {
+              fee = Number(shippingSetting.value) || 99;
+            }
           }
-          const shippingSetting = data.find(s => s.key === 'shipping_charges');
-          if (shippingSetting) {
-            setShippingFee(Number(shippingSetting.value) || 99);
-          }
+          setFreeThreshold(threshold);
+          setShippingFee(fee);
         } else {
           loadLocalSettings();
         }

@@ -201,6 +201,7 @@ export default function Admin() {
   const loadProducts = async () => {
     try {
       const { data, error } = await supabase.from('products').select('*');
+      console.log('loadProducts:', data, error);
       if (error) throw error;
       if (data && data.length > 0) {
         setProducts(data || []);
@@ -234,9 +235,11 @@ export default function Admin() {
       }));
 
       const { error } = await supabase.from('products').upsert(toInsert);
+      console.log('autoSeedDefaultCatalog seed:', error);
       if (error) throw error;
 
-      const { data: refetched } = await supabase.from('products').select('*');
+      const { data: refetched, error: refetchErr } = await supabase.from('products').select('*');
+      console.log('autoSeedDefaultCatalog refetch:', refetched, refetchErr);
       if (refetched) {
         setProducts(refetched);
       }
@@ -251,6 +254,7 @@ export default function Admin() {
         .from('orders')
         .select('*')
         .order('created_at', { ascending: false });
+      console.log('loadOrders:', data, error);
       if (error) throw error;
       if (data) {
         const formatted = data.map((o: any) => ({
@@ -270,17 +274,23 @@ export default function Admin() {
   const loadSettings = async () => {
     try {
       const { data: settingsData, error: settingsError } = await supabase.from('store_settings').select('*');
+      console.log('loadSettings store_settings:', settingsData, settingsError);
       if (settingsError) throw settingsError;
       
       const loaded: any = {};
       if (settingsData && settingsData.length > 0) {
         settingsData.forEach((s: any) => {
-          loaded[s.key] = s.value;
+          if (s.value && typeof s.value === 'object') {
+            Object.assign(loaded, s.value);
+          } else {
+            loaded[s.key] = s.value;
+          }
         });
       }
 
       // Load Categories from database
-      const { data: catsData } = await supabase.from('categories').select('*').order('name', { ascending: true });
+      const { data: catsData, error: catsError } = await supabase.from('categories').select('*').order('name', { ascending: true });
+      console.log('loadSettings categories:', catsData, catsError);
       if (catsData && catsData.length > 0) {
         setCategories(catsData.map((c: any) => c.name));
       } else {
@@ -290,7 +300,8 @@ export default function Admin() {
           slug: name.toLowerCase().replace(/\s+/g, '-')
         }));
         try {
-          await supabase.from('categories').insert(toInsert);
+          const { error: seedErr } = await supabase.from('categories').insert(toInsert);
+          console.log('loadSettings categories seed:', seedErr);
           setCategories(defaults);
         } catch (catSeedErr) {
           console.warn('Auto-seed of categories failed:', catSeedErr);
@@ -299,7 +310,8 @@ export default function Admin() {
       }
 
       // Load Discount Codes from database
-      const { data: discsData } = await supabase.from('discounts').select('*').order('created_at', { ascending: false });
+      const { data: discsData, error: discsError } = await supabase.from('discounts').select('*').order('created_at', { ascending: false });
+      console.log('loadSettings discounts:', discsData, discsError);
       if (discsData) {
         setDiscountCodes(discsData.map((d: any) => ({
           id: d.id,
@@ -313,7 +325,8 @@ export default function Admin() {
       }
 
       // Load Reviews from database
-      const { data: revsData } = await supabase.from('reviews').select('*').order('created_at', { ascending: false });
+      const { data: revsData, error: revsError } = await supabase.from('reviews').select('*').order('created_at', { ascending: false });
+      console.log('loadSettings reviews:', revsData, revsError);
       if (revsData) {
         setReviews(revsData.map((r: any) => ({
           id: r.id,
@@ -329,7 +342,8 @@ export default function Admin() {
       }
 
       // Load Site Content from database
-      const { data: contentData } = await supabase.from('site_content').select('*');
+      const { data: contentData, error: contentError } = await supabase.from('site_content').select('*');
+      console.log('loadSettings site_content:', contentData, contentError);
       const contentLoaded: any = {};
       if (contentData) {
         contentData.forEach((row: any) => {

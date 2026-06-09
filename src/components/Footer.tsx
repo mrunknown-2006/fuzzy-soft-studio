@@ -39,11 +39,17 @@ export default function Footer() {
     supabase
       .from('store_settings')
       .select('*')
-      .eq('key', 'contact_email')
-      .single()
       .then(({ data }) => {
-        if (data && data.value) {
-          setFooterEmail(String(data.value));
+        if (data) {
+          const generalSetting = data.find(s => s.key === 'general');
+          if (generalSetting && generalSetting.value && generalSetting.value.contact_email) {
+            setFooterEmail(String(generalSetting.value.contact_email));
+          } else {
+            const emailSetting = data.find(s => s.key === 'contact_email');
+            if (emailSetting && emailSetting.value) {
+              setFooterEmail(String(emailSetting.value));
+            }
+          }
         }
       });
   }, []);

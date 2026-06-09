@@ -64,6 +64,7 @@ export default function Discounts() {
         .insert(newCouponDb)
         .select()
         .single();
+      console.log('Discount CRUD result (create):', data, error);
       
       if (error) throw error;
 
@@ -97,10 +98,12 @@ export default function Discounts() {
   const handleToggleCouponActive = async (index: number) => {
     const target = coupons[index];
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('discounts')
         .update({ is_active: !target.active })
-        .eq('code', target.code);
+        .eq('code', target.code)
+        .select();
+      console.log('Discount CRUD result (toggle):', data, error);
       if (error) throw error;
 
       const updated = discountCodes.map((c, idx) => {
@@ -119,10 +122,12 @@ export default function Discounts() {
   const handleDeleteDiscount = async (code: string) => {
     if (!window.confirm(`Delete discount code ${code}?`)) return;
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('discounts')
         .delete()
-        .eq('code', code);
+        .eq('code', code)
+        .select();
+      console.log('Discount CRUD result (delete):', data, error);
       if (error) throw error;
 
       const updated = discountCodes.filter(d => d.code !== code);
