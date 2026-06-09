@@ -89,9 +89,9 @@ export default function Settings() {
   }, [settings]);
 
   // Combined Save Settings Handler
-  const handleSaveAllSettings = async (e: React.FormEvent) => {
+  const handleSaveAllSettings = async (e?: React.FormEvent | React.MouseEvent) => {
     console.log("Supabase client:", supabase);
-    e.preventDefault();
+    if (e) e.preventDefault();
     setSaving(true);
 
     const updatedSettings = {
@@ -143,10 +143,10 @@ export default function Settings() {
 
       setSettings(updatedSettings);
       alert("Saved successfully!");
-      showToast('All settings updated successfully!', 'success');
+      showToast('Saved successfully!', 'success');
     } catch (err: any) {
       alert(JSON.stringify(err));
-      showToast(`Failed to save settings: ${err.message}`, 'error');
+      showToast(err.message || 'Failed to save settings', 'error');
     } finally {
       setSaving(false);
     }
@@ -387,6 +387,7 @@ export default function Settings() {
       {/* Submit Button */}
       <button
         type="submit"
+        onClick={handleSaveAllSettings}
         disabled={saving}
         className="px-8 h-11 bg-[#DCA29A] hover:bg-[#D4938A] text-white rounded-full uppercase text-xs tracking-widest font-semibold shadow-xs hover:shadow-sm cursor-pointer transition active:scale-95 flex items-center justify-center gap-1.5"
       >

@@ -7,6 +7,7 @@ export interface SupabaseProduct {
   price: number;
   compare_at_price?: number | null;
   category: string;
+  category_id?: string | null;
   collection: string;
   image: string;
   images: string[];

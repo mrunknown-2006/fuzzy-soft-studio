@@ -313,11 +313,11 @@ export default function ContentManager() {
           updated_at: new Date().toISOString()
         })
         .select();
-      console.log('Site Content section upsert:', sectionId, data, error);
+      console.log('Site Content section upsert:', sectionId, data, error, successMsg);
       if (error) throw error;
-      showToast(successMsg, 'success');
+      showToast('Saved successfully!', 'success');
     } catch (err: any) {
-      showToast(`Save failed: ${err.message}`, 'error');
+      showToast(err.message || 'Save failed', 'error');
     } finally {
       setLoading(false);
     }

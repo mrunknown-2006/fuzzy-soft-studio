@@ -10,7 +10,24 @@ export default function ProductForm() {
   const { id } = useParams<{ id?: string }>();
   const navigate = useNavigate();
   const { products, setProducts, categories, showToast } = useOutletContext<AdminContext>();
+  const [dbCategories, setDbCategories] = useState<any[]>([]);
   const mode = id ? 'edit' : 'add';
+
+  useEffect(() => {
+    const fetchDbCategories = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('categories')
+          .select('*')
+          .order('name', { ascending: true });
+        if (error) throw error;
+        setDbCategories(data || []);
+      } catch (err) {
+        console.warn('Failed to load categories table:', err);
+      }
+    };
+    fetchDbCategories();
+  }, []);
 
   // Basic Information
   const [name, setName] = useState('');
@@ -283,6 +300,9 @@ export default function ProductForm() {
     if (!price || parseFloat(price) <= 0) return showToast('Price must be greater than 0', 'error');
     if (!imageUrls[0]) return showToast('Hero image (Slot 1) is required', 'error');
 
+    const matchedCategory = dbCategories.find(c => c.name === category);
+    const categoryId = matchedCategory ? matchedCategory.id : null;
+
     const productSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     const productData: Omit<SupabaseProduct, 'id' | 'created_at'> = {
       name: name.trim(),
@@ -290,6 +310,7 @@ export default function ProductForm() {
       price: parseFloat(price),
       compare_at_price: compareAtPrice ? parseFloat(compareAtPrice) : null,
       category,
+      category_id: categoryId,
       collection,
       stock: parseInt(stock) || 0,
       sku: sku.trim() || undefined,
@@ -317,7 +338,7 @@ export default function ProductForm() {
         if (error) throw error;
 
         setProducts([finalProduct, ...products]);
-        showToast('Product added successfully!', 'success');
+        showToast('Saved successfully!', 'success');
       } else {
         const { error } = await supabase
           .from('products')
@@ -326,11 +347,11 @@ export default function ProductForm() {
         if (error) throw error;
 
         setProducts(products.map(p => p.id === id ? { ...p, ...productData } : p));
-        showToast('Product updated successfully!', 'success');
+        showToast('Saved successfully!', 'success');
       }
       navigate('/admin/products');
     } catch (err: any) {
-      showToast(`Failed: ${err.message}`, 'error');
+      showToast(err.message || 'Failed to save product', 'error');
     }
   };
 

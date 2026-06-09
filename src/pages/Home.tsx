@@ -29,6 +29,7 @@ export default function Home() {
   const [featuredSectionTitle, setFeaturedSectionTitle] = useState('Most Loved Arrangements');
   const [featuredSectionSubtitle, setFeaturedSectionSubtitle] = useState('Handpicked, just for you');
   const [featuredCount, setFeaturedCount] = useState(4);
+  const [featuredVisible, setFeaturedVisible] = useState(true);
 
   // Collections section state
   const [collectionsTitle, setCollectionsTitle] = useState('Our Collections');
@@ -106,6 +107,9 @@ export default function Home() {
         if (s.featured_section_title) setFeaturedSectionTitle(s.featured_section_title);
         if (s.featured_section_subtitle) setFeaturedSectionSubtitle(s.featured_section_subtitle);
         if (s.featured_section_count) setFeaturedCount(Number(s.featured_section_count));
+        if (s.featured_section_visible !== undefined) {
+          setFeaturedVisible(s.featured_section_visible === true || s.featured_section_visible === 'true');
+        }
 
         // Collections section
         if (s.collections_section_title) setCollectionsTitle(s.collections_section_title);
@@ -624,23 +628,25 @@ export default function Home() {
       </section>
 
       {/* 4. MOST LOVED ARRANGEMENTS */}
-      <section className="py-20 px-6 lg:px-10 max-w-7xl mx-auto w-full">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-serif text-brand-heading text-center">
-            {featuredSectionTitle}
-          </h2>
-          <p className="mt-3 text-2xl text-brand-body font-script">
-            {featuredSectionSubtitle}
-          </p>
-        </div>
+      {featuredVisible && (
+        <section className="py-20 px-6 lg:px-10 max-w-7xl mx-auto w-full">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-serif text-brand-heading text-center">
+              {featuredSectionTitle}
+            </h2>
+            <p className="mt-3 text-2xl text-brand-body font-script">
+              {featuredSectionSubtitle}
+            </p>
+          </div>
 
-        {/* Displaying first 4 products */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-          {products.slice(0, featuredCount).map((prod) => (
-            <ProductCard key={prod.id} product={prod} />
-          ))}
-        </div>
-      </section>
+          {/* Displaying first 4 products */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+            {products.slice(0, featuredCount).map((prod) => (
+              <ProductCard key={prod.id} product={prod} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* 5. TRUST BADGES */}
       <section className="py-20 bg-[#F3ECE3] relative overflow-hidden w-full flex items-center justify-center">

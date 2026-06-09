@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { Star, Trash2, Check, MessageSquare } from 'lucide-react';
+import { Star, Trash2, Check, MessageSquare, X } from 'lucide-react';
 import type { AdminContext } from './types';
 import { supabase } from '../../lib/supabaseClient';
 
@@ -34,15 +34,14 @@ export default function Reviews() {
   const testimonials = useMemo<Testimonial[]>(() => {
     return (reviews || []).map(r => ({
       ...r,
-      // Default to true if not explicitly set to false
-      approved: r.approved !== undefined ? r.approved : true
+      approved: r.status === 'approved'
     }));
   }, [reviews]);
 
   // Filtered reviews
   const filteredReviews = useMemo(() => {
     if (filter === 'approved') return testimonials.filter(t => t.approved);
-    if (filter === 'pending') return testimonials.filter(t => !t.approved);
+    if (filter === 'pending') return testimonials.filter(t => t.status === 'pending');
     return testimonials;
   }, [testimonials, filter]);
 
@@ -51,7 +50,7 @@ export default function Reviews() {
     return {
       all: testimonials.length,
       approved: testimonials.filter(t => t.approved).length,
-      pending: testimonials.filter(t => !t.approved).length
+      pending: testimonials.filter(t => t.status === 'pending').length
     };
   }, [testimonials]);
 
@@ -106,9 +105,9 @@ export default function Reviews() {
       setNewReviewRating(5);
       setNewReviewQuote('');
       setNewReviewVerified(false);
-      showToast('Testimonial added and published!', 'success');
+      showToast('Saved successfully!', 'success');
     } catch (err: any) {
-      showToast(`Failed to add testimonial: ${err.message}`, 'error');
+      showToast(err.message || 'Failed to add testimonial', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -127,13 +126,32 @@ export default function Reviews() {
       if (error) throw error;
 
       setReviews(reviews.map(r => r.id === target.id ? { ...r, approved: true, status: 'approved' } : r));
-      showToast('Review approved!', 'success');
+      showToast('Saved successfully!', 'success');
     } catch (err: any) {
-      showToast(`Failed: ${err.message}`, 'error');
+      showToast(err.message || 'Failed to approve review', 'error');
     }
   };
 
-  // Single Delete / Reject
+  // Single Reject
+  const handleReject = async (indexInFiltered: number) => {
+    const target = filteredReviews[indexInFiltered];
+    try {
+      const { data, error } = await supabase
+        .from('reviews')
+        .update({ status: 'rejected' })
+        .eq('id', target.id)
+        .select();
+      console.log('Review CRUD result (reject):', data, error);
+      if (error) throw error;
+
+      setReviews(reviews.map(r => r.id === target.id ? { ...r, approved: false, status: 'rejected' } : r));
+      showToast('Saved successfully!', 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to reject review', 'error');
+    }
+  };
+
+  // Single Delete / Remove
   const handleDelete = async (indexInFiltered: number) => {
     const target = filteredReviews[indexInFiltered];
     if (!confirm('Are you sure you want to remove this review?')) return;
@@ -147,9 +165,9 @@ export default function Reviews() {
       if (error) throw error;
 
       setReviews(reviews.filter(r => r.id !== target.id));
-      showToast('Review removed', 'success');
+      showToast('Saved successfully!', 'success');
     } catch (err: any) {
-      showToast(`Failed: ${err.message}`, 'error');
+      showToast(err.message || 'Failed to remove review', 'error');
     }
   };
 
@@ -165,9 +183,9 @@ export default function Reviews() {
       if (error) throw error;
 
       setReviews(reviews.map(r => r.status === 'pending' ? { ...r, approved: true, status: 'approved' } : r));
-      showToast(`Approved all pending reviews!`, 'success');
+      showToast('Saved successfully!', 'success');
     } catch (err: any) {
-      showToast(`Failed: ${err.message}`, 'error');
+      showToast(err.message || 'Failed to approve pending reviews', 'error');
     }
   };
 
@@ -245,9 +263,14 @@ export default function Reviews() {
                           Verified Purchase
                         </span>
                       )}
-                      {!r.approved && (
+                      {r.status === 'pending' && (
                         <span className="text-[7px] bg-amber-50 text-amber-700 px-1.5 py-0.2 rounded-full font-bold uppercase tracking-wider border border-amber-100 shrink-0">
                           Pending Approval
+                        </span>
+                      )}
+                      {r.status === 'rejected' && (
+                        <span className="text-[7px] bg-red-50 text-red-700 px-1.5 py-0.2 rounded-full font-bold uppercase tracking-wider border border-red-100 shrink-0">
+                          Rejected
                         </span>
                       )}
                     </div>
@@ -259,8 +282,9 @@ export default function Reviews() {
                   </div>
 
                   <div className="flex gap-1.5 shrink-0 select-none pt-0.5">
-                    {!r.approved && (
+                    {r.status !== 'approved' && (
                       <button 
+                        type="button"
                         onClick={() => handleApprove(idx)}
                         className="w-7 h-7 bg-green-50 hover:bg-green-100 text-green-600 border border-green-200 rounded-full flex items-center justify-center transition active:scale-90 cursor-pointer"
                         title="Approve Review"
@@ -268,10 +292,21 @@ export default function Reviews() {
                         <Check size={13} />
                       </button>
                     )}
+                    {r.status !== 'rejected' && (
+                      <button 
+                        type="button"
+                        onClick={() => handleReject(idx)}
+                        className="w-7 h-7 bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-200 rounded-full flex items-center justify-center transition active:scale-90 cursor-pointer"
+                        title="Reject Review"
+                      >
+                        <X size={13} />
+                      </button>
+                    )}
                     <button 
+                      type="button"
                       onClick={() => handleDelete(idx)}
                       className="w-7 h-7 bg-red-50 hover:bg-red-100 text-red-650 border border-red-200 rounded-full flex items-center justify-center transition active:scale-90 cursor-pointer"
-                      title="Delete / Reject"
+                      title="Delete Review"
                     >
                       <Trash2 size={13} />
                     </button>

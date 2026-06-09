@@ -87,9 +87,9 @@ export default function Discounts() {
       setNewDiscountLimit('');
       setNewDiscountMinOrderValue('');
       setNewDiscountActive(true);
-      showToast('Discount code created successfully!', 'success');
+      showToast('Saved successfully!', 'success');
     } catch (err: any) {
-      showToast(`Failed to create coupon: ${err.message}`, 'error');
+      showToast(err.message || 'Failed to create coupon', 'error');
     } finally {
       setLoading(false);
     }
@@ -97,11 +97,12 @@ export default function Discounts() {
 
   const handleToggleCouponActive = async (index: number) => {
     const target = coupons[index];
+    if (!target.id) return;
     try {
       const { data, error } = await supabase
         .from('discounts')
         .update({ is_active: !target.active })
-        .eq('code', target.code)
+        .eq('id', target.id)
         .select();
       console.log('Discount CRUD result (toggle):', data, error);
       if (error) throw error;
@@ -113,28 +114,28 @@ export default function Discounts() {
         return c;
       });
       setDiscountCodes(updated);
-      showToast('Coupon status updated', 'success');
+      showToast('Saved successfully!', 'success');
     } catch (err: any) {
-      showToast(`Failed to update coupon status: ${err.message}`, 'error');
+      showToast(err.message || 'Failed to update coupon status', 'error');
     }
   };
 
-  const handleDeleteDiscount = async (code: string) => {
+  const handleDeleteDiscount = async (id: string, code: string) => {
     if (!window.confirm(`Delete discount code ${code}?`)) return;
     try {
       const { data, error } = await supabase
         .from('discounts')
         .delete()
-        .eq('code', code)
+        .eq('id', id)
         .select();
       console.log('Discount CRUD result (delete):', data, error);
       if (error) throw error;
 
-      const updated = discountCodes.filter(d => d.code !== code);
+      const updated = discountCodes.filter(d => d.id !== id);
       setDiscountCodes(updated);
-      showToast('Discount code deleted', 'success');
+      showToast('Saved successfully!', 'success');
     } catch (err: any) {
-      showToast(`Failed to delete coupon: ${err.message}`, 'error');
+      showToast(err.message || 'Failed to delete coupon', 'error');
     }
   };
 
@@ -314,7 +315,7 @@ export default function Discounts() {
                         </td>
                         <td className="py-4 pl-2 text-right select-none">
                           <button
-                            onClick={() => handleDeleteDiscount(coupon.code)}
+                            onClick={() => handleDeleteDiscount(coupon.id || '', coupon.code)}
                             className="text-brand-body/40 hover:text-red-500 p-1.5 hover:scale-105 transition cursor-pointer"
                             title="Delete Coupon"
                           >
