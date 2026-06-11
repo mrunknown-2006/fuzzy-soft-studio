@@ -41,7 +41,7 @@ export default function Admin() {
   const [settings, setSettings] = useState<SiteSettings>({
     free_delivery_threshold: 999,
     shipping_charges: 99,
-    whatsapp_number: '+91-XXXXX-XXXXX',
+    whatsapp_number: '916386422660',
     contact_email: 'hello@fuzzysoftstudio.com',
     offer_line: '🌸 Mother\'s Day Special: Use code BLOOM20 for 20% off all bouquets! 🌸'
   });
@@ -369,7 +369,7 @@ export default function Admin() {
       const newSettings = {
         free_delivery_threshold: loaded.free_delivery_threshold !== undefined ? Number(loaded.free_delivery_threshold) : 999,
         shipping_charges: loaded.shipping_charges !== undefined ? Number(loaded.shipping_charges) : 99,
-        whatsapp_number: loaded.whatsapp_number || '+91-XXXXX-XXXXX',
+        whatsapp_number: loaded.whatsapp_number || '916386422660',
         contact_email: loaded.contact_email || 'hello@fuzzysoftstudio.com',
         offer_line: contentLoaded.offer_line || '🌸 Mother\'s Day Special: Use code BLOOM20 for 20% off all bouquets! 🌸',
         banner_url: contentLoaded.banner_url || ''

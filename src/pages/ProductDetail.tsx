@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
-import { Heart, Star, ShoppingBag, Plus, Minus, Truck, ShieldCheck, HeartCrack, Leaf } from 'lucide-react';
+import { Heart, Star, ShoppingBag, Plus, Minus, Truck, ShieldCheck, HeartCrack, Leaf, Share2 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import type { WishlistItem } from '../store/useStore';
 import { products as staticProducts } from '../data/products';
@@ -101,6 +101,11 @@ export default function ProductDetail() {
   const handleToggleWishlist = () => {
     if (!product) return;
     toggleWishlist(product as WishlistItem);
+  };
+
+  const handleShareProduct = () => {
+    navigator.clipboard.writeText(window.location.href);
+    showToast('Link copied!', 'success');
   };
 
   const showToast = useStore((state) => state.showToast);
@@ -548,6 +553,15 @@ export default function ProductDetail() {
             >
               <Heart size={14} className={wished ? 'fill-red-500 text-red-500' : ''} />
               <span>{wished ? 'Remove from Wishlist' : 'Add to Wishlist'}</span>
+            </button>
+
+            {/* Share Product */}
+            <button
+              onClick={handleShareProduct}
+              className="w-full h-11 rounded-full border border-brand-border bg-white hover:bg-brand-cream text-xs uppercase tracking-widest font-semibold transition duration-300 flex items-center justify-center gap-2 cursor-pointer text-brand-heading hover:text-brand-accent hover:border-brand-accent"
+            >
+              <Share2 size={14} />
+              <span>Share Product</span>
             </button>
           </div>
         </div>

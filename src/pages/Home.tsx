@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Star, Flower2, Sparkles, Leaf } from 'lucide-react';
+import { Flower2, Sparkles, Leaf } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import { products as staticProducts } from '../data/products';
 import { supabase } from '../lib/supabaseClient';
@@ -55,9 +55,9 @@ export default function Home() {
       image: 'https://hbzmkpeirngvbsdawcld.supabase.co/storage/v1/object/public/product-images/collection-gift-bouquets.png'
     }
   ]);
+  const [collectionImageErrors, setCollectionImageErrors] = useState<Record<string, boolean>>({});
 
-  // Testimonials state
-  const [dynamicTestimonials, setDynamicTestimonials] = useState<Array<{ name: string; quote: string; rating: number; location?: string }>>([]);
+
 
   // Falling Petals State
   const [petals, setPetals] = useState<Array<{ id: number; left: number; duration: number; delay: number; size: number; color: string }>>([]);
@@ -123,26 +123,7 @@ export default function Home() {
           } catch {}
         }
 
-        // Dynamic testimonials from reviews table (status = approved)
-        try {
-          const { data: reviewsData } = await supabase
-            .from('reviews')
-            .select('*')
-            .eq('status', 'approved')
-            .order('created_at', { ascending: false });
-          if (reviewsData && reviewsData.length > 0) {
-            const mappedReviews = reviewsData.map((r: any) => ({
-              name: r.customer_name || 'Anonymous',
-              quote: r.review_text || '',
-              rating: Number(r.rating) || 5,
-              location: 'Verified Buyer',
-              verified: true
-            }));
-            setDynamicTestimonials(mappedReviews);
-          }
-        } catch (revErr) {
-          console.warn('Failed to load testimonials from reviews table:', revErr);
-        }
+
 
         // Apply hero content (either loaded from site_content or default fallback values)
         setHeroBadge(s.hero_badge || 'FLORAL LIFESTYLE · EST. 2026');
@@ -225,23 +206,7 @@ export default function Home() {
 
   // gardenImages constant removed, loaded from state instead
 
-  const testimonials = [
-    {
-      name: 'Ananya R.',
-      quote: "The most exquisite bouquet I've ever received. It felt like a poem in petals.",
-      rating: 5
-    },
-    {
-      name: 'Riya & Karan',
-      quote: 'Fuzzy Soft made our wedding feel like a garden dream. Pure magic.',
-      rating: 5
-    },
-    {
-      name: 'Meera S.',
-      quote: 'Their preserved roses sit on my desk and still make me smile months later.',
-      rating: 5
-    }
-  ];
+
 
   const badges = [
     {
@@ -609,19 +574,28 @@ export default function Home() {
               to={`/shop?collection=${col.slug}`}
               className="collection-card group relative overflow-hidden rounded-2xl aspect-square ring-1 ring-transparent hover:ring-[#C9A84C] transition-all duration-500"
             >
-              {/* Image */}
-              <img
-                src={col.image}
-                alt={col.name}
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-              {/* Bottom Gradient overlay */}
-              <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-brand-cream via-brand-cream/60 to-transparent" />
-              {/* Centered Collection Name */}
-              <h3 className="absolute bottom-5 inset-x-0 text-center font-serif text-xl text-brand-heading">
-                {col.name}
-              </h3>
+              {collectionImageErrors[col.slug] ? (
+                <div className="w-full h-full bg-gradient-to-br from-rose-100 to-pink-50 flex items-center justify-center">
+                  <span className="font-serif text-xl text-rose-800">{col.name}</span>
+                </div>
+              ) : (
+                <>
+                  {/* Image */}
+                  <img
+                    src={col.image}
+                    alt={col.name}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                    onError={() => setCollectionImageErrors(prev => ({ ...prev, [col.slug]: true }))}
+                  />
+                  {/* Bottom Gradient overlay */}
+                  <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-brand-cream via-brand-cream/60 to-transparent" />
+                  {/* Centered Collection Name */}
+                  <h3 className="absolute bottom-5 inset-x-0 text-center font-serif text-xl text-brand-heading">
+                    {col.name}
+                  </h3>
+                </>
+              )}
             </Link>
           ))}
         </div>
@@ -779,36 +753,30 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 7. CUSTOMER TESTIMONIALS */}
-      <section className="py-20 bg-[#F3ECE3] w-full relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 lg:px-10 w-full">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl sm:text-4xl font-serif text-brand-heading text-center">
-              What Our Customers Say
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {(dynamicTestimonials.length > 0 ? dynamicTestimonials : testimonials).map((t, idx) => (
-              <div
-                key={idx}
-                className="bg-[#F6EBE2] border-l-4 border-[#74876E] rounded-r-2xl p-7 shadow-sm flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center space-x-1 text-[#C9A84C] mb-3">
-                    {[...Array(t.rating)].map((_, i) => (
-                      <Star key={i} size={14} className="fill-current" />
-                    ))}
-                  </div>
-                  <p className="font-serif text-base text-brand-heading/90 leading-relaxed italic mb-6">
-                    "{t.quote}"
-                  </p>
-                </div>
-                <p className="font-sans text-[11px] font-semibold tracking-widest text-brand-heading/70 uppercase mt-auto">
-                  — {(t.name || 'Anonymous').toUpperCase()}{(t as any).location ? `, ${(t as any).location}` : ''}
-                </p>
-              </div>
-            ))}
+      {/* 7. OUR PROMISE (TRUST BANNER) */}
+      <section className="py-16 px-6 text-center bg-brand-bg">
+        <div className="max-w-3xl mx-auto space-y-6">
+          <p className="text-xs uppercase tracking-[0.3em] text-brand-accent font-semibold">Our Promise</p>
+          <h2 className="font-serif text-3xl md:text-4xl text-brand-heading">
+            Crafted with Love. Delivered with Care.
+          </h2>
+          <p className="text-sm text-brand-body/70 leading-relaxed max-w-xl mx-auto">
+            Every arrangement at Fuzzy Soft Studio is handcrafted to order — no mass production, 
+            no compromise. We pour heart into every petal, every ribbon, every box.
+          </p>
+          <div className="grid grid-cols-3 gap-6 pt-4 max-w-lg mx-auto">
+            <div className="space-y-1">
+              <p className="font-serif text-2xl text-brand-heading">100%</p>
+              <p className="text-xs text-brand-body/60 uppercase tracking-wide">Handmade</p>
+            </div>
+            <div className="space-y-1">
+              <p className="font-serif text-2xl text-brand-heading">Made</p>
+              <p className="text-xs text-brand-body/60 uppercase tracking-wide">To Order</p>
+            </div>
+            <div className="space-y-1">
+              <p className="font-serif text-2xl text-brand-heading">Fresh</p>
+              <p className="text-xs text-brand-body/60 uppercase tracking-wide">Every Time</p>
+            </div>
           </div>
         </div>
       </section>

@@ -127,10 +127,9 @@ export default function Footer() {
             <p className="font-sans text-[13px] text-brand-body/80 leading-relaxed">
               {footerAbout}
             </p>
-            <div className="pt-1.5">
-              <span className="inline-block px-3 py-1 bg-white/50 border border-brand-border/30 text-[10px] font-semibold text-brand-heading tracking-wide uppercase rounded-full select-none shadow-xs">
-                500+ happy arrangements across India
-              </span>
+            <div className="pt-1.5 space-y-1">
+              <p className="font-serif text-lg text-white/90">Handcrafted Blooms</p>
+              <p className="text-xs text-white/50 tracking-widest uppercase">Est. 2026 · Lucknow, India</p>
             </div>
           </div>
 
@@ -222,7 +221,7 @@ export default function Footer() {
 
               {/* WhatsApp */}
               <a
-                href={footerWhatsapp || 'https://wa.me/919506228972'}
+                href={footerWhatsapp || 'https://wa.me/916386422660'}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full flex items-center justify-center bg-white/70 border border-brand-border/40 hover:border-brand-accent/50 text-brand-body/80 hover:text-brand-accent hover:bg-white transition-all duration-300 shadow-xs hover:scale-105 active:scale-95"

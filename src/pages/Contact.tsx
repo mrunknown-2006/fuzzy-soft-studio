@@ -31,7 +31,7 @@ export default function Contact() {
         const loaded = (data && data.content) || {};
         setTitle(loaded.contact_title || 'Contact Us');
         setIntro(loaded.contact_intro || 'Have questions about custom crochet orders, shipping timelines, or care tips? Drop us a line and our artisan team will write back to you shortly.');
-        setWhatsapp(loaded.contact_whatsapp || '+91 95062 28972');
+        setWhatsapp(loaded.contact_whatsapp || '916386422660');
         setEmail(loaded.contact_email || 'hello@fuzzysoftstudio.com');
         setLocation(loaded.contact_location || 'Kanpur, Uttar Pradesh');
         setHours(loaded.contact_hours || 'Mon–Sat: 10am – 7pm');
@@ -41,7 +41,7 @@ export default function Contact() {
         // Fallback to defaults on error
         setTitle('Contact Us');
         setIntro('Have questions about custom crochet orders, shipping timelines, or care tips? Drop us a line and our artisan team will write back to you shortly.');
-        setWhatsapp('+91 95062 28972');
+        setWhatsapp('916386422660');
         setEmail('hello@fuzzysoftstudio.com');
         setLocation('Kanpur, Uttar Pradesh');
         setHours('Mon–Sat: 10am – 7pm');

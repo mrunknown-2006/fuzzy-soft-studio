@@ -3,18 +3,20 @@ import { Heart, Sparkles, ShieldCheck } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
 export default function About() {
-  const [heroTitle, setHeroTitle] = useState('');
-  const [heroSubtitle, setHeroSubtitle] = useState('');
-  const [block1Title, setBlock1Title] = useState('');
+  const [heroTitle, setHeroTitle] = useState('Our Story');
+  const [heroSubtitle, setHeroSubtitle] = useState('Born from a love of blooms — Fuzzy Soft Studio is where flowers become feelings.');
+  const [block1Title, setBlock1Title] = useState('Founder\'s Journey');
   const [block1Image, setBlock1Image] = useState('');
-  const [block1Text1, setBlock1Text1] = useState('');
-  const [block1Text2, setBlock1Text2] = useState('');
+  const [block1Text1, setBlock1Text1] = useState('Fuzzy Soft Studio is a new handmade floral studio based in Lucknow, founded by Warisha Shariq in 2026. What started as a personal love for flowers and crochet has grown into a small studio that crafts made-to-order arrangements for life\'s quiet and grand moments.');
+  const [block1Text2, setBlock1Text2] = useState('Every piece is handmade with care, and no two are exactly alike.');
   
-  const [block2Title, setBlock2Title] = useState('');
+  const [block2Title, setBlock2Title] = useState('Crafted with Care');
   const [block2Image, setBlock2Image] = useState('');
-  const [block2Text1, setBlock2Text1] = useState('');
-  const [block2Text2, setBlock2Text2] = useState('');
+  const [block2Text1, setBlock2Text1] = useState('We believe that flowers should hold more than just a temporary place in our lives. Our crochet arrangements are hand-threaded to order, ensuring each set of petals carries custom character and enduring warmth.');
+  const [block2Text2, setBlock2Text2] = useState('By creating made-to-order floral statements, we ensure nothing is wasted, and every box is a custom work of art.');
   const [isLoading, setIsLoading] = useState(true);
+  const [img1Error, setImg1Error] = useState(false);
+  const [img2Error, setImg2Error] = useState(false);
 
   useEffect(() => {
     const loadAboutContent = async () => {
@@ -76,11 +78,18 @@ export default function About() {
         {/* Brand Story block */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
           <div className="relative rounded-3xl overflow-hidden aspect-[4/3] bg-brand-cream border border-brand-border/40 shadow-xs select-none">
-            <img
-              src={block1Image}
-              alt="Artisanal blooms background"
-              className="w-full h-full object-cover"
-            />
+            {!block1Image || img1Error ? (
+              <div className="w-full h-full bg-gradient-to-br from-[#F5EDE6] to-[#EADFD5] flex items-center justify-center select-none text-[#8FA088]/60">
+                <Sparkles size={36} strokeWidth={1} />
+              </div>
+            ) : (
+              <img
+                src={block1Image}
+                alt="Artisanal blooms background"
+                className="w-full h-full object-cover"
+                onError={() => setImg1Error(true)}
+              />
+            )}
           </div>
           <div className="space-y-4 font-sans text-brand-body/80 leading-relaxed text-sm">
             <h2 className="font-serif text-2xl font-bold text-brand-heading">{block1Title}</h2>
@@ -92,11 +101,18 @@ export default function About() {
         {/* Handmade with Love section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center md:flex-row-reverse">
           <div className="md:order-last relative rounded-3xl overflow-hidden aspect-[4/3] bg-brand-cream border border-brand-border/40 shadow-xs select-none">
-            <img
-              src={block2Image}
-              alt="Hand-tying bouquets"
-              className="w-full h-full object-cover"
-            />
+            {!block2Image || img2Error ? (
+              <div className="w-full h-full bg-gradient-to-br from-[#F5EDE6] to-[#EADFD5] flex items-center justify-center select-none text-brand-accent/60">
+                <Heart size={36} strokeWidth={1} />
+              </div>
+            ) : (
+              <img
+                src={block2Image}
+                alt="Hand-tying bouquets"
+                className="w-full h-full object-cover"
+                onError={() => setImg2Error(true)}
+              />
+            )}
           </div>
           <div className="space-y-4 font-sans text-brand-body/80 leading-relaxed text-sm">
             <h2 className="font-serif text-2xl font-bold text-brand-heading">{block2Title}</h2>
