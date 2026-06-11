@@ -123,7 +123,7 @@ export default function ProductForm() {
   };
 
   const handleGenerateSku = () => {
-    const prefix = category.substring(0, 3).toUpperCase() || 'FSS';
+    const prefix = category?.substring(0, 3)?.toUpperCase() || 'FSS';
     const rand = Math.floor(1000 + Math.random() * 9000);
     setSku(`${prefix}-${rand}`);
   };

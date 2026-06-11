@@ -15,13 +15,14 @@ export default function Footer() {
   const [footerNote, setFooterNote] = useState('Made with love in Lucknow 🌸');
 
   useEffect(() => {
-    // Fetch footer site content
-    supabase
-      .from('site_content')
-      .select('*')
-      .eq('id', 'footer')
-      .single()
-      .then(({ data }) => {
+    const loadFooterData = async () => {
+      // Fetch footer site content
+      try {
+        const { data } = await supabase
+          .from('site_content')
+          .select('*')
+          .eq('id', 'footer')
+          .single();
         if (data && data.content) {
           const s = data.content;
           if (s.footer_tagline) setFooterTagline(s.footer_tagline);
@@ -33,13 +34,15 @@ export default function Footer() {
           if (s.footer_copyright) setFooterCopyright(s.footer_copyright);
           if (s.footer_note) setFooterNote(s.footer_note);
         }
-      });
+      } catch (err) {
+        console.warn('Failed to load footer site content:', err);
+      }
 
-    // Fetch contact email from store_settings
-    supabase
-      .from('store_settings')
-      .select('*')
-      .then(({ data }) => {
+      // Fetch contact email from store_settings
+      try {
+        const { data } = await supabase
+          .from('store_settings')
+          .select('*');
         if (data) {
           const generalSetting = data.find(s => s.key === 'general');
           if (generalSetting && generalSetting.value && generalSetting.value.contact_email) {
@@ -51,7 +54,11 @@ export default function Footer() {
             }
           }
         }
-      });
+      } catch (err) {
+        console.warn('Failed to load store settings for footer email:', err);
+      }
+    };
+    loadFooterData();
   }, []);
 
   return (

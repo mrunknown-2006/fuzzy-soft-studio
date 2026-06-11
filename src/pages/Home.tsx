@@ -132,8 +132,8 @@ export default function Home() {
             .order('created_at', { ascending: false });
           if (reviewsData && reviewsData.length > 0) {
             const mappedReviews = reviewsData.map((r: any) => ({
-              name: r.customer_name,
-              quote: r.review_text,
+              name: r.customer_name || 'Anonymous',
+              quote: r.review_text || '',
               rating: Number(r.rating) || 5,
               location: 'Verified Buyer',
               verified: true
@@ -299,7 +299,7 @@ export default function Home() {
           </div>
 
           {/* Elegant Botanical Flowers — Full Width Hero Bottom */}
-          <svg viewBox="0 0 1000 620" className="absolute inset-x-0 bottom-0 w-full h-[55vh] md:h-[65vh] pointer-events-none opacity-35 md:opacity-45" preserveAspectRatio="xMidYEnd meet" aria-hidden="true">
+          <svg viewBox="0 0 1000 620" className="absolute inset-x-0 bottom-0 w-full h-[55vh] md:h-[65vh] pointer-events-none opacity-35 md:opacity-45" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
             <defs>
               {/* Petal gradients for depth */}
               <radialGradient id="pg1" cx="50%" cy="70%" r="60%">
@@ -805,7 +805,7 @@ export default function Home() {
                   </p>
                 </div>
                 <p className="font-sans text-[11px] font-semibold tracking-widest text-brand-heading/70 uppercase mt-auto">
-                  — {t.name.toUpperCase()}{(t as any).location ? `, ${(t as any).location}` : ''}
+                  — {(t.name || 'Anonymous').toUpperCase()}{(t as any).location ? `, ${(t as any).location}` : ''}
                 </p>
               </div>
             ))}

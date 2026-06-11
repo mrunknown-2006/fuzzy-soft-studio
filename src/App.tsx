@@ -44,6 +44,22 @@ export default function App() {
   useEffect(() => {
     const checkMaintenance = async () => {
       try {
+        // Query the general settings row first
+        const { data: generalData } = await supabase
+          .from('store_settings')
+          .select('value')
+          .eq('key', 'general')
+          .single();
+        
+        if (generalData?.value) {
+          const val = generalData.value;
+          if (val.store_open === false || val.store_open === 'false') {
+            setMaintenance(true);
+            return;
+          }
+        }
+
+        // Fallback to checking store_open key directly
         const { data } = await supabase
           .from('store_settings')
           .select('value')

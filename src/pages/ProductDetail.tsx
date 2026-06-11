@@ -297,15 +297,15 @@ export default function ProductDetail() {
   const reviewsToDisplay = useMemo(() => {
     if (!product) return [];
     return dbReviews.map(r => ({
-      author: r.customer_name.toUpperCase(),
-      stars: r.rating,
-      date: new Date(r.created_at).toLocaleDateString('en-US', {
+      author: (r.customer_name || 'Anonymous').toUpperCase(),
+      stars: r.rating || 5,
+      date: new Date(r.created_at || Date.now()).toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
         year: 'numeric'
       }),
-      title: r.title,
-      comment: r.comment
+      title: r.title || 'Review',
+      comment: r.comment || r.review_text || ''
     }));
   }, [dbReviews, product]);
 

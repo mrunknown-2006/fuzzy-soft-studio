@@ -13,9 +13,15 @@ export default function Cart() {
 
   const [dbProducts, setDbProducts] = useState<any[]>([]);
   useEffect(() => {
-    supabase.from('products').select('id, slug').then(({ data }) => {
-      if (data) setDbProducts(data);
-    });
+    const loadCartProducts = async () => {
+      try {
+        const { data } = await supabase.from('products').select('id, slug');
+        if (data) setDbProducts(data);
+      } catch (err) {
+        console.warn('Failed to fetch products for Cart slug lookup:', err);
+      }
+    };
+    loadCartProducts();
   }, []);
 
   const getProductSlug = (itemId: string, itemSlug?: string): string => {
