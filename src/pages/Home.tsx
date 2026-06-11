@@ -81,14 +81,8 @@ export default function Home() {
   const [petals, setPetals] = useState<Array<{ id: number; left: number; duration: number; delay: number; size: number; color: string }>>([]);
 
   // Garden images state
-  const [gardenImages, setGardenImages] = useState([
-    'https://images.unsplash.com/photo-1533616688419-b7a585564566?w=500&q=80',
-    'https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=500&q=80',
-    'https://images.unsplash.com/photo-1508610048659-a06b669e3321?w=500&q=80',
-    'https://images.unsplash.com/photo-1487530811015-780780a87cc2?w=500&q=80',
-    'https://images.unsplash.com/photo-1532634896-26909d0d4b89?w=500&q=80',
-    'https://images.unsplash.com/photo-1490750967868-88df5691cc17?w=500&q=80'
-  ]);
+  const [gardenImages, setGardenImages] = useState<any[]>([]);
+  const [collectionUrls, setCollectionUrls] = useState<Record<string, string>>({});
   const [instagramUrl, setInstagramUrl] = useState('https://instagram.com/fuzzysoftstudio');
 
   useEffect(() => {
@@ -106,21 +100,48 @@ export default function Home() {
           });
         }
 
-        // Garden Gallery: Fetch from site_content where id='garden_gallery'
-        const galleryRow = siteData?.find((row: any) => row.id === 'garden_gallery');
-        if (galleryRow && galleryRow.content && Array.isArray(galleryRow.content.photos) && galleryRow.content.photos.length > 0) {
-          setGardenImages(galleryRow.content.photos);
-        } else if (s.garden_images) {
-          try {
-            if (Array.isArray(s.garden_images)) {
-              setGardenImages(s.garden_images);
-            } else {
-              setGardenImages(JSON.parse(s.garden_images));
+        // Fetch collection banner URLs from site_content where id='collections'
+        try {
+          const { data: collectionsRes } = await supabase
+            .from('site_content')
+            .select('content')
+            .eq('id', 'collections')
+            .single();
+
+          const banners = collectionsRes?.content || {};
+          const urls: Record<string, string> = {};
+          const slugs = ['bridal-blooms', 'everyday-luxury', 'seasonal-picks', 'gift-bouquets'];
+          slugs.forEach(slug => {
+            let url = '';
+            if (slug === 'bridal-blooms') url = banners.bridal_blooms_url;
+            else if (slug === 'everyday-luxury') url = banners.everyday_luxury_url;
+            else if (slug === 'seasonal-picks') url = banners.seasonal_picks_url;
+            else if (slug === 'gift-bouquets') url = banners.gift_bouquets_url;
+            
+            if (!url) {
+              const filename = getCollectionBannerFilename(slug);
+              url = getImageUrl(filename);
             }
-          } catch {
-            setGardenImages([]);
-          }
-        } else {
+            urls[slug] = url;
+          });
+          setCollectionUrls(urls);
+        } catch (colErr) {
+          console.warn('Error loading collections banners:', colErr);
+        }
+
+        // Fetch garden gallery from site_content where id='garden_gallery'
+        try {
+          const { data: galleryRes } = await supabase
+            .from('site_content')
+            .select('content')
+            .eq('id', 'garden_gallery')
+            .single();
+          
+          const photos = galleryRes?.content?.photos || [];
+          const validPhotos = photos.filter((p: any) => p?.url && p.url.length > 0);
+          setGardenImages(validPhotos);
+        } catch (galErr) {
+          console.warn('Error loading garden gallery:', galErr);
           setGardenImages([]);
         }
 
@@ -604,8 +625,7 @@ export default function Home() {
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
           {collectionBanners.map((col) => {
-            const filename = getCollectionBannerFilename(col.slug);
-            const imageUrl = getImageUrl(filename);
+            const imageUrl = collectionUrls[col.slug] || '';
             return (
               <Link
                 key={col.slug}
@@ -624,7 +644,14 @@ export default function Home() {
                       alt={col.name}
                       className="w-full h-full object-cover"
                       loading="lazy"
-                      onError={() => setCollectionImageErrors(prev => ({ ...prev, [col.slug]: true }))}
+                      onError={(e) => {
+                        setCollectionImageErrors(prev => ({ ...prev, [col.slug]: true }));
+                        e.currentTarget.style.display = 'none';
+                        if (e.currentTarget.parentElement) {
+                          e.currentTarget.parentElement.style.background = 
+                            'linear-gradient(135deg, #fce4ec, #f8bbd0)';
+                        }
+                      }}
                     />
                     {/* Bottom Gradient overlay */}
                     <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-brand-cream via-brand-cream/60 to-transparent" />
@@ -703,92 +730,42 @@ export default function Home() {
         </div>
 
         {/* Masonry mixed grid */}
-        {/* Masonry mixed grid */}
         {gardenImages.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {/* Card 1: Tall on Desktop */}
-            <div className="md:row-span-2 col-span-1 rounded-2xl overflow-hidden shadow-sm group relative">
-              <img
-                src={gardenImages[0]}
-                alt="Garden Floral 1"
-                className="w-full h-full object-cover aspect-[3/4] transition-transform duration-700 group-hover:scale-105"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-brand-accent/40 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"></line></svg>
+            {gardenImages.slice(0, 6).map((photo: any, i) => (
+              <div 
+                key={i} 
+                className={`rounded-2xl overflow-hidden shadow-sm group relative ${
+                  i === 0 ? 'md:row-span-2 col-span-1' : ''
+                }`}
+              >
+                <img
+                  src={photo.url}
+                  alt={photo.caption || `Garden Floral ${i + 1}`}
+                  className="w-full h-full object-cover aspect-[3/4] transition-transform duration-700 group-hover:scale-105"
+                  loading="lazy"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.parentElement!.style.background = 
+                      'linear-gradient(135deg, #fce4ec, #f8bbd0)';
+                  }}
+                />
+                <div className="absolute inset-0 bg-brand-accent/40 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center text-white">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"></line></svg>
+                </div>
               </div>
-            </div>
-            {/* Card 2 */}
-            <div className="rounded-2xl overflow-hidden shadow-sm group relative">
-              <img
-                src={gardenImages[1]}
-                alt="Garden Floral 2"
-                className="w-full h-full object-cover aspect-[3/4] transition-transform duration-700 group-hover:scale-105"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-brand-accent/40 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"></line></svg>
-              </div>
-            </div>
-            {/* Card 3 */}
-            <div className="rounded-2xl overflow-hidden shadow-sm group relative">
-              <img
-                src={gardenImages[2]}
-                alt="Garden Floral 3"
-                className="w-full h-full object-cover aspect-[3/4] transition-transform duration-700 group-hover:scale-105"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-brand-accent/40 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"></line></svg>
-              </div>
-            </div>
-            {/* Card 4 */}
-            <div className="rounded-2xl overflow-hidden shadow-sm group relative">
-              <img
-                src={gardenImages[3]}
-                alt="Garden Floral 4"
-                className="w-full h-full object-cover aspect-[3/4] transition-transform duration-700 group-hover:scale-105"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-brand-accent/40 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"></line></svg>
-              </div>
-            </div>
-            {/* Card 5 */}
-            <div className="rounded-2xl overflow-hidden shadow-sm group relative">
-              <img
-                src={gardenImages[4]}
-                alt="Garden Floral 5"
-                className="w-full h-full object-cover aspect-[3/4] transition-transform duration-700 group-hover:scale-105"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-brand-accent/40 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"></line></svg>
-              </div>
-            </div>
-            {/* Card 6 */}
-            <div className="rounded-2xl overflow-hidden shadow-sm group relative">
-              <img
-                src={gardenImages[5]}
-                alt="Garden Floral 6"
-                className="w-full h-full object-cover aspect-[3/4] transition-transform duration-700 group-hover:scale-105"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-brand-accent/40 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"></line></svg>
-              </div>
-            </div>
+            ))}
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {Array.from({ length: 6 }).map((_, i) => (
               <div 
                 key={i} 
-                className={`rounded-2xl bg-gradient-to-br from-[#F5EDE6] to-[#EADFD5] flex flex-col items-center justify-center border border-brand-border/30 min-h-[180px] md:min-h-[220px] ${
-                  i === 0 ? 'md:row-span-2' : ''
+                className={`rounded-2xl bg-gradient-to-br from-rose-100 to-pink-50 flex flex-col items-center justify-center border border-brand-border/30 min-h-[180px] md:min-h-[220px] ${
+                  i === 0 ? 'md:row-span-2 col-span-1' : ''
                 }`}
               >
-                <Flower2 className="w-8 h-8 text-[#DCA29A]/60 animate-pulse" strokeWidth={1.2} />
+                <Flower2 className="w-8 h-8 text-rose-300 animate-pulse" strokeWidth={1.2} />
               </div>
             ))}
           </div>

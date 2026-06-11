@@ -80,6 +80,20 @@ export default function ContentManager() {
   const [marqueeVisible, setMarqueeVisible] = useState(true);
   const [homeBannerUrl, setHomeBannerUrl] = useState('');
 
+  // 6.5 Collections & Garden slots states
+  const [bridalUrl, setBridalUrl] = useState('');
+  const [everydayUrl, setEverydayUrl] = useState('');
+  const [seasonalUrl, setSeasonalUrl] = useState('');
+  const [giftUrl, setGiftUrl] = useState('');
+  const [gardenSlots, setGardenSlots] = useState<Array<{ url: string; caption: string }>>([
+    { url: '', caption: '' },
+    { url: '', caption: '' },
+    { url: '', caption: '' },
+    { url: '', caption: '' },
+    { url: '', caption: '' },
+    { url: '', caption: '' }
+  ]);
+
   // Load all settings directly
   useEffect(() => {
     const fetchSettings = async () => {
@@ -168,6 +182,48 @@ export default function ContentManager() {
             }
           } catch {}
         }
+
+        // Load collections row banner URLs
+        const collectionsRow = data?.find((row: any) => row.id === 'collections');
+        if (collectionsRow && collectionsRow.content) {
+          const c = collectionsRow.content;
+          setBridalUrl(c.bridal_blooms_url || '');
+          setEverydayUrl(c.everyday_luxury_url || '');
+          setSeasonalUrl(c.seasonal_picks_url || '');
+          setGiftUrl(c.gift_bouquets_url || '');
+          
+          setAdminCollectionBanners(prev => prev.map(b => {
+            if (b.slug === 'bridal-blooms') return { ...b, image: c.bridal_blooms_url || b.image };
+            if (b.slug === 'everyday-luxury') return { ...b, image: c.everyday_luxury_url || b.image };
+            if (b.slug === 'seasonal-picks') return { ...b, image: c.seasonal_picks_url || b.image };
+            if (b.slug === 'gift-bouquets') return { ...b, image: c.gift_bouquets_url || b.image };
+            return b;
+          }));
+        }
+
+        // Load Garden Slots from site_content where id='garden_gallery'
+        const galleryRow = data?.find((row: any) => row.id === 'garden_gallery');
+        if (galleryRow && galleryRow.content && Array.isArray(galleryRow.content.photos)) {
+          const photos = galleryRow.content.photos;
+          const slots = Array.from({ length: 6 }, (_, i) => ({
+            url: photos[i]?.url || '',
+            caption: photos[i]?.caption || ''
+          }));
+          setGardenSlots(slots);
+        } else {
+          // Fallback to loaded.garden_images
+          let list: string[] = [];
+          if (loaded.garden_images) {
+            try {
+              list = Array.isArray(loaded.garden_images) ? loaded.garden_images : JSON.parse(loaded.garden_images);
+            } catch {}
+          }
+          const slots = Array.from({ length: 6 }, (_, i) => ({
+            url: list[i] || '',
+            caption: ''
+          }));
+          setGardenSlots(slots);
+        }
       } catch (err: any) {
         showToast(`Error fetching content: ${err.message}`, 'error');
       }
@@ -206,6 +262,27 @@ export default function ContentManager() {
       reader.onerror = () => reject(new Error('Failed to read file'));
       reader.readAsDataURL(file);
     });
+  };
+
+  // Single Reusable Upload Helper
+  const uploadToContentBucket = async (
+    file: File, 
+    filename: string
+  ): Promise<string | null> => {
+    const { error } = await supabase.storage
+      .from('content')
+      .upload(filename, file, { upsert: true });
+    
+    if (error) {
+      alert('Upload failed: ' + error.message);
+      return null;
+    }
+    
+    const { data } = supabase.storage
+      .from('content')
+      .getPublicUrl(filename);
+    
+    return data.publicUrl;
   };
 
   // Upload Asset using Fixed Filename & Upsert
@@ -342,22 +419,6 @@ export default function ContentManager() {
           { onConflict: 'id' }
         );
       }
-      if (index >= 30 && index <= 35) {
-        const next = [...gardenImages];
-        next[index - 30] = publicUrl;
-        setGardenImages(next);
-        const sectionPayload = {
-          offer_line: offerLine,
-          marquee_visible: marqueeVisible,
-          banner_url: homeBannerUrl,
-          collection_banners: adminCollectionBanners,
-          garden_images: next
-        };
-        await supabase.from('site_content').upsert(
-          { id: 'announcements', content: sectionPayload, updated_at: new Date().toISOString() },
-          { onConflict: 'id' }
-        );
-      }
 
       showToast('Image uploaded successfully!', 'success');
     } catch (err: any) {
@@ -377,47 +438,80 @@ export default function ContentManager() {
     showToast('Uploading collection banner...', 'success');
     try {
       const webpBlob = await convertToWebP(file);
+      const webpFile = new File([webpBlob], `collection-${slug}.webp`, { type: 'image/webp' });
       const fileName = `collection-${slug}.webp`;
-      const filePath = fileName;
 
-      const { data, error } = await supabase.storage
-        .from('content')
-        .upload(filePath, webpBlob, {
-          contentType: 'image/webp',
-          cacheControl: '3600',
-          upsert: true
-        });
-      console.log('Collection banner upload result:', data, error);
-
-      if (error) throw error;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('content')
-        .getPublicUrl(filePath);
+      const publicUrl = await uploadToContentBucket(webpFile, fileName);
+      if (!publicUrl) return;
 
       const updated = [...adminCollectionBanners];
       updated[index] = { ...updated[index], image: publicUrl };
       setAdminCollectionBanners(updated);
 
-      // Save immediately
-      const announcementsPayload = {
-        offer_line: offerLine,
-        marquee_visible: marqueeVisible,
-        banner_url: homeBannerUrl,
-        collection_banners: updated,
-        garden_images: gardenImages
-      };
-      await supabase.from('site_content').upsert(
-        { id: 'announcements', content: announcementsPayload, updated_at: new Date().toISOString() },
-        { onConflict: 'id' }
-      );
+      // Save each banner URL to site_content id='collections'
+      let newBridal = bridalUrl;
+      let newEveryday = everydayUrl;
+      let newSeasonal = seasonalUrl;
+      let newGift = giftUrl;
 
-      showToast('Collection banner uploaded!', 'success');
+      if (slug === 'bridal-blooms') { newBridal = publicUrl; setBridalUrl(publicUrl); }
+      else if (slug === 'everyday-luxury') { newEveryday = publicUrl; setEverydayUrl(publicUrl); }
+      else if (slug === 'seasonal-picks') { newSeasonal = publicUrl; setSeasonalUrl(publicUrl); }
+      else if (slug === 'gift-bouquets') { newGift = publicUrl; setGiftUrl(publicUrl); }
+
+      await supabase.from('site_content').upsert({
+        id: 'collections',
+        content: {
+          bridal_blooms_url: newBridal,
+          everyday_luxury_url: newEveryday,
+          seasonal_picks_url: newSeasonal,
+          gift_bouquets_url: newGift,
+        },
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'id' });
+
+      alert('Collection banner uploaded!');
     } catch (err: any) {
       showToast('Upload failed: ' + err.message, 'error');
     } finally {
       e.target.value = '';
     }
+  };
+
+  // Garden Grid upload and display helper
+  const handleGardenImageUpload = async (file: File, slotIndex: number) => {
+    const filename = `garden-slot-${slotIndex + 1}.webp`;
+    const publicUrl = await uploadToContentBucket(file, filename);
+    if (!publicUrl) return;
+
+    // Update local state immediately
+    const updatedSlots = [...gardenSlots];
+    updatedSlots[slotIndex] = { 
+      ...updatedSlots[slotIndex], 
+      url: publicUrl 
+    };
+    setGardenSlots(updatedSlots);
+
+    // Auto-save to site_content immediately
+    const { error: saveError } = await supabase
+      .from('site_content')
+      .upsert({
+        id: 'garden_gallery',
+        content: { 
+          photos: updatedSlots.map(s => ({ 
+            url: s.url, 
+            caption: s.caption || '' 
+          }))
+        },
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'id' });
+
+    if (saveError) {
+      alert('Save failed: ' + saveError.message);
+      return;
+    }
+
+    alert(`Garden slot ${slotIndex + 1} uploaded successfully!`);
   };
 
   // 1. Save Hero
@@ -1132,42 +1226,55 @@ export default function ContentManager() {
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {gardenImages.map((imgUrl, idx) => (
+              {gardenSlots.map((slot, idx) => (
                 <div key={idx} className="border border-brand-border/40 rounded-xl p-3 bg-white/50 space-y-2 flex flex-col justify-between">
                   <p className="font-semibold text-xs text-brand-heading">Slot {idx + 1}</p>
                   
-                  <div className="aspect-square w-full rounded-lg overflow-hidden border border-brand-border/30 bg-brand-cream/35 flex items-center justify-center relative">
-                    {imgUrl ? (
-                      <img src={imgUrl} className="w-full h-full object-cover" alt={`Garden Slot ${idx + 1}`} />
-                    ) : (
-                      <span className="text-[10px] text-brand-body/40">Empty Slot</span>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-1.5 pt-1">
-                    <input
-                      type="text"
-                      value={imgUrl || ''}
-                      onChange={(e) => {
-                        const updated = [...gardenImages];
-                        updated[idx] = e.target.value;
-                        setGardenImages(updated);
-                      }}
-                      placeholder="Image URL"
-                      className="w-full border border-brand-border/40 rounded-lg px-2.5 py-1 text-xs bg-white/80"
-                    />
+                  {/* Show a small image preview (60x60px) after upload / if slot.url exists */}
+                  <div className="flex gap-3 items-center">
+                    <div className="w-[60px] h-[60px] rounded-lg overflow-hidden border border-brand-border/30 bg-brand-cream/35 flex items-center justify-center relative shrink-0">
+                      {slot.url ? (
+                        <img src={slot.url} className="w-full h-full object-cover" alt={`Garden Slot ${idx + 1}`} />
+                      ) : (
+                        <span className="text-[8px] text-brand-body/45 text-center">No Image</span>
+                      )}
+                    </div>
                     
-                    <label className="h-8 w-full bg-brand-cream/80 hover:bg-brand-cream border border-brand-border text-brand-heading rounded-lg flex items-center justify-center gap-1 cursor-pointer text-[10px] font-semibold select-none active:scale-95 transition">
-                      <Upload size={10} />
-                      <span>{uploadingIndex === 30 + idx ? '...' : 'Upload WebP'}</span>
+                    <div className="flex-grow space-y-1.5">
+                      {/* Image URL input field is READ-ONLY, does NOT allow manual typing */}
                       <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleImageUpload(e, 30 + idx)}
-                        className="hidden"
-                        disabled={uploadingIndex !== null}
+                        type="text"
+                        value={slot.url || ''}
+                        readOnly
+                        placeholder="Upload to set URL"
+                        className="w-full border border-brand-border/40 rounded-lg px-2.5 py-1 text-[10px] bg-brand-cream/15 text-brand-body/60 font-mono focus:outline-none cursor-default"
                       />
-                    </label>
+                      
+                      <label className="h-8 w-full bg-brand-cream/80 hover:bg-brand-cream border border-brand-border text-brand-heading rounded-lg flex items-center justify-center gap-1 cursor-pointer text-[10px] font-semibold select-none active:scale-95 transition">
+                        <Upload size={10} />
+                        <span>{uploadingIndex === 30 + idx ? '...' : 'Upload WebP'}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            setUploadingIndex(30 + idx);
+                            try {
+                              const webpBlob = await convertToWebP(file);
+                              const webpFile = new File([webpBlob], `garden-slot-${idx + 1}.webp`, { type: 'image/webp' });
+                              await handleGardenImageUpload(webpFile, idx);
+                            } catch (err: any) {
+                              alert('Upload failed: ' + err.message);
+                            } finally {
+                              setUploadingIndex(null);
+                            }
+                          }}
+                          className="hidden"
+                          disabled={uploadingIndex !== null}
+                        />
+                      </label>
+                    </div>
                   </div>
                 </div>
               ))}
