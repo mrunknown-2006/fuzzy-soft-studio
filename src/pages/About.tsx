@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Heart, Sparkles, ShieldCheck } from 'lucide-react';
+import { Heart, Sparkles, ShieldCheck, User } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
 export default function About() {
@@ -14,9 +14,22 @@ export default function About() {
   const [block2Image, setBlock2Image] = useState('');
   const [block2Text1, setBlock2Text1] = useState('We believe that flowers should hold more than just a temporary place in our lives. Our crochet arrangements are hand-threaded to order, ensuring each set of petals carries custom character and enduring warmth.');
   const [block2Text2, setBlock2Text2] = useState('By creating made-to-order floral statements, we ensure nothing is wasted, and every box is a custom work of art.');
+  const [founderImage, setFounderImage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [img1Error, setImg1Error] = useState(false);
   const [img2Error, setImg2Error] = useState(false);
+  const [founderImgError, setFounderImgError] = useState(false);
+
+  const getImageUrl = (filename: string) => {
+    if (!filename) return '';
+    if (filename.startsWith('http://') || filename.startsWith('https://')) {
+      return filename;
+    }
+    const { data } = supabase.storage
+      .from('content')
+      .getPublicUrl(filename);
+    return data.publicUrl;
+  };
 
   useEffect(() => {
     const loadAboutContent = async () => {
@@ -30,12 +43,16 @@ export default function About() {
           if (loaded.about_hero_subtitle) setHeroSubtitle(loaded.about_hero_subtitle);
           if (loaded.about_block1_title) setBlock1Title(loaded.about_block1_title);
           if (loaded.about_block1_image) setBlock1Image(loaded.about_block1_image);
+          else if (loaded.block1_image) setBlock1Image(loaded.block1_image);
           if (loaded.about_block1_text1) setBlock1Text1(loaded.about_block1_text1);
           if (loaded.about_block1_text2) setBlock1Text2(loaded.about_block1_text2);
           if (loaded.about_block2_title) setBlock2Title(loaded.about_block2_title);
           if (loaded.about_block2_image) setBlock2Image(loaded.about_block2_image);
+          else if (loaded.block2_image) setBlock2Image(loaded.block2_image);
           if (loaded.about_block2_text1) setBlock2Text1(loaded.about_block2_text1);
           if (loaded.about_block2_text2) setBlock2Text2(loaded.about_block2_text2);
+          if (loaded.about_founder_image) setFounderImage(loaded.about_founder_image);
+          else if (loaded.founder_image) setFounderImage(loaded.founder_image);
         }
       } catch (err) {
         console.warn('Failed to load about page settings:', err);
@@ -84,7 +101,7 @@ export default function About() {
               </div>
             ) : (
               <img
-                src={block1Image}
+                src={getImageUrl(block1Image)}
                 alt="Artisanal blooms background"
                 className="w-full h-full object-cover"
                 onError={() => setImg1Error(true)}
@@ -99,7 +116,7 @@ export default function About() {
         </div>
 
         {/* Handmade with Love section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center md:flex-row-reverse">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
           <div className="md:order-last relative rounded-3xl overflow-hidden aspect-[4/3] bg-brand-cream border border-brand-border/40 shadow-xs select-none">
             {!block2Image || img2Error ? (
               <div className="w-full h-full bg-gradient-to-br from-[#F5EDE6] to-[#EADFD5] flex items-center justify-center select-none text-brand-accent/60">
@@ -107,7 +124,7 @@ export default function About() {
               </div>
             ) : (
               <img
-                src={block2Image}
+                src={getImageUrl(block2Image)}
                 alt="Hand-tying bouquets"
                 className="w-full h-full object-cover"
                 onError={() => setImg2Error(true)}
@@ -118,6 +135,31 @@ export default function About() {
             <h2 className="font-serif text-2xl font-bold text-brand-heading">{block2Title}</h2>
             {block2Text1 && <p>{block2Text1}</p>}
             {block2Text2 && <p>{block2Text2}</p>}
+          </div>
+        </div>
+
+        {/* Meet the Maker (Founder) Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center pt-8">
+          <div className="relative rounded-3xl overflow-hidden aspect-[4/3] bg-brand-cream border border-brand-border/40 shadow-xs select-none">
+            {!founderImage || founderImgError ? (
+              <div className="w-full h-full bg-gradient-to-br from-[#F5EDE6] to-[#EADFD5] flex items-center justify-center select-none text-brand-accent/60">
+                <User size={36} strokeWidth={1} className="text-[#8FA088]/60" />
+              </div>
+            ) : (
+              <img
+                src={getImageUrl(founderImage)}
+                alt="Warisha Shariq, Founder"
+                className="w-full h-full object-cover"
+                onError={() => setFounderImgError(true)}
+              />
+            )}
+          </div>
+          <div className="space-y-4 font-sans text-brand-body/80 leading-relaxed text-sm">
+            <span className="text-xs uppercase tracking-widest text-[#8FA088] font-sans font-semibold">MEET THE MAKER</span>
+            <h2 className="font-serif text-2xl font-bold text-brand-heading">Warisha Shariq</h2>
+            <p>
+              Every bouquet, arrangement, and custom card is personally designed and handcrafted by Warisha. Her passion for blending organic textures with high-quality yarn brings the studio's cozy and romantic vision to life.
+            </p>
           </div>
         </div>
 

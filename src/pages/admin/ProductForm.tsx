@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useOutletContext, useNavigate, useParams } from 'react-router-dom';
 import { Upload, X, Check } from 'lucide-react';
 import type { AdminContext } from './types';
-import type { SupabaseProduct } from '../../types/database';
 import { supabase } from '../../lib/supabaseClient';
 import Toggle from '../../components/ui/Toggle';
 
@@ -191,9 +190,10 @@ export default function ProductForm() {
 
       if (error) throw error;
 
-      const { data: { publicUrl } } = supabase.storage
+      const { data } = supabase.storage
         .from('product-images')
-        .getPublicUrl(filePath);
+        .getPublicUrl(`products/${fixedName}`);
+      const publicUrl = data.publicUrl;
 
       setImageUrls(prev => {
         const updated = [...prev];
@@ -247,9 +247,10 @@ export default function ProductForm() {
 
       if (error) throw error;
 
-      const { data: { publicUrl } } = supabase.storage
+      const { data } = supabase.storage
         .from('product-images')
-        .getPublicUrl(filePath);
+        .getPublicUrl(`products/${fixedName}`);
+      const publicUrl = data.publicUrl;
 
       setImageUrls(prev => {
         const updated = [...prev];
@@ -304,7 +305,7 @@ export default function ProductForm() {
     const categoryId = matchedCategory ? matchedCategory.id : null;
 
     const productSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-    const productData: Omit<SupabaseProduct, 'id' | 'created_at'> = {
+    const productData: any = {
       name: name.trim(),
       slug: productSlug,
       price: parseFloat(price),
@@ -320,6 +321,7 @@ export default function ProductForm() {
       is_featured: isFeatured,
       show_in_related: showInRelated,
       image: imageUrls[0],
+      image_url: imageUrls[0],
       images: imageUrls.filter(Boolean),
       bullet_points: badges.slice(0, 4), // Store up to 4 highlights in old column or keep all badges
       badges,
@@ -334,16 +336,35 @@ export default function ProductForm() {
       if (mode === 'add') {
         const newId = `p-${Date.now()}`;
         const finalProduct = { id: newId, ...productData };
-        const { error } = await supabase.from('products').insert(finalProduct);
+        let { error } = await supabase.from('products').insert(finalProduct);
+        
+        if (error && error.message.includes('image_url')) {
+          // Retry without image_url
+          const { image_url, ...retryData } = finalProduct;
+          const retryRes = await supabase.from('products').insert(retryData);
+          error = retryRes.error;
+        }
+        
         if (error) throw error;
 
         setProducts([finalProduct, ...products]);
         showToast('Saved successfully!', 'success');
       } else {
-        const { error } = await supabase
+        let { error } = await supabase
           .from('products')
           .update(productData)
           .eq('id', id);
+          
+        if (error && error.message.includes('image_url')) {
+          // Retry without image_url
+          const { image_url, ...retryData } = productData;
+          const retryRes = await supabase
+            .from('products')
+            .update(retryData)
+            .eq('id', id);
+          error = retryRes.error;
+        }
+        
         if (error) throw error;
 
         setProducts(products.map(p => p.id === id ? { ...p, ...productData } : p));

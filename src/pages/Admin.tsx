@@ -372,7 +372,8 @@ export default function Admin() {
         whatsapp_number: loaded.whatsapp_number || '916386422660',
         contact_email: loaded.contact_email || 'hello@fuzzysoftstudio.com',
         offer_line: contentLoaded.offer_line || '🌸 Mother\'s Day Special: Use code BLOOM20 for 20% off all bouquets! 🌸',
-        banner_url: contentLoaded.banner_url || ''
+        banner_url: contentLoaded.banner_url || '',
+        store_logo_url: loaded.store_logo_url || ''
       };
 
       setSettings(newSettings);
@@ -522,9 +523,18 @@ export default function Admin() {
       <aside className="hidden md:flex flex-col justify-between w-64 h-full border-r border-brand-border/40 bg-[#F5EDE6]/60 shrink-0 select-none">
         <div className="p-6 space-y-8 overflow-y-auto max-h-[85vh]">
           {/* Logo Header */}
-          <div>
-            <span className="font-script text-3.5xl text-brand-heading block leading-none">Admin</span>
-            <span className="text-[9px] tracking-[0.25em] font-sans font-bold text-brand-heading/70 uppercase">Fuzzy Soft Studio</span>
+          <div className="flex items-center gap-3">
+            {settings?.store_logo_url && (
+              <img 
+                src={settings.store_logo_url} 
+                alt="Fuzzy Soft Studio Logo" 
+                className="w-10 h-10 object-cover rounded-full border border-brand-border/30 shadow-xs" 
+              />
+            )}
+            <div>
+              <span className="font-script text-3.5xl text-brand-heading block leading-none">Admin</span>
+              <span className="text-[9px] tracking-[0.25em] font-sans font-bold text-brand-heading/70 uppercase">Fuzzy Soft Studio</span>
+            </div>
           </div>
 
           {/* Links list */}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { Settings as SettingsIcon, Truck, Bell, Activity } from 'lucide-react';
+import { Settings as SettingsIcon, Truck, Bell, Activity, Upload } from 'lucide-react';
 import type { AdminContext } from './types';
 import { supabase } from '../../lib/supabaseClient';
 import Toggle from '../../components/ui/Toggle';
@@ -25,6 +25,8 @@ export default function Settings() {
   const [whatsapp, setWhatsapp] = useState('');
   const [email, setEmail] = useState('');
   const [orderIdPrefix, setOrderIdPrefix] = useState('FSS-');
+  const [storeLogoUrl, setStoreLogoUrl] = useState('');
+  const [uploadingLogo, setUploadingLogo] = useState(false);
 
   // Notifications
   const [whatsappAlerts, setWhatsappAlerts] = useState(true);
@@ -32,12 +34,75 @@ export default function Settings() {
 
   const [saving, setSaving] = useState(false);
 
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingLogo(true);
+    try {
+      const { error: uploadErr } = await supabase.storage
+        .from('content')
+        .upload('store-logo.webp', file, { upsert: true });
+
+      if (uploadErr) throw uploadErr;
+
+      const { data } = supabase.storage
+        .from('content')
+        .getPublicUrl('store-logo.webp');
+      
+      const publicUrl = data.publicUrl;
+      setStoreLogoUrl(publicUrl);
+
+      const payloadObject = {
+        store_open: storeOpen,
+        low_stock_threshold: lowStockThreshold,
+        free_delivery_threshold: freeThreshold,
+        shipping_charges: shippingFee,
+        whatsapp_number: whatsapp.trim(),
+        contact_email: email.trim(),
+        cod_available: codAvailable,
+        cod_charge: codCharge,
+        whatsapp_alerts: whatsappAlerts,
+        email_alerts: emailAlerts,
+        order_id_prefix: orderIdPrefix.trim(),
+        store_logo_url: publicUrl
+      };
+
+      const { error: saveErr } = await supabase
+        .from('store_settings')
+        .upsert(
+          { key: 'general', value: payloadObject, updated_at: new Date().toISOString() },
+          { onConflict: 'key' }
+        );
+
+      if (saveErr) throw saveErr;
+
+      setSettings({
+        free_delivery_threshold: freeThreshold,
+        shipping_charges: shippingFee,
+        whatsapp_number: whatsapp.trim(),
+        contact_email: email.trim(),
+        offer_line: settings.offer_line,
+        banner_url: settings.banner_url,
+        store_logo_url: publicUrl
+      });
+
+      alert('Logo uploaded successfully!');
+    } catch (err: any) {
+      console.error('Logo upload error:', err);
+      alert('Upload failed: ' + err.message);
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
   // Sync settings when loaded
   useEffect(() => {
     setFreeThreshold(settings.free_delivery_threshold);
     setShippingFee(settings.shipping_charges);
     setWhatsapp(settings.whatsapp_number);
     setEmail(settings.contact_email);
+    setStoreLogoUrl(settings.store_logo_url || '');
 
     // Fetch extra custom settings keys
     const fetchSettingsFromDB = async () => {
@@ -62,6 +127,7 @@ export default function Settings() {
             if (val.whatsapp_alerts !== undefined) setWhatsappAlerts(val.whatsapp_alerts === true || val.whatsapp_alerts === 'true');
             if (val.email_alerts !== undefined) setEmailAlerts(val.email_alerts === true || val.email_alerts === 'true');
             if (val.order_id_prefix !== undefined) setOrderIdPrefix(String(val.order_id_prefix || 'FSS-'));
+            if (val.store_logo_url !== undefined) setStoreLogoUrl(String(val.store_logo_url || ''));
           }
         }
       } catch (err) {
@@ -87,7 +153,8 @@ export default function Settings() {
       cod_charge: codCharge,
       whatsapp_alerts: whatsappAlerts,
       email_alerts: emailAlerts,
-      order_id_prefix: orderIdPrefix.trim()
+      order_id_prefix: orderIdPrefix.trim(),
+      store_logo_url: storeLogoUrl
     };
 
     try {
@@ -113,7 +180,8 @@ export default function Settings() {
         whatsapp_number: whatsapp.trim(),
         contact_email: email.trim(),
         offer_line: settings.offer_line,
-        banner_url: settings.banner_url
+        banner_url: settings.banner_url,
+        store_logo_url: storeLogoUrl
       });
       localStorage.setItem('fuzzy-soft-studio-settings', JSON.stringify(payloadObject));
     } catch (err: any) {
@@ -154,6 +222,37 @@ export default function Settings() {
               className="w-24 h-11 px-4 bg-white border border-brand-border/60 rounded-xl text-xs font-sans focus:outline-none" 
             />
             <span className="text-xs text-brand-body/55 font-sans">Threshold at which products trigger a low stock alert on Dashboard</span>
+          </div>
+        </div>
+
+        <hr className="border-brand-border/20" />
+
+        <div className="space-y-2 pt-2">
+          <label className="block text-[10px] font-semibold uppercase tracking-wider text-brand-heading">Store Logo</label>
+          <p className="text-xs text-brand-body/60 font-sans">Upload your brand logo for the header and navigation</p>
+          <div className="flex items-center gap-4 pt-1">
+            {storeLogoUrl ? (
+              <img 
+                src={storeLogoUrl} 
+                alt="Store Logo" 
+                className="w-20 h-20 rounded-full object-cover border border-brand-border/40 shadow-xs" 
+              />
+            ) : (
+              <div className="w-20 h-20 rounded-full bg-brand-cream/40 border border-brand-border/60 flex items-center justify-center text-[10px] text-brand-body/50 font-sans">
+                No Logo
+              </div>
+            )}
+            <label className="h-11 px-5 bg-brand-cream/80 hover:bg-brand-cream border border-brand-border text-brand-heading rounded-full flex items-center justify-center gap-1.5 cursor-pointer text-xs font-semibold select-none active:scale-95 transition">
+              <Upload size={14} />
+              <span>{uploadingLogo ? 'Uploading...' : 'Upload Logo'}</span>
+              <input 
+                type="file" 
+                accept="image/png, image/jpeg, image/svg+xml, image/webp" 
+                onChange={handleLogoUpload} 
+                className="hidden" 
+                disabled={uploadingLogo} 
+              />
+            </label>
           </div>
         </div>
 

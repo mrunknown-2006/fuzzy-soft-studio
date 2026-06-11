@@ -1,43 +1,48 @@
-import React from 'react';
 
 interface ToggleProps {
   checked: boolean;
   onChange: (val: boolean) => void;
   disabled?: boolean;
-  label?: string;
 }
 
-export default function Toggle({ checked, onChange, disabled = false, label }: ToggleProps) {
-  const handleToggle = (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (!disabled) {
-      onChange(!checked);
-    }
-  };
-
+export default function Toggle({ checked, onChange, disabled = false }: ToggleProps) {
   return (
-    <div 
-      className={`flex items-center gap-3 select-none ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`} 
-      onClick={handleToggle}
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      disabled={disabled}
+      onClick={() => !disabled && onChange(!checked)}
+      style={{
+        position: 'relative',
+        display: 'inline-flex',
+        alignItems: 'center',
+        width: '52px',
+        height: '28px',
+        borderRadius: '9999px',
+        backgroundColor: checked ? '#22c55e' : '#d1d5db',
+        border: 'none',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.5 : 1,
+        transition: 'background-color 200ms ease',
+        flexShrink: 0,
+        padding: '3px',
+      }}
     >
-      <button
-        type="button"
-        disabled={disabled}
-        className={`relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none ${
-          checked ? 'bg-[#22c55e]' : 'bg-[#d1d5db]'
-        } ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-      >
-        <span
-          className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${
-            checked ? 'translate-x-6' : 'translate-x-0.5'
-          }`}
-        />
-      </button>
-      {label && (
-        <span className="text-xs font-semibold uppercase tracking-wider text-brand-heading">
-          {label}
-        </span>
-      )}
-    </div>
+      <span
+        style={{
+          position: 'absolute',
+          top: '4px',
+          left: checked ? '24px' : '4px',
+          width: '20px',
+          height: '20px',
+          borderRadius: '9999px',
+          backgroundColor: 'white',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+          transition: 'left 200ms ease',
+          display: 'block',
+        }}
+      />
+    </button>
   );
 }

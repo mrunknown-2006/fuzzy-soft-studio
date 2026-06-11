@@ -7,6 +7,7 @@ export interface SiteSettings {
   contact_email: string;
   offer_line: string;
   banner_url?: string;
+  store_logo_url?: string;
 }
 
 export interface AdminContext {

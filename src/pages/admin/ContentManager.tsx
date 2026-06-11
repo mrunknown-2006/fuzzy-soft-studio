@@ -54,6 +54,7 @@ export default function ContentManager() {
   const [aboutBlock2Text1, setAboutBlock2Text1] = useState('');
   const [aboutBlock2Text2, setAboutBlock2Text2] = useState('');
   const [aboutBlock2Image, setAboutBlock2Image] = useState('');
+  const [aboutFounderImage, setAboutFounderImage] = useState('');
 
   // 4. Contact Fields
   const [contactTitle, setContactTitle] = useState('');
@@ -118,11 +119,12 @@ export default function ContentManager() {
         setAboutBlock1Title(loaded.about_block1_title || '');
         setAboutBlock1Text1(loaded.about_block1_text1 || '');
         setAboutBlock1Text2(loaded.about_block1_text2 || '');
-        setAboutBlock1Image(loaded.about_block1_image || '');
+        setAboutBlock1Image(loaded.about_block1_image || loaded.block1_image || '');
         setAboutBlock2Title(loaded.about_block2_title || '');
         setAboutBlock2Text1(loaded.about_block2_text1 || '');
         setAboutBlock2Text2(loaded.about_block2_text2 || '');
-        setAboutBlock2Image(loaded.about_block2_image || '');
+        setAboutBlock2Image(loaded.about_block2_image || loaded.block2_image || '');
+        setAboutFounderImage(loaded.founder_image || loaded.about_founder_image || '');
 
         // Contact
         setContactTitle(loaded.contact_title || '');
@@ -241,16 +243,120 @@ export default function ContentManager() {
         .from('content')
         .getPublicUrl(filePath);
 
-      if (index === 10) setHeroBannerUrl(publicUrl);
-      if (index === 11) setAboutBlock1Image(publicUrl);
-      if (index === 12) setAboutBlock2Image(publicUrl);
-      if (index === 13) setHomeBannerUrl(publicUrl);
+      if (index === 10) {
+        setHeroBannerUrl(publicUrl);
+        const sectionPayload = {
+          hero_banner_url: publicUrl,
+          hero_badge: heroBadge,
+          hero_title_1: heroTitle1,
+          hero_title_2: heroTitle2,
+          hero_title_3: heroTitle3,
+          hero_tagline: heroTagline,
+          hero_cta_text: heroCta,
+        };
+        await supabase.from('site_content').upsert(
+          { id: 'hero', content: sectionPayload, updated_at: new Date().toISOString() },
+          { onConflict: 'id' }
+        );
+      }
+      if (index === 11) {
+        setAboutBlock1Image(publicUrl);
+        const sectionPayload = {
+          about_hero_title: aboutHeroTitle,
+          about_hero_subtitle: aboutHeroSubtitle,
+          about_block1_title: aboutBlock1Title,
+          about_block1_text1: aboutBlock1Text1,
+          about_block1_text2: aboutBlock1Text2,
+          about_block1_image: publicUrl,
+          block1_image: publicUrl,
+          about_block2_title: aboutBlock2Title,
+          about_block2_text1: aboutBlock2Text1,
+          about_block2_text2: aboutBlock2Text2,
+          about_block2_image: aboutBlock2Image,
+          block2_image: aboutBlock2Image,
+          about_founder_image: aboutFounderImage,
+          founder_image: aboutFounderImage,
+        };
+        await supabase.from('site_content').upsert(
+          { id: 'about', content: sectionPayload, updated_at: new Date().toISOString() },
+          { onConflict: 'id' }
+        );
+      }
+      if (index === 12) {
+        setAboutBlock2Image(publicUrl);
+        const sectionPayload = {
+          about_hero_title: aboutHeroTitle,
+          about_hero_subtitle: aboutHeroSubtitle,
+          about_block1_title: aboutBlock1Title,
+          about_block1_text1: aboutBlock1Text1,
+          about_block1_text2: aboutBlock1Text2,
+          about_block1_image: aboutBlock1Image,
+          block1_image: aboutBlock1Image,
+          about_block2_title: aboutBlock2Title,
+          about_block2_text1: aboutBlock2Text1,
+          about_block2_text2: aboutBlock2Text2,
+          about_block2_image: publicUrl,
+          block2_image: publicUrl,
+          about_founder_image: aboutFounderImage,
+          founder_image: aboutFounderImage,
+        };
+        await supabase.from('site_content').upsert(
+          { id: 'about', content: sectionPayload, updated_at: new Date().toISOString() },
+          { onConflict: 'id' }
+        );
+      }
+      if (index === 14) {
+        setAboutFounderImage(publicUrl);
+        const sectionPayload = {
+          about_hero_title: aboutHeroTitle,
+          about_hero_subtitle: aboutHeroSubtitle,
+          about_block1_title: aboutBlock1Title,
+          about_block1_text1: aboutBlock1Text1,
+          about_block1_text2: aboutBlock1Text2,
+          about_block1_image: aboutBlock1Image,
+          block1_image: aboutBlock1Image,
+          about_block2_title: aboutBlock2Title,
+          about_block2_text1: aboutBlock2Text1,
+          about_block2_text2: aboutBlock2Text2,
+          about_block2_image: aboutBlock2Image,
+          block2_image: aboutBlock2Image,
+          about_founder_image: publicUrl,
+          founder_image: publicUrl,
+        };
+        await supabase.from('site_content').upsert(
+          { id: 'about', content: sectionPayload, updated_at: new Date().toISOString() },
+          { onConflict: 'id' }
+        );
+      }
+      if (index === 13) {
+        setHomeBannerUrl(publicUrl);
+        const sectionPayload = {
+          offer_line: offerLine,
+          marquee_visible: marqueeVisible,
+          banner_url: publicUrl,
+          collection_banners: adminCollectionBanners,
+          garden_images: gardenImages
+        };
+        await supabase.from('site_content').upsert(
+          { id: 'announcements', content: sectionPayload, updated_at: new Date().toISOString() },
+          { onConflict: 'id' }
+        );
+      }
       if (index >= 30 && index <= 35) {
-        setGardenImages(prev => {
-          const next = [...prev];
-          next[index - 30] = publicUrl;
-          return next;
-        });
+        const next = [...gardenImages];
+        next[index - 30] = publicUrl;
+        setGardenImages(next);
+        const sectionPayload = {
+          offer_line: offerLine,
+          marquee_visible: marqueeVisible,
+          banner_url: homeBannerUrl,
+          collection_banners: adminCollectionBanners,
+          garden_images: next
+        };
+        await supabase.from('site_content').upsert(
+          { id: 'announcements', content: sectionPayload, updated_at: new Date().toISOString() },
+          { onConflict: 'id' }
+        );
       }
 
       showToast('Image uploaded successfully!', 'success');
@@ -292,6 +398,19 @@ export default function ContentManager() {
       const updated = [...adminCollectionBanners];
       updated[index] = { ...updated[index], image: publicUrl };
       setAdminCollectionBanners(updated);
+
+      // Save immediately
+      const announcementsPayload = {
+        offer_line: offerLine,
+        marquee_visible: marqueeVisible,
+        banner_url: homeBannerUrl,
+        collection_banners: updated,
+        garden_images: gardenImages
+      };
+      await supabase.from('site_content').upsert(
+        { id: 'announcements', content: announcementsPayload, updated_at: new Date().toISOString() },
+        { onConflict: 'id' }
+      );
 
       showToast('Collection banner uploaded!', 'success');
     } catch (err: any) {
@@ -372,10 +491,14 @@ export default function ContentManager() {
       about_block1_text1: aboutBlock1Text1,
       about_block1_text2: aboutBlock1Text2,
       about_block1_image: aboutBlock1Image,
+      block1_image: aboutBlock1Image,
       about_block2_title: aboutBlock2Title,
       about_block2_text1: aboutBlock2Text1,
       about_block2_text2: aboutBlock2Text2,
       about_block2_image: aboutBlock2Image,
+      block2_image: aboutBlock2Image,
+      about_founder_image: aboutFounderImage,
+      founder_image: aboutFounderImage,
     };
 
     const { data, error } = await supabase
@@ -759,6 +882,23 @@ export default function ContentManager() {
               <div className="space-y-1.5">
                 <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">Paragraph 2</label>
                 <textarea value={aboutBlock2Text2} onChange={e => setAboutBlock2Text2(e.target.value)} rows={4} className="w-full p-4 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none resize-none" />
+              </div>
+            </div>
+
+            <hr className="border-brand-border/20" />
+            <h4 className="text-xs uppercase tracking-widest text-brand-accent font-bold">Founder Section</h4>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">Founder Image</label>
+                <div className="flex gap-2">
+                  <input type="text" value={aboutFounderImage} onChange={e => setAboutFounderImage(e.target.value)} className="flex-grow h-11 px-4 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none" />
+                  <label className="h-11 px-4 bg-brand-cream/80 hover:bg-brand-cream border border-brand-border text-brand-heading rounded-xl flex items-center justify-center gap-1.5 cursor-pointer text-xs font-semibold select-none active:scale-95 transition shrink-0">
+                    <Upload size={14} />
+                    <span>{uploadingIndex === 14 ? '...' : 'Upload'}</span>
+                    <input type="file" accept="image/*" onChange={e => handleImageUpload(e, 14)} className="hidden" disabled={uploadingIndex !== null} />
+                  </label>
+                </div>
               </div>
             </div>
           </div>
