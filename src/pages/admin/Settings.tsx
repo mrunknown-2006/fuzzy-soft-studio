@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { Settings as SettingsIcon, Truck, Bell, Activity, Upload } from 'lucide-react';
+import { Settings as SettingsIcon, Truck, Bell, Activity, Upload, Trash2 } from 'lucide-react';
 import type { AdminContext } from './types';
 import { supabase } from '../../lib/supabaseClient';
 import Toggle from '../../components/ui/Toggle';
@@ -93,6 +93,52 @@ export default function Settings() {
       alert('Upload failed: ' + err.message);
     } finally {
       setUploadingLogo(false);
+    }
+  };
+
+  const handleLogoDelete = async () => {
+    if (!window.confirm('Are you sure you want to remove the store logo?')) return;
+
+    try {
+      setStoreLogoUrl('');
+
+      const payloadObject = {
+        store_open: storeOpen,
+        low_stock_threshold: lowStockThreshold,
+        free_delivery_threshold: freeThreshold,
+        shipping_charges: shippingFee,
+        whatsapp_number: whatsapp.trim(),
+        contact_email: email.trim(),
+        cod_available: codAvailable,
+        cod_charge: codCharge,
+        whatsapp_alerts: whatsappAlerts,
+        email_alerts: emailAlerts,
+        store_logo_url: ''
+      };
+
+      const { error: saveErr } = await supabase
+        .from('store_settings')
+        .upsert(
+          { key: 'general', value: payloadObject, updated_at: new Date().toISOString() },
+          { onConflict: 'key' }
+        );
+
+      if (saveErr) throw saveErr;
+
+      setSettings({
+        free_delivery_threshold: freeThreshold,
+        shipping_charges: shippingFee,
+        whatsapp_number: whatsapp.trim(),
+        contact_email: email.trim(),
+        offer_line: settings.offer_line,
+        banner_url: settings.banner_url,
+        store_logo_url: ''
+      });
+
+      alert('Logo removed successfully!');
+    } catch (err: any) {
+      console.error('Logo delete error:', err);
+      alert('Delete failed: ' + err.message);
     }
   };
 
@@ -253,6 +299,16 @@ export default function Settings() {
                 disabled={uploadingLogo} 
               />
             </label>
+            {storeLogoUrl && (
+              <button
+                type="button"
+                onClick={handleLogoDelete}
+                className="h-11 px-5 bg-red-50 hover:bg-red-100 border border-red-200 text-red-650 rounded-full flex items-center justify-center gap-1.5 cursor-pointer text-xs font-semibold select-none active:scale-95 transition"
+              >
+                <Trash2 size={14} />
+                <span>Remove Logo</span>
+              </button>
+            )}
           </div>
         </div>
 

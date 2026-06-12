@@ -8,7 +8,8 @@ import {
   Layout, 
   Megaphone, 
   Upload, 
-  ArrowLeft
+  ArrowLeft,
+  Trash2
 } from 'lucide-react';
 import type { AdminContext } from './types';
 import { supabase } from '../../lib/supabaseClient';
@@ -514,6 +515,73 @@ export default function ContentManager() {
     alert(`Garden slot ${slotIndex + 1} uploaded successfully!`);
   };
 
+  // Garden Grid image deletion logic
+  const handleGardenImageDelete = async (slotIndex: number) => {
+    if (!window.confirm(`Are you sure you want to delete the image in Garden Slot ${slotIndex + 1}?`)) return;
+
+    // Update local state immediately
+    const updatedSlots = [...gardenSlots];
+    updatedSlots[slotIndex] = { 
+      ...updatedSlots[slotIndex], 
+      url: '' 
+    };
+    setGardenSlots(updatedSlots);
+
+    // Auto-save to site_content immediately
+    const { error: saveError } = await supabase
+      .from('site_content')
+      .upsert({
+        id: 'garden_gallery',
+        content: { 
+          photos: updatedSlots.map(s => ({ 
+            url: s.url, 
+            caption: s.caption || '' 
+          }))
+        },
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'id' });
+
+    if (saveError) {
+      alert('Delete failed: ' + saveError.message);
+      return;
+    }
+
+    alert(`Garden slot ${slotIndex + 1} image removed successfully!`);
+  };
+
+  // Collection banner image deletion logic
+  const handleCollectionBannerDelete = async (index: number, slug: string) => {
+    if (!window.confirm(`Are you sure you want to delete the banner for ${adminCollectionBanners[index].name}?`)) return;
+
+    const updated = [...adminCollectionBanners];
+    updated[index] = { ...updated[index], image: '' };
+    setAdminCollectionBanners(updated);
+
+    // Save each banner URL to site_content id='collections'
+    let newBridal = bridalUrl;
+    let newEveryday = everydayUrl;
+    let newSeasonal = seasonalUrl;
+    let newGift = giftUrl;
+
+    if (slug === 'bridal-blooms') { newBridal = ''; setBridalUrl(''); }
+    else if (slug === 'everyday-luxury') { newEveryday = ''; setEverydayUrl(''); }
+    else if (slug === 'seasonal-picks') { newSeasonal = ''; setSeasonalUrl(''); }
+    else if (slug === 'gift-bouquets') { newGift = ''; setGiftUrl(''); }
+
+    await supabase.from('site_content').upsert({
+      id: 'collections',
+      content: {
+        bridal_blooms_url: newBridal,
+        everyday_luxury_url: newEveryday,
+        seasonal_picks_url: newSeasonal,
+        gift_bouquets_url: newGift,
+      },
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'id' });
+
+    alert('Collection banner removed!');
+  };
+
   // 1. Save Hero
   const handleSaveHero = async () => {
     setLoading(true);
@@ -785,6 +853,20 @@ export default function ContentManager() {
                   <span>{uploadingIndex === 10 ? '...' : 'Upload'}</span>
                   <input type="file" accept="image/*" onChange={e => handleImageUpload(e, 10)} className="hidden" disabled={uploadingIndex !== null} />
                 </label>
+                {heroBannerUrl && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm('Clear Hero Cover Banner?')) {
+                        setHeroBannerUrl('');
+                      }
+                    }}
+                    className="h-11 w-11 bg-red-50 hover:bg-red-100 border border-red-200 text-red-650 rounded-xl flex items-center justify-center cursor-pointer transition active:scale-95 shrink-0"
+                    title="Clear Image"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
               </div>
               {heroBannerUrl && (
                 <div className="mt-2 aspect-[21/9] w-full rounded-xl overflow-hidden border border-brand-border/30">
@@ -932,6 +1014,20 @@ export default function ContentManager() {
                     <span>{uploadingIndex === 11 ? '...' : 'Upload'}</span>
                     <input type="file" accept="image/*" onChange={e => handleImageUpload(e, 11)} className="hidden" disabled={uploadingIndex !== null} />
                   </label>
+                  {aboutBlock1Image && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (window.confirm('Clear Block 1 Image?')) {
+                          setAboutBlock1Image('');
+                        }
+                      }}
+                      className="h-11 w-11 bg-red-50 hover:bg-red-100 border border-red-200 text-red-650 rounded-xl flex items-center justify-center cursor-pointer transition active:scale-95 shrink-0"
+                      title="Clear Image"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -964,6 +1060,20 @@ export default function ContentManager() {
                     <span>{uploadingIndex === 12 ? '...' : 'Upload'}</span>
                     <input type="file" accept="image/*" onChange={e => handleImageUpload(e, 12)} className="hidden" disabled={uploadingIndex !== null} />
                   </label>
+                  {aboutBlock2Image && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (window.confirm('Clear Block 2 Image?')) {
+                          setAboutBlock2Image('');
+                        }
+                      }}
+                      className="h-11 w-11 bg-red-50 hover:bg-red-100 border border-red-200 text-red-650 rounded-xl flex items-center justify-center cursor-pointer transition active:scale-95 shrink-0"
+                      title="Clear Image"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -992,6 +1102,20 @@ export default function ContentManager() {
                     <span>{uploadingIndex === 14 ? '...' : 'Upload'}</span>
                     <input type="file" accept="image/*" onChange={e => handleImageUpload(e, 14)} className="hidden" disabled={uploadingIndex !== null} />
                   </label>
+                  {aboutFounderImage && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (window.confirm('Clear Founder Image?')) {
+                          setAboutFounderImage('');
+                        }
+                      }}
+                      className="h-11 w-11 bg-red-50 hover:bg-red-100 border border-red-200 text-red-650 rounded-xl flex items-center justify-center cursor-pointer transition active:scale-95 shrink-0"
+                      title="Clear Image"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -1162,6 +1286,20 @@ export default function ContentManager() {
                   <span>{uploadingIndex === 13 ? '...' : 'Upload'}</span>
                   <input type="file" accept="image/*" onChange={e => handleImageUpload(e, 13)} className="hidden" disabled={uploadingIndex !== null} />
                 </label>
+                {homeBannerUrl && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm('Clear Promotion Banner?')) {
+                        setHomeBannerUrl('');
+                      }
+                    }}
+                    className="h-11 w-11 bg-red-50 hover:bg-red-100 border border-red-200 text-red-650 rounded-xl flex items-center justify-center cursor-pointer transition active:scale-95 shrink-0"
+                    title="Clear Image"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
               </div>
               {homeBannerUrl && (
                 <div className="mt-2 aspect-[21/9] w-full rounded-xl overflow-hidden border border-brand-border/30">
@@ -1200,16 +1338,28 @@ export default function ContentManager() {
                       placeholder="Paste banner image URL"
                       className="w-full border border-brand-border/40 rounded-lg px-3 py-1.5 text-xs bg-white/80"
                     />
-                    <label className="h-8 w-full bg-brand-cream/80 hover:bg-brand-cream border border-brand-border text-brand-heading rounded-lg flex items-center justify-center gap-1.5 cursor-pointer text-[10px] font-bold select-none active:scale-95 transition">
-                      <Upload size={12} />
-                      <span>Upload WebP Banner</span>
-                      <input 
-                        type="file"
-                        accept="image/*"
-                        onChange={e => handleCollectionBannerUpload(e, index, banner.slug)}
-                        className="hidden"
-                      />
-                    </label>
+                    <div className="flex gap-2">
+                      <label className="h-8 flex-grow bg-brand-cream/80 hover:bg-brand-cream border border-brand-border text-brand-heading rounded-lg flex items-center justify-center gap-1.5 cursor-pointer text-[10px] font-bold select-none active:scale-95 transition">
+                        <Upload size={12} />
+                        <span>Upload WebP Banner</span>
+                        <input 
+                          type="file"
+                          accept="image/*"
+                          onChange={e => handleCollectionBannerUpload(e, index, banner.slug)}
+                          className="hidden"
+                        />
+                      </label>
+                      {banner.image && (
+                        <button
+                          type="button"
+                          onClick={() => handleCollectionBannerDelete(index, banner.slug)}
+                          className="h-8 w-8 bg-red-50 hover:bg-red-100 border border-red-200 text-red-650 rounded-lg flex items-center justify-center cursor-pointer transition active:scale-95 shrink-0"
+                          title="Delete Banner"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -1250,30 +1400,42 @@ export default function ContentManager() {
                         className="w-full border border-brand-border/40 rounded-lg px-2.5 py-1 text-[10px] bg-brand-cream/15 text-brand-body/60 font-mono focus:outline-none cursor-default"
                       />
                       
-                      <label className="h-8 w-full bg-brand-cream/80 hover:bg-brand-cream border border-brand-border text-brand-heading rounded-lg flex items-center justify-center gap-1 cursor-pointer text-[10px] font-semibold select-none active:scale-95 transition">
-                        <Upload size={10} />
-                        <span>{uploadingIndex === 30 + idx ? '...' : 'Upload WebP'}</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-                            setUploadingIndex(30 + idx);
-                            try {
-                              const webpBlob = await convertToWebP(file);
-                              const webpFile = new File([webpBlob], `garden-slot-${idx + 1}.webp`, { type: 'image/webp' });
-                              await handleGardenImageUpload(webpFile, idx);
-                            } catch (err: any) {
-                              alert('Upload failed: ' + err.message);
-                            } finally {
-                              setUploadingIndex(null);
-                            }
-                          }}
-                          className="hidden"
-                          disabled={uploadingIndex !== null}
-                        />
-                      </label>
+                      <div className="flex gap-2">
+                        <label className="h-8 flex-grow bg-brand-cream/80 hover:bg-brand-cream border border-brand-border text-brand-heading rounded-lg flex items-center justify-center gap-1 cursor-pointer text-[10px] font-semibold select-none active:scale-95 transition">
+                          <Upload size={10} />
+                          <span>{uploadingIndex === 30 + idx ? '...' : 'Upload WebP'}</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              setUploadingIndex(30 + idx);
+                              try {
+                                const webpBlob = await convertToWebP(file);
+                                const webpFile = new File([webpBlob], `garden-slot-${idx + 1}.webp`, { type: 'image/webp' });
+                                await handleGardenImageUpload(webpFile, idx);
+                              } catch (err: any) {
+                                alert('Upload failed: ' + err.message);
+                              } finally {
+                                setUploadingIndex(null);
+                              }
+                            }}
+                            className="hidden"
+                            disabled={uploadingIndex !== null}
+                          />
+                        </label>
+                        {slot.url && (
+                          <button
+                            type="button"
+                            onClick={() => handleGardenImageDelete(idx)}
+                            className="h-8 w-8 bg-red-50 hover:bg-red-100 border border-red-200 text-red-650 rounded-lg flex items-center justify-center cursor-pointer transition active:scale-95 shrink-0"
+                            title="Delete Image"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
