@@ -112,7 +112,7 @@ export default function App() {
   if (maintenance && !isAdminRoute) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-brand-bg text-center px-4">
-        <img src={logoUrl} className="max-h-12 w-auto object-contain mb-8" alt="Fuzzy Soft Studio Logo" />
+        <img src={logoUrl} className="h-24 md:h-32 max-w-xs md:max-w-sm w-auto object-contain mb-8" alt="Fuzzy Soft Studio Logo" />
         <h1 className="font-serif text-4xl text-brand-heading mb-4">
           We'll Be Back Soon 🌸
         </h1>
