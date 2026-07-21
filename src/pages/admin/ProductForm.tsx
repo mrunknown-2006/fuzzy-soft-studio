@@ -193,7 +193,7 @@ export default function ProductForm() {
       const { data } = supabase.storage
         .from('product-images')
         .getPublicUrl(`products/${fixedName}`);
-      const publicUrl = data.publicUrl;
+      const publicUrl = `${data.publicUrl}?t=${Date.now()}`;
 
       setImageUrls(prev => {
         const updated = [...prev];
@@ -250,7 +250,7 @@ export default function ProductForm() {
       const { data } = supabase.storage
         .from('product-images')
         .getPublicUrl(`products/${fixedName}`);
-      const publicUrl = data.publicUrl;
+      const publicUrl = `${data.publicUrl}?t=${Date.now()}`;
 
       setImageUrls(prev => {
         const updated = [...prev];
