@@ -8,7 +8,7 @@ import Toggle from '../../components/ui/Toggle';
 export default function ProductForm() {
   const { id } = useParams<{ id?: string }>();
   const navigate = useNavigate();
-  const { products, setProducts, categories, showToast } = useOutletContext<AdminContext>();
+  const { products, setProducts, categories, showToast, loadProducts } = useOutletContext<AdminContext>();
   const [dbCategories, setDbCategories] = useState<any[]>([]);
   const mode = id ? 'edit' : 'add';
 
@@ -405,6 +405,7 @@ export default function ProductForm() {
         if (error) throw error;
 
         setProducts([finalProduct, ...products]);
+        loadProducts().catch(err => console.warn('Background refetch failed:', err));
         showToast('Saved successfully!', 'success');
       } else {
         let { error } = await supabase
@@ -425,10 +426,12 @@ export default function ProductForm() {
         if (error) throw error;
 
         setProducts(products.map(p => p.id === id ? { ...p, ...productData } : p));
+        loadProducts().catch(err => console.warn('Background refetch failed:', err));
         showToast('Saved successfully!', 'success');
       }
       navigate('/admin/products');
     } catch (err: any) {
+      console.error('SUPABASE SAVE PRODUCT FAILURE:', err);
       showToast(err.message || 'Failed to save product', 'error');
     }
   };

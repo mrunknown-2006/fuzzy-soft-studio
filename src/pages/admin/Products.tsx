@@ -7,7 +7,7 @@ import { supabase } from '../../lib/supabaseClient';
 
 export default function Products() {
   const navigate = useNavigate();
-  const { products, setProducts, showToast } = useOutletContext<AdminContext>();
+  const { products, setProducts, showToast, loadProducts } = useOutletContext<AdminContext>();
 
   // State
   const [productSearch, setProductSearch] = useState('');
@@ -115,8 +115,10 @@ export default function Products() {
       if (error) throw error;
 
       setProducts(products.map(p => p.id === product.id ? { ...p, price: newPrice } : p));
+      loadProducts().catch(err => console.warn('Background refetch failed:', err));
       showToast(`Price updated to ₹${newPrice}`, 'success');
     } catch (err: any) {
+      console.error('SUPABASE INLINE PRICE UPDATE FAILURE:', err);
       showToast(`Failed: ${err.message}`, 'error');
     } finally {
       setInlineEditPrice(null);
@@ -137,8 +139,10 @@ export default function Products() {
       if (error) throw error;
 
       setProducts(products.map(p => p.id === product.id ? { ...p, stock: newStock } : p));
+      loadProducts().catch(err => console.warn('Background refetch failed:', err));
       showToast(`Stock updated to ${newStock} items`, 'success');
     } catch (err: any) {
+      console.error('SUPABASE INLINE STOCK UPDATE FAILURE:', err);
       showToast(`Failed: ${err.message}`, 'error');
     } finally {
       setInlineEditStock(null);
@@ -155,8 +159,10 @@ export default function Products() {
       if (error) throw error;
 
       setProducts(products.map(p => p.id === product.id ? { ...p, active: newActiveState, is_active: newActiveState } : p));
+      loadProducts().catch(err => console.warn('Background refetch failed:', err));
       showToast(`Product ${newActiveState ? 'activated' : 'deactivated'}`, 'success');
     } catch (err: any) {
+      console.error('SUPABASE TOGGLE ACTIVE STATE FAILURE:', err);
       showToast(`Failed: ${err.message}`, 'error');
     }
   };
@@ -171,8 +177,10 @@ export default function Products() {
       if (error) throw error;
 
       setProducts(products.filter(p => p.id !== id));
+      loadProducts().catch(err => console.warn('Background refetch failed:', err));
       showToast('Product deleted successfully', 'success');
     } catch (err: any) {
+      console.error('SUPABASE PRODUCT DELETE FAILURE:', err);
       showToast(`Failed to delete product: ${err.message}`, 'error');
     }
   };

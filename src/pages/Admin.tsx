@@ -482,6 +482,7 @@ export default function Admin() {
     lowStockThreshold,
     setLowStockThreshold,
     loadAllData,
+    loadProducts,
     storeOpen,
     setStoreOpen,
     storeClosedMessage,

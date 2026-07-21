@@ -30,6 +30,7 @@ export interface AdminContext {
   lowStockThreshold: number;
   setLowStockThreshold: React.Dispatch<React.SetStateAction<number>>;
   loadAllData: () => Promise<void>;
+  loadProducts: () => Promise<void>;
   storeOpen: boolean;
   setStoreOpen: React.Dispatch<React.SetStateAction<boolean>>;
   storeClosedMessage: string;
