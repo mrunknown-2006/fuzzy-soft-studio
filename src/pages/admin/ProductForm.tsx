@@ -59,6 +59,7 @@ export default function ProductForm() {
   // Image Uploads (6 Slots)
   const [imageUrls, setImageUrls] = useState<string[]>(Array(6).fill(''));
   const [uploadingSlot, setUploadingSlot] = useState<number | null>(null);
+  const [originalProduct, setOriginalProduct] = useState<any>(null);
 
   const presetBadges = ['100% Handcrafted', 'Long-lasting Bloom', 'Customizable Order', 'Allergen & Pet Safe', 'Best Seller', 'New Arrival'];
 
@@ -71,40 +72,66 @@ export default function ProductForm() {
 
   // Load existing product details on Edit Mode
   useEffect(() => {
+    let active = true;
     if (mode === 'edit' && id) {
-      const product = products.find(p => p.id === id);
-      if (product) {
-        setName(product.name || '');
-        setPrice(product.price?.toString() || '');
-        setCompareAtPrice(product.compare_at_price?.toString() || '');
-        setCategory(product.category || categories[0] || '');
-        setCollection(product.collection || 'everyday-luxury');
-        setStock(product.stock?.toString() || '0');
-        setSku(product.sku || '');
-        setLowStockThreshold(product.low_stock_threshold?.toString() || '5');
+      const loadProduct = async () => {
+        // Try finding locally first
+        let product = products.find(p => p.id === id);
         
-        setIsActive(product.active);
-        setIsFeatured(product.is_featured || false);
-        setShowInRelated(product.show_in_related !== undefined ? product.show_in_related : true);
-
-        setSlug(product.slug || '');
-        setMetaTitle(product.meta_title || '');
-        setMetaDescription(product.meta_description || '');
-        setDescription(product.description || '');
-        setCareInstructions(product.care_instructions || '');
-        setDeliveryInfo(product.delivery_info || '');
-        setBadges(product.badges || []);
-
-        const urls = Array(6).fill('');
-        if (product.image) urls[0] = product.image;
-        if (product.images) {
-          product.images.forEach((img, idx) => {
-            if (idx < 6) urls[idx] = img;
-          });
+        // Fallback: fetch from Supabase
+        if (!product) {
+          try {
+            const { data, error } = await supabase
+              .from('products')
+              .select('*')
+              .eq('id', id)
+              .single();
+            if (data && !error) {
+              product = data;
+            }
+          } catch (err) {
+            console.error('Failed to fetch product directly:', err);
+          }
         }
-        setImageUrls(urls);
-      }
+        
+        if (product && active) {
+          setOriginalProduct(product);
+          setName(product.name || '');
+          setPrice(product.price?.toString() || '');
+          setCompareAtPrice(product.compare_at_price?.toString() || '');
+          setCategory(product.category || categories[0] || '');
+          setCollection(product.collection || 'everyday-luxury');
+          setStock(product.stock?.toString() || '0');
+          setSku(product.sku || '');
+          setLowStockThreshold(product.low_stock_threshold?.toString() || '5');
+          
+          setIsActive(product.active);
+          setIsFeatured(product.is_featured || false);
+          setShowInRelated(product.show_in_related !== undefined ? product.show_in_related : true);
+
+          setSlug(product.slug || '');
+          setMetaTitle(product.meta_title || '');
+          setMetaDescription(product.meta_description || '');
+          setDescription(product.description || '');
+          setCareInstructions(product.care_instructions || '');
+          setDeliveryInfo(product.delivery_info || '');
+          setBadges(product.badges || []);
+
+          const urls = Array(6).fill('');
+          if (product.image) urls[0] = product.image;
+          if (product.images) {
+            product.images.forEach((img, idx) => {
+              if (idx < 6) urls[idx] = img;
+            });
+          }
+          setImageUrls(urls);
+        }
+      };
+      loadProduct();
     }
+    return () => {
+      active = false;
+    };
   }, [mode, id, products, categories]);
 
   // Handle URL slug generation
@@ -305,32 +332,62 @@ export default function ProductForm() {
     const categoryId = matchedCategory ? matchedCategory.id : null;
 
     const productSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-    const productData: any = {
-      name: name.trim(),
-      slug: productSlug,
-      price: parseFloat(price),
-      compare_at_price: compareAtPrice ? parseFloat(compareAtPrice) : null,
-      category,
-      category_id: categoryId,
-      collection,
-      stock: parseInt(stock) || 0,
-      sku: sku.trim() || undefined,
-      low_stock_threshold: parseInt(lowStockThreshold) || 5,
-      active: isActive,
-      is_active: isActive,
-      is_featured: isFeatured,
-      show_in_related: showInRelated,
-      image: imageUrls[0],
-      image_url: imageUrls[0],
-      images: imageUrls.filter(Boolean),
-      bullet_points: badges.slice(0, 4), // Store up to 4 highlights in old column or keep all badges
-      badges,
-      care_instructions: careInstructions.trim(),
-      delivery_info: deliveryInfo.trim(),
-      description: description.trim() || 'Handcrafted luxury arrangement.',
-      meta_title: metaTitle.trim() || undefined,
-      meta_description: metaDescription.trim() || undefined,
-    };
+    let productData: any = {};
+    if (mode === 'add') {
+      productData = {
+        name: name.trim(),
+        slug: productSlug,
+        price: parseFloat(price),
+        compare_at_price: compareAtPrice ? parseFloat(compareAtPrice) : null,
+        category,
+        category_id: categoryId,
+        collection,
+        stock: parseInt(stock) || 0,
+        sku: sku.trim() || null,
+        low_stock_threshold: parseInt(lowStockThreshold) || 5,
+        active: isActive,
+        is_active: isActive,
+        is_featured: isFeatured,
+        show_in_related: showInRelated,
+        image: imageUrls[0],
+        image_url: imageUrls[0],
+        images: imageUrls.filter(Boolean),
+        bullet_points: badges.slice(0, 4),
+        badges,
+        care_instructions: careInstructions.trim(),
+        delivery_info: deliveryInfo.trim(),
+        description: description.trim() || 'Handcrafted luxury arrangement.',
+        meta_title: metaTitle.trim() || null,
+        meta_description: metaDescription.trim() || null,
+      };
+    } else {
+      productData = {
+        name: name.trim() || originalProduct?.name || '',
+        slug: productSlug || originalProduct?.slug || '',
+        price: !isNaN(parseFloat(price)) ? parseFloat(price) : (originalProduct?.price || 0),
+        compare_at_price: compareAtPrice ? parseFloat(compareAtPrice) : null,
+        category: category || originalProduct?.category || '',
+        category_id: categoryId || originalProduct?.category_id || null,
+        collection: collection || originalProduct?.collection || 'everyday-luxury',
+        stock: !isNaN(parseInt(stock)) ? parseInt(stock) : (originalProduct?.stock || 0),
+        sku: sku.trim() || null,
+        low_stock_threshold: !isNaN(parseInt(lowStockThreshold)) ? parseInt(lowStockThreshold) : (originalProduct?.low_stock_threshold || 5),
+        active: isActive,
+        is_active: isActive,
+        is_featured: isFeatured,
+        show_in_related: showInRelated,
+        image: imageUrls[0] || originalProduct?.image || '',
+        image_url: imageUrls[0] || originalProduct?.image_url || '',
+        images: imageUrls.filter(Boolean).length > 0 ? imageUrls.filter(Boolean) : (originalProduct?.images || []),
+        bullet_points: badges.length > 0 ? badges.slice(0, 4) : (originalProduct?.bullet_points || []),
+        badges: badges.length > 0 ? badges : (originalProduct?.badges || []),
+        care_instructions: careInstructions.trim() || originalProduct?.care_instructions || '',
+        delivery_info: deliveryInfo.trim() || originalProduct?.delivery_info || '',
+        description: description.trim() || originalProduct?.description || 'Handcrafted luxury arrangement.',
+        meta_title: metaTitle.trim() || null,
+        meta_description: metaDescription.trim() || null,
+      };
+    }
 
     try {
       if (mode === 'add') {
