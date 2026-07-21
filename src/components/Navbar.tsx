@@ -98,7 +98,7 @@ export default function Navbar() {
                 <img 
                   src={logoUrl} 
                   alt="Fuzzy Soft Studio" 
-                  className="h-12 w-12 rounded-full object-cover border border-brand-border/30 shadow-xs" 
+                  className="max-h-12 w-auto object-contain border border-brand-border/30 shadow-xs" 
                 />
               ) : (
                 <>

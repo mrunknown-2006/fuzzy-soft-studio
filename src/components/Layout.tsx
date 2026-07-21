@@ -18,8 +18,12 @@ export default function Layout() {
         if (data) {
           const generalSetting = data.find(s => s.key === 'general');
           let whatsappVal = '';
+          let faviconUrl = '';
+          let logoUrl = '';
           if (generalSetting && generalSetting.value) {
             whatsappVal = generalSetting.value.whatsapp_number || generalSetting.value.contact_whatsapp || '';
+            faviconUrl = generalSetting.value.favicon_url || '';
+            logoUrl = generalSetting.value.store_logo_url || '';
           }
           if (!whatsappVal) {
             const whatsappSetting = data.find(
@@ -32,6 +36,20 @@ export default function Layout() {
           const digits = whatsappVal.replace(/[^0-9]/g, '');
           if (digits && digits.length >= 10) {
             setWhatsappNumber(digits.slice(-10));
+          }
+
+          // Sync Favicon
+          const newFaviconUrl = faviconUrl || logoUrl;
+          if (newFaviconUrl) {
+            const link = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
+            if (link) {
+              link.href = newFaviconUrl;
+            } else {
+              const newLink = document.createElement('link');
+              newLink.rel = 'icon';
+              newLink.href = newFaviconUrl;
+              document.head.appendChild(newLink);
+            }
           }
         }
       } catch (err) {

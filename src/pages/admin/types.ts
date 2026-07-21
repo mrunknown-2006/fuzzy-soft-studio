@@ -8,6 +8,7 @@ export interface SiteSettings {
   offer_line: string;
   banner_url?: string;
   store_logo_url?: string;
+  favicon_url?: string;
 }
 
 export interface AdminContext {

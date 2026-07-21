@@ -189,6 +189,22 @@ export default function Admin() {
     }
   }, [session]);
 
+  // Synchronize browser tab icon
+  useEffect(() => {
+    const newFaviconUrl = settings.favicon_url || settings.store_logo_url;
+    if (newFaviconUrl) {
+      const link = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
+      if (link) {
+        link.href = newFaviconUrl;
+      } else {
+        const newLink = document.createElement('link');
+        newLink.rel = 'icon';
+        newLink.href = newFaviconUrl;
+        document.head.appendChild(newLink);
+      }
+    }
+  }, [settings.favicon_url, settings.store_logo_url]);
+
   const loadAllData = async () => {
     await Promise.all([
       loadProducts(),
@@ -373,7 +389,8 @@ export default function Admin() {
         contact_email: loaded.contact_email || 'hello@fuzzysoftstudio.com',
         offer_line: contentLoaded.offer_line || '🌸 Mother\'s Day Special: Use code BLOOM20 for 20% off all bouquets! 🌸',
         banner_url: contentLoaded.banner_url || '',
-        store_logo_url: loaded.store_logo_url || ''
+        store_logo_url: loaded.store_logo_url || '',
+        favicon_url: loaded.favicon_url || ''
       };
 
       setSettings(newSettings);
@@ -529,7 +546,7 @@ export default function Admin() {
               <img 
                 src={settings.store_logo_url} 
                 alt="Fuzzy Soft Studio Logo" 
-                className="w-10 h-10 object-cover rounded-full border border-brand-border/30 shadow-xs" 
+                className="max-h-12 w-auto object-contain border border-brand-border/30 shadow-xs" 
               />
             )}
             <div>

@@ -67,6 +67,7 @@ class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasErr
 }
 
 export default function App() {
+  const [logoUrl, setLogoUrl] = useState('/logo.png');
   const [maintenance, setMaintenance] = useState(false);
 
   useEffect(() => {
@@ -81,6 +82,9 @@ export default function App() {
         
         if (generalData?.value) {
           const val = generalData.value;
+          if (val.store_logo_url) {
+            setLogoUrl(val.store_logo_url);
+          }
           if (val.store_open === false || val.store_open === 'false') {
             setMaintenance(true);
             return;
@@ -108,7 +112,7 @@ export default function App() {
   if (maintenance && !isAdminRoute) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-brand-bg text-center px-4">
-        <img src="/logo.png" className="h-16 mb-8" alt="Fuzzy Soft Studio Logo" />
+        <img src={logoUrl} className="max-h-12 w-auto object-contain mb-8" alt="Fuzzy Soft Studio Logo" />
         <h1 className="font-serif text-4xl text-brand-heading mb-4">
           We'll Be Back Soon 🌸
         </h1>
