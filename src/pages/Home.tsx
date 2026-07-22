@@ -5,6 +5,13 @@ import ProductCard from '../components/ProductCard';
 import { products as staticProducts } from '../data/products';
 import { supabase } from '../lib/supabaseClient';
 
+const DEFAULT_BANNERS = [
+  { name: 'Bridal Blooms', slug: 'bridal-blooms', link: '/shop?category=bridal-blooms', image: 'https://hbzmkpeirngvbsdawcld.supabase.co/storage/v1/object/public/product-images/collection-bridal-blooms.png' },
+  { name: 'Everyday Luxury', slug: 'everyday-luxury', link: '/shop?category=everyday-luxury', image: 'https://hbzmkpeirngvbsdawcld.supabase.co/storage/v1/object/public/product-images/collection-everyday-luxury.png' },
+  { name: 'Seasonal Picks', slug: 'seasonal-picks', link: '/shop?category=seasonal-picks', image: 'https://hbzmkpeirngvbsdawcld.supabase.co/storage/v1/object/public/product-images/collection-seasonal-picks-1.png' },
+  { name: 'Gift Bouquets', slug: 'gift-bouquets', link: '/shop?category=gift-bouquets', image: 'https://hbzmkpeirngvbsdawcld.supabase.co/storage/v1/object/public/product-images/collection-gift-bouquets.png' },
+];
+
 export default function Home() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -36,7 +43,7 @@ export default function Home() {
   // Collections section state
   const [collectionsTitle, setCollectionsTitle] = useState('Our Collections');
   const [bannersCount, setBannersCount] = useState(4);
-  const [collectionBanners, setCollectionBanners] = useState<Array<{ name: string; slug: string; image?: string }>>([
+  const [collectionBanners, setCollectionBanners] = useState<Array<{ name: string; slug: string; image?: string; image_url?: string; link?: string }>>([
     {
       name: 'Bridal Blooms',
       slug: 'bridal-blooms'
@@ -56,28 +63,6 @@ export default function Home() {
   ]);
   const [collectionImageErrors, setCollectionImageErrors] = useState<Record<string, boolean>>({});
 
-  const getImageUrl = (filename: string) => {
-    const { data } = supabase.storage
-      .from('product-images')
-      .getPublicUrl(filename);
-    return data.publicUrl;
-  };
-
-  const getCollectionBannerFilename = (slug: string) => {
-    switch (slug) {
-      case 'bridal-blooms':
-        return 'collection-bridal-blooms.png';
-      case 'everyday-luxury':
-        return 'collection-everyday-luxury.png';
-      case 'seasonal-picks':
-        return 'collection-seasonal-picks-1.png';
-      case 'gift-bouquets':
-        return 'collection-gift-bouquets.png';
-      default:
-        return `collection-${slug}.png`;
-    }
-  };
-
 
 
   // Falling Petals State
@@ -85,7 +70,6 @@ export default function Home() {
 
   // Garden images state
   const [gardenImages, setGardenImages] = useState<any[]>([]);
-  const [collectionUrls, setCollectionUrls] = useState<Record<string, string>>({});
   const [instagramUrl, setInstagramUrl] = useState('https://instagram.com/fuzzysoftstudio');
 
   useEffect(() => {
@@ -101,35 +85,6 @@ export default function Home() {
               });
             }
           });
-        }
-
-        // Fetch collection banner URLs from site_content where id='collections'
-        try {
-          const { data: collectionsRes } = await supabase
-            .from('site_content')
-            .select('content')
-            .eq('id', 'collections')
-            .single();
-
-          const banners = collectionsRes?.content || {};
-          const urls: Record<string, string> = {};
-          const slugs = ['bridal-blooms', 'everyday-luxury', 'seasonal-picks', 'gift-bouquets'];
-          slugs.forEach(slug => {
-            let url = '';
-            if (slug === 'bridal-blooms') url = banners.bridal_blooms_url;
-            else if (slug === 'everyday-luxury') url = banners.everyday_luxury_url;
-            else if (slug === 'seasonal-picks') url = banners.seasonal_picks_url;
-            else if (slug === 'gift-bouquets') url = banners.gift_bouquets_url;
-            
-            if (!url) {
-              const filename = getCollectionBannerFilename(slug);
-              url = getImageUrl(filename);
-            }
-            urls[slug] = url;
-          });
-          setCollectionUrls(urls);
-        } catch (colErr) {
-          console.warn('Error loading collections banners:', colErr);
         }
 
         // Fetch garden gallery from site_content where id='garden_gallery'
@@ -638,15 +593,16 @@ export default function Home() {
         <div className={`grid gap-5 ${
           bannersCount === 6 ? 'grid-cols-2 lg:grid-cols-3' : 'grid-cols-2 lg:grid-cols-4'
         }`}>
-          {collectionBanners.slice(0, bannersCount).map((col) => {
-            const imageUrl = col.image || collectionUrls[col.slug] || '';
+          {collectionBanners.slice(0, bannersCount).map((col, index) => {
+            const imageUrl = col.image || col.image_url || (index < 4 ? DEFAULT_BANNERS[index].image : '');
+            const destinationLink = col.link || `/shop?category=${col.slug}`;
             return (
               <Link
-                key={col.slug}
-                to={`/shop?collection=${col.slug}`}
+                key={col.slug || index}
+                to={destinationLink}
                 className="collection-card group relative overflow-hidden rounded-2xl aspect-square ring-1 ring-transparent hover:ring-[#C9A84C] transition-all duration-500"
               >
-                {collectionImageErrors[col.slug] ? (
+                {collectionImageErrors[col.slug || index] ? (
                   <div className="w-full h-full bg-gradient-to-br from-rose-100 to-pink-50 flex items-center justify-center">
                     <span className="font-serif text-xl text-rose-800">{col.name}</span>
                   </div>
@@ -659,7 +615,7 @@ export default function Home() {
                       className="w-full h-full object-cover"
                       loading="lazy"
                       onError={(e) => {
-                        setCollectionImageErrors(prev => ({ ...prev, [col.slug]: true }));
+                        setCollectionImageErrors(prev => ({ ...prev, [col.slug || index]: true }));
                         e.currentTarget.style.display = 'none';
                         if (e.currentTarget.parentElement) {
                           e.currentTarget.parentElement.style.background = 

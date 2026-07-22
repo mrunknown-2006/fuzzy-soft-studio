@@ -15,6 +15,13 @@ import type { AdminContext } from './types';
 import { supabase } from '../../lib/supabaseClient';
 import Toggle from '../../components/ui/Toggle';
 
+const DEFAULT_BANNERS = [
+  { name: 'Bridal Blooms', slug: 'bridal-blooms', link: '/shop?category=bridal-blooms', image: 'https://hbzmkpeirngvbsdawcld.supabase.co/storage/v1/object/public/product-images/collection-bridal-blooms.png' },
+  { name: 'Everyday Luxury', slug: 'everyday-luxury', link: '/shop?category=everyday-luxury', image: 'https://hbzmkpeirngvbsdawcld.supabase.co/storage/v1/object/public/product-images/collection-everyday-luxury.png' },
+  { name: 'Seasonal Picks', slug: 'seasonal-picks', link: '/shop?category=seasonal-picks', image: 'https://hbzmkpeirngvbsdawcld.supabase.co/storage/v1/object/public/product-images/collection-seasonal-picks-1.png' },
+  { name: 'Gift Bouquets', slug: 'gift-bouquets', link: '/shop?category=gift-bouquets', image: 'https://hbzmkpeirngvbsdawcld.supabase.co/storage/v1/object/public/product-images/collection-gift-bouquets.png' },
+];
+
 export default function ContentManager() {
   const { 
     showToast,
@@ -87,11 +94,7 @@ export default function ContentManager() {
   const [homeBannerUrl, setHomeBannerUrl] = useState('');
   const [bannerSlotCount, setBannerSlotCount] = useState(4);
 
-  // 6.5 Collections & Garden slots states
-  const [bridalUrl, setBridalUrl] = useState('');
-  const [everydayUrl, setEverydayUrl] = useState('');
-  const [seasonalUrl, setSeasonalUrl] = useState('');
-  const [giftUrl, setGiftUrl] = useState('');
+  // 6.5 Garden slots states
   const [gardenSlots, setGardenSlots] = useState<Array<{ url: string; caption: string }>>([
     { url: '', caption: '' },
     { url: '', caption: '' },
@@ -193,15 +196,31 @@ export default function ContentManager() {
         setHomeBannerUrl(loaded.banner_url || '');
         setBannerSlotCount(Number(loaded.collection_banners_count) || 4);
 
+        let bannersFromDb: any[] = [];
         if (loaded.collection_banners) {
           try {
-            if (Array.isArray(loaded.collection_banners)) {
-              setAdminCollectionBanners(loaded.collection_banners);
-            } else {
-              setAdminCollectionBanners(JSON.parse(loaded.collection_banners));
-            }
+            bannersFromDb = Array.isArray(loaded.collection_banners)
+              ? loaded.collection_banners
+              : JSON.parse(loaded.collection_banners);
           } catch {}
         }
+
+        const filledBanners = Array.from({ length: 8 }, (_, idx) => {
+          const dbItem = bannersFromDb[idx] || {};
+          const fallback = idx < 4 ? DEFAULT_BANNERS[idx] : {
+            name: `Custom Banner Slot ${idx + 1}`,
+            slug: `custom-slot-${idx + 1}`,
+            link: '/shop',
+            image: ''
+          };
+          return {
+            name: dbItem.name || dbItem.title || fallback.name,
+            slug: dbItem.slug || fallback.slug,
+            link: dbItem.link || fallback.link,
+            image: dbItem.image || dbItem.image_url || fallback.image
+          };
+        });
+        setAdminCollectionBanners(filledBanners);
         if (loaded.garden_images) {
           try {
             if (Array.isArray(loaded.garden_images)) {
@@ -212,23 +231,7 @@ export default function ContentManager() {
           } catch {}
         }
 
-        // Load collections row banner URLs
-        const collectionsRow = data?.find((row: any) => row.id === 'collections');
-        if (collectionsRow && collectionsRow.content) {
-          const c = collectionsRow.content;
-          setBridalUrl(c.bridal_blooms_url || '');
-          setEverydayUrl(c.everyday_luxury_url || '');
-          setSeasonalUrl(c.seasonal_picks_url || '');
-          setGiftUrl(c.gift_bouquets_url || '');
-          
-          setAdminCollectionBanners(prev => prev.map(b => {
-            if (b.slug === 'bridal-blooms') return { ...b, image: c.bridal_blooms_url || b.image };
-            if (b.slug === 'everyday-luxury') return { ...b, image: c.everyday_luxury_url || b.image };
-            if (b.slug === 'seasonal-picks') return { ...b, image: c.seasonal_picks_url || b.image };
-            if (b.slug === 'gift-bouquets') return { ...b, image: c.gift_bouquets_url || b.image };
-            return b;
-          }));
-        }
+
 
         // Load Garden Slots from site_content where id='garden_gallery'
         const galleryRow = data?.find((row: any) => row.id === 'garden_gallery');
@@ -464,42 +467,31 @@ export default function ContentManager() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    showToast('Uploading collection banner...', 'success');
+    showToast('Uploading collection banner preview...', 'success');
     try {
       const webpBlob = await convertToWebP(file);
-      const webpFile = new File([webpBlob], `collection-${slug}.webp`, { type: 'image/webp' });
-      const fileName = `collection-${slug}.webp`;
+      const timestamp = Date.now();
+      const webpFile = new File([webpBlob], `collection-${slug}-${timestamp}.webp`, { type: 'image/webp' });
+      const fileName = `collection-${slug}-${timestamp}.webp`;
 
       const publicUrl = await uploadToContentBucket(webpFile, fileName);
       if (!publicUrl) return;
 
+      const cacheBustUrl = `${publicUrl}?t=${timestamp}`;
+
       const updated = [...adminCollectionBanners];
-      updated[index] = { ...updated[index], image: publicUrl };
+      while (updated.length <= index) {
+        updated.push({
+          name: updated.length < 4 ? DEFAULT_BANNERS[updated.length].name : `Custom Banner Slot ${updated.length + 1}`,
+          slug: updated.length < 4 ? DEFAULT_BANNERS[updated.length].slug : `custom-slot-${updated.length + 1}`,
+          link: updated.length < 4 ? DEFAULT_BANNERS[updated.length].link : '/shop',
+          image: ''
+        });
+      }
+      updated[index] = { ...updated[index], image: cacheBustUrl };
       setAdminCollectionBanners(updated);
 
-      // Save each banner URL to site_content id='collections'
-      let newBridal = bridalUrl;
-      let newEveryday = everydayUrl;
-      let newSeasonal = seasonalUrl;
-      let newGift = giftUrl;
-
-      if (slug === 'bridal-blooms') { newBridal = publicUrl; setBridalUrl(publicUrl); }
-      else if (slug === 'everyday-luxury') { newEveryday = publicUrl; setEverydayUrl(publicUrl); }
-      else if (slug === 'seasonal-picks') { newSeasonal = publicUrl; setSeasonalUrl(publicUrl); }
-      else if (slug === 'gift-bouquets') { newGift = publicUrl; setGiftUrl(publicUrl); }
-
-      await supabase.from('site_content').upsert({
-        id: 'collections',
-        content: {
-          bridal_blooms_url: newBridal,
-          everyday_luxury_url: newEveryday,
-          seasonal_picks_url: newSeasonal,
-          gift_bouquets_url: newGift,
-        },
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'id' });
-
-      alert('Collection banner uploaded!');
+      showToast('Collection banner uploaded locally! Click save below to publish.', 'success');
     } catch (err: any) {
       showToast('Upload failed: ' + err.message, 'error');
     } finally {
@@ -578,36 +570,15 @@ export default function ContentManager() {
   };
 
   // Collection banner image deletion logic
-  const handleCollectionBannerDelete = async (index: number, slug: string) => {
-    if (!window.confirm(`Are you sure you want to delete the banner for ${adminCollectionBanners[index].name}?`)) return;
+  const handleCollectionBannerDelete = async (index: number) => {
+    if (!window.confirm(`Are you sure you want to delete the banner for ${adminCollectionBanners[index]?.name || 'this slot'}?`)) return;
 
     const updated = [...adminCollectionBanners];
-    updated[index] = { ...updated[index], image: '' };
-    setAdminCollectionBanners(updated);
-
-    // Save each banner URL to site_content id='collections'
-    let newBridal = bridalUrl;
-    let newEveryday = everydayUrl;
-    let newSeasonal = seasonalUrl;
-    let newGift = giftUrl;
-
-    if (slug === 'bridal-blooms') { newBridal = ''; setBridalUrl(''); }
-    else if (slug === 'everyday-luxury') { newEveryday = ''; setEverydayUrl(''); }
-    else if (slug === 'seasonal-picks') { newSeasonal = ''; setSeasonalUrl(''); }
-    else if (slug === 'gift-bouquets') { newGift = ''; setGiftUrl(''); }
-
-    await supabase.from('site_content').upsert({
-      id: 'collections',
-      content: {
-        bridal_blooms_url: newBridal,
-        everyday_luxury_url: newEveryday,
-        seasonal_picks_url: newSeasonal,
-        gift_bouquets_url: newGift,
-      },
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'id' });
-
-    alert('Collection banner removed!');
+    if (updated[index]) {
+      updated[index] = { ...updated[index], image: '' };
+      setAdminCollectionBanners(updated);
+      showToast('Collection banner cleared locally! Click save below to publish.', 'success');
+    }
   };
 
   // 1. Save Hero
@@ -1451,14 +1422,15 @@ export default function ContentManager() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {Array.from({ length: bannerSlotCount }).map((_, index) => {
                 const banner = adminCollectionBanners[index] || {
-                  name: `Custom Banner Slot ${index + 1}`,
-                  slug: `custom-slot-${index + 1}`,
+                  name: index < 4 ? DEFAULT_BANNERS[index].name : `Custom Banner Slot ${index + 1}`,
+                  slug: index < 4 ? DEFAULT_BANNERS[index].slug : `custom-slot-${index + 1}`,
+                  link: index < 4 ? DEFAULT_BANNERS[index].link : '/shop',
                   image: ''
                 };
                 return (
-                  <div key={banner.slug || index} className="border border-brand-border/40 rounded-xl p-4 bg-white/50 space-y-3">
-                    <div className="flex justify-between items-center">
-                      <p className="font-semibold text-sm text-brand-heading">{banner.name}</p>
+                  <div key={banner.slug || index} className="border border-brand-border/40 rounded-xl p-4 bg-white/50 space-y-4 shadow-2xs">
+                    <div className="flex justify-between items-center border-b border-brand-border/10 pb-2">
+                      <p className="font-semibold text-sm text-brand-heading">Slot {index + 1}</p>
                       <span className="text-[10px] text-brand-body/55 font-mono select-all">/{banner.slug}</span>
                     </div>
 
@@ -1468,46 +1440,96 @@ export default function ContentManager() {
                       </div>
                     )}
 
-                    <div className="space-y-2">
-                      <input 
-                        type="text"
-                        value={banner.image || ''}
-                        onChange={(e) => {
-                          const updated = [...adminCollectionBanners];
-                          while (updated.length <= index) {
-                            updated.push({
-                              name: `Custom Banner Slot ${updated.length + 1}`,
-                              slug: `custom-slot-${updated.length + 1}`,
-                              image: ''
-                            });
-                          }
-                          updated[index] = { ...updated[index], image: e.target.value };
-                          setAdminCollectionBanners(updated);
-                        }}
-                        placeholder="Paste banner image URL"
-                        className="w-full border border-brand-border/40 rounded-lg px-3 py-1.5 text-xs bg-white/80"
-                      />
-                      <div className="flex gap-2">
-                        <label className="h-8 flex-grow bg-brand-cream/80 hover:bg-brand-cream border border-brand-border text-brand-heading rounded-lg flex items-center justify-center gap-1.5 cursor-pointer text-[10px] font-bold select-none active:scale-95 transition">
-                          <Upload size={12} />
-                          <span>Upload WebP Banner</span>
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-brand-heading block">Banner Title / Name</label>
+                        <input 
+                          type="text"
+                          value={banner.name || ''}
+                          onChange={(e) => {
+                            const updated = [...adminCollectionBanners];
+                            while (updated.length <= index) {
+                              updated.push({
+                                name: updated.length < 4 ? DEFAULT_BANNERS[updated.length].name : `Custom Banner Slot ${updated.length + 1}`,
+                                slug: updated.length < 4 ? DEFAULT_BANNERS[updated.length].slug : `custom-slot-${updated.length + 1}`,
+                                link: updated.length < 4 ? DEFAULT_BANNERS[updated.length].link : '/shop',
+                                image: ''
+                              });
+                            }
+                            updated[index] = { ...updated[index], name: e.target.value };
+                            setAdminCollectionBanners(updated);
+                          }}
+                          placeholder="e.g. Bridal Blooms"
+                          className="w-full border border-brand-border/40 rounded-lg px-3 py-1.5 text-xs bg-white focus:outline-none focus:border-brand-accent/50"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-brand-heading block">Destination Route / Category Link</label>
+                        <input 
+                          type="text"
+                          value={banner.link || ''}
+                          onChange={(e) => {
+                            const updated = [...adminCollectionBanners];
+                            while (updated.length <= index) {
+                              updated.push({
+                                name: updated.length < 4 ? DEFAULT_BANNERS[updated.length].name : `Custom Banner Slot ${updated.length + 1}`,
+                                slug: updated.length < 4 ? DEFAULT_BANNERS[updated.length].slug : `custom-slot-${updated.length + 1}`,
+                                link: updated.length < 4 ? DEFAULT_BANNERS[updated.length].link : '/shop',
+                                image: ''
+                              });
+                            }
+                            updated[index] = { ...updated[index], link: e.target.value };
+                            setAdminCollectionBanners(updated);
+                          }}
+                          placeholder="e.g. /shop?category=bridal-blooms"
+                          className="w-full border border-brand-border/40 rounded-lg px-3 py-1.5 text-xs bg-white focus:outline-none focus:border-brand-accent/50"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-brand-heading block">Banner Image URL</label>
+                        <div className="flex gap-2">
                           <input 
-                            type="file"
-                            accept="image/*"
-                            onChange={e => handleCollectionBannerUpload(e, index, banner.slug)}
-                            className="hidden"
+                            type="text"
+                            value={banner.image || ''}
+                            onChange={(e) => {
+                              const updated = [...adminCollectionBanners];
+                              while (updated.length <= index) {
+                                updated.push({
+                                  name: updated.length < 4 ? DEFAULT_BANNERS[updated.length].name : `Custom Banner Slot ${updated.length + 1}`,
+                                  slug: updated.length < 4 ? DEFAULT_BANNERS[updated.length].slug : `custom-slot-${updated.length + 1}`,
+                                  link: updated.length < 4 ? DEFAULT_BANNERS[updated.length].link : '/shop',
+                                  image: ''
+                                });
+                              }
+                              updated[index] = { ...updated[index], image: e.target.value };
+                              setAdminCollectionBanners(updated);
+                            }}
+                            placeholder="Paste banner image URL"
+                            className="flex-grow border border-brand-border/40 rounded-lg px-3 py-1.5 text-xs bg-white/85 focus:outline-none focus:border-brand-accent/50"
                           />
-                        </label>
-                        {banner.image && (
-                          <button
-                            type="button"
-                            onClick={() => handleCollectionBannerDelete(index, banner.slug)}
-                            className="h-8 w-8 bg-red-50 hover:bg-red-100 border border-red-200 text-red-650 rounded-lg flex items-center justify-center cursor-pointer transition active:scale-95 shrink-0"
-                            title="Delete Banner"
-                          >
-                            <Trash2 size={12} />
-                          </button>
-                        )}
+                          <label className="h-8 bg-brand-cream/80 hover:bg-brand-cream border border-brand-border text-brand-heading rounded-lg flex items-center justify-center gap-1.5 cursor-pointer text-[10px] font-bold select-none active:scale-95 transition px-3 shrink-0">
+                            <Upload size={12} />
+                            <span>Upload</span>
+                            <input 
+                              type="file"
+                              accept="image/*"
+                              onChange={e => handleCollectionBannerUpload(e, index, banner.slug)}
+                              className="hidden"
+                            />
+                          </label>
+                          {banner.image && (
+                            <button
+                              type="button"
+                              onClick={() => handleCollectionBannerDelete(index)}
+                              className="h-8 w-8 bg-red-50 hover:bg-red-100 border border-red-200 text-red-650 rounded-lg flex items-center justify-center cursor-pointer transition active:scale-95 shrink-0"
+                              title="Delete Banner"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
