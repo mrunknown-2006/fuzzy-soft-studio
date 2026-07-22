@@ -32,6 +32,8 @@ export interface SupabaseProduct {
   crafting_time?: string;
   allow_ribbon_selection?: boolean;
   allow_gift_note?: boolean;
+  short_summary?: string;
+  full_description?: string;
   created_at?: string;
 }
 

@@ -27,6 +27,8 @@ CREATE TABLE IF NOT EXISTS public.products (
     care_instructions TEXT,
     delivery_info TEXT,
     description TEXT NOT NULL,
+    short_summary TEXT,
+    full_description TEXT,
     stock INT NOT NULL DEFAULT 10,
     active BOOLEAN NOT NULL DEFAULT TRUE,
     customization_options JSONB DEFAULT '{"allow_ribbon_selection": false, "allow_gift_note": false}'::jsonb,
@@ -115,6 +117,8 @@ ALTER TABLE public.products ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT t
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS image_url TEXT;
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS customization_options JSONB DEFAULT '{"allow_ribbon_selection": false, "allow_gift_note": false}'::jsonb;
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS crafting_time TEXT DEFAULT '2-3 Days to handcraft';
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS short_summary TEXT;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS full_description TEXT;
 
 -- Orders Columns & Constraints
 ALTER TABLE public.orders DROP CONSTRAINT IF EXISTS orders_status_check;

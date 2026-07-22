@@ -420,8 +420,8 @@ export default function ProductDetail() {
           <hr className="border-brand-border/40" />
 
           {/* Description */}
-          <p className="text-sm md:text-base text-brand-body/75 leading-relaxed font-light">
-            {product.description} Experience the beauty of hand-selected stems assembled with artistic precision. Perfect as a gift or center attraction.
+          <p className="text-sm md:text-base text-brand-body/75 leading-relaxed font-light whitespace-pre-line">
+            {product.short_summary || product.description}
           </p>
 
           {/* Highlights Section */}
@@ -594,12 +594,9 @@ export default function ProductDetail() {
         {/* Tab Contents */}
         <div className="min-h-[120px] transition-all duration-500 py-2">
           {activeTab === 'description' && (
-            <div className="space-y-4 max-w-4xl text-sm text-brand-body/85 leading-relaxed">
+            <div className="space-y-4 max-w-4xl text-sm text-brand-body/85 leading-relaxed whitespace-pre-wrap">
               <p>
-                Our signature {product.name} arrangement showcases the premium heights of handcrafting. Utilizing selected stems of highest grade flowers, each floral arrangement is composed carefully to bring romantic luxury directly into your spaces.
-              </p>
-              <p>
-                Designed under a neutral aesthetic, it features pastel gradients that blend seamlessly with any decor. Safe for pets, allergen-free, and assembled with details that represent premium luxury.
+                {product.full_description || product.description || 'No detailed description available for this arrangement.'}
               </p>
             </div>
           )}

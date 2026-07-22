@@ -20,6 +20,8 @@ CREATE TABLE IF NOT EXISTS public.products (
     care_instructions TEXT,
     delivery_info TEXT,
     description TEXT NOT NULL,
+    short_summary TEXT,
+    full_description TEXT,
     stock INT NOT NULL DEFAULT 10,
     active BOOLEAN NOT NULL DEFAULT TRUE,
     customization_options JSONB DEFAULT '{"allow_ribbon_selection": false, "allow_gift_note": false}'::jsonb,

@@ -48,6 +48,12 @@ export default function ProductForm() {
 
   // Descriptions & Texts
   const [description, setDescription] = useState('');
+  const [shortSummary, setShortSummary] = useState('');
+  const [fullDescription, setFullDescription] = useState('');
+  const [bullet1, setBullet1] = useState('');
+  const [bullet2, setBullet2] = useState('');
+  const [bullet3, setBullet3] = useState('');
+  const [bullet4, setBullet4] = useState('');
   const [careInstructions, setCareInstructions] = useState('Dust with soft dry cloth. Keep away from direct sunlight. Do not wash or wet. Store in cool dry place.');
   const [deliveryInfo, setDeliveryInfo] = useState('Lucknow: 5–10 business days. Rest of India: 7–14 business days.');
 
@@ -111,6 +117,14 @@ export default function ProductForm() {
           setMetaTitle(product.meta_title || '');
           setMetaDescription(product.meta_description || '');
           setDescription(product.description || '');
+          setShortSummary(product.short_summary || '');
+          setFullDescription(product.full_description || '');
+          
+          const bp = product.bullet_points || [];
+          setBullet1(bp[0] || '');
+          setBullet2(bp[1] || '');
+          setBullet3(bp[2] || '');
+          setBullet4(bp[3] || '');
           setCareInstructions(product.care_instructions || 'Dust with soft dry cloth. Keep away from direct sunlight. Do not wash or wet. Store in cool dry place.');
           setDeliveryInfo(product.delivery_info || 'Lucknow: 5–10 business days. Rest of India: 7–14 business days.');
           setBadges(product.badges || []);
@@ -350,11 +364,13 @@ export default function ProductForm() {
         image: imageUrls[0],
         image_url: imageUrls[0],
         images: imageUrls.filter(Boolean),
-        bullet_points: badges.slice(0, 4),
-        badges,
+        bullet_points: [bullet1.trim(), bullet2.trim(), bullet3.trim(), bullet4.trim()].filter(Boolean),
+        badges: [bullet1.trim(), bullet2.trim(), bullet3.trim(), bullet4.trim()].filter(Boolean),
         care_instructions: careInstructions.trim(),
         delivery_info: deliveryInfo.trim(),
-        description: description.trim() || 'Handcrafted luxury arrangement.',
+        description: shortSummary.trim() || description.trim() || 'Handcrafted luxury arrangement.',
+        short_summary: shortSummary.trim(),
+        full_description: fullDescription.trim(),
         meta_title: metaTitle.trim() || null,
         meta_description: metaDescription.trim() || null,
         crafting_time: craftingTime.trim() || '2-3 Days to handcraft'
@@ -378,11 +394,13 @@ export default function ProductForm() {
         image: imageUrls[0] || originalProduct?.image || '',
         image_url: imageUrls[0] || originalProduct?.image_url || '',
         images: imageUrls.filter(Boolean).length > 0 ? imageUrls.filter(Boolean) : (originalProduct?.images || []),
-        bullet_points: badges.length > 0 ? badges.slice(0, 4) : (originalProduct?.bullet_points || []),
-        badges: badges.length > 0 ? badges : (originalProduct?.badges || []),
+        bullet_points: [bullet1.trim(), bullet2.trim(), bullet3.trim(), bullet4.trim()].filter(Boolean),
+        badges: [bullet1.trim(), bullet2.trim(), bullet3.trim(), bullet4.trim()].filter(Boolean),
         care_instructions: careInstructions.trim() || originalProduct?.care_instructions || '',
         delivery_info: deliveryInfo.trim() || originalProduct?.delivery_info || '',
-        description: description.trim() || originalProduct?.description || 'Handcrafted luxury arrangement.',
+        description: shortSummary.trim() || description.trim() || originalProduct?.description || 'Handcrafted luxury arrangement.',
+        short_summary: shortSummary.trim(),
+        full_description: fullDescription.trim(),
         meta_title: metaTitle.trim() || null,
         meta_description: metaDescription.trim() || null,
         crafting_time: craftingTime.trim() || '2-3 Days to handcraft'
@@ -395,9 +413,10 @@ export default function ProductForm() {
         const finalProduct = { id: newId, ...productData };
         let { error } = await supabase.from('products').insert(finalProduct);
         
-        if (error && (error.message.includes('image_url') || error.message.includes('crafting_time'))) {
+        if (error && (error.message.includes('image_url') || error.message.includes('crafting_time') || error.message.includes('short_summary') || error.message.includes('full_description'))) {
           // Retry without missing columns
-          const { image_url, crafting_time, ...retryData } = finalProduct;
+          const { image_url, crafting_time, short_summary, full_description, ...retryData } = finalProduct;
+          retryData.description = shortSummary.trim() || description.trim();
           const retryRes = await supabase.from('products').insert(retryData);
           error = retryRes.error;
         }
@@ -413,9 +432,10 @@ export default function ProductForm() {
           .update(productData)
           .eq('id', id);
           
-        if (error && (error.message.includes('image_url') || error.message.includes('crafting_time'))) {
+        if (error && (error.message.includes('image_url') || error.message.includes('crafting_time') || error.message.includes('short_summary') || error.message.includes('full_description'))) {
           // Retry without missing columns
-          const { image_url, crafting_time, ...retryData } = productData;
+          const { image_url, crafting_time, short_summary, full_description, ...retryData } = productData;
+          retryData.description = shortSummary.trim() || description.trim();
           const retryRes = await supabase
             .from('products')
             .update(retryData)
@@ -581,15 +601,83 @@ export default function ProductForm() {
               </div>
             </div>
 
-            {/* C: Description */}
-            <div className="bg-white/60 border border-brand-border/40 rounded-2xl p-6 shadow-xs backdrop-blur-xs space-y-4">
-              <h3 className="font-serif text-lg font-bold text-brand-heading border-b border-brand-border/25 pb-2">Description</h3>
+            {/* C: Product Copy & Brand Story */}
+            <div className="bg-white/60 border border-brand-border/40 rounded-2xl p-6 shadow-xs backdrop-blur-xs space-y-6">
+              <h3 className="font-serif text-lg font-bold text-brand-heading border-b border-brand-border/25 pb-2">
+                Product Copy & Story
+              </h3>
+              
+              {/* Short Summary */}
               <div className="space-y-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">
+                  Short Summary / Hook *
+                </label>
+                <span className="text-[10px] text-brand-body/60 font-sans block mt-0.5">
+                  concise introduction displayed next to the hero image (2-3 lines)
+                </span>
                 <textarea
                   required
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Describe the arrangement, materials used (soft acrylic yarn, wire support), style details..."
+                  value={shortSummary}
+                  onChange={(e) => setShortSummary(e.target.value)}
+                  placeholder="Describe the main hook, e.g., 'A romantic signature arrangement featuring premium hand-knitted garden roses in deep mauve...'"
+                  rows={3}
+                  className="w-full p-4 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition resize-none"
+                />
+              </div>
+
+              {/* Key Bullet Points / Specs */}
+              <div className="space-y-2.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">
+                  Key Bullet Points / Specs
+                </label>
+                <span className="text-[10px] text-brand-body/60 font-sans block mt-0.5">
+                  Quick scannable features (materials, size, flexibility) displayed in the highlights section (up to 4)
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <input
+                    type="text"
+                    value={bullet1}
+                    onChange={(e) => setBullet1(e.target.value)}
+                    placeholder="Bullet 1 (e.g., 100% Handcrafted)"
+                    className="w-full h-11 px-4 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition"
+                  />
+                  <input
+                    type="text"
+                    value={bullet2}
+                    onChange={(e) => setBullet2(e.target.value)}
+                    placeholder="Bullet 2 (e.g., Soft Premium Acrylic Yarn)"
+                    className="w-full h-11 px-4 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition"
+                  />
+                  <input
+                    type="text"
+                    value={bullet3}
+                    onChange={(e) => setBullet3(e.target.value)}
+                    placeholder="Bullet 3 (e.g., Bendable Iron Stems)"
+                    className="w-full h-11 px-4 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition"
+                  />
+                  <input
+                    type="text"
+                    value={bullet4}
+                    onChange={(e) => setBullet4(e.target.value)}
+                    placeholder="Bullet 4 (e.g., Pet & Allergen Safe)"
+                    className="w-full h-11 px-4 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition"
+                  />
+                </div>
+              </div>
+
+              {/* Full Description */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">
+                  Full Detailed Description *
+                </label>
+                <span className="text-[10px] text-brand-body/60 font-sans block mt-0.5">
+                  Comprehensive brand story and detailed craftsmanship info for the bottom tab
+                </span>
+                <textarea
+                  required
+                  value={fullDescription}
+                  onChange={(e) => setFullDescription(e.target.value)}
+                  placeholder="Tell the detailed craft story of this arrangement, including colors, design inspirations, and recommendations..."
                   rows={6}
                   className="w-full p-4 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition resize-none"
                 />
