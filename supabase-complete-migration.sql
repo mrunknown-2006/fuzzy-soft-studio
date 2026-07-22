@@ -83,6 +83,8 @@ CREATE TABLE IF NOT EXISTS public.orders (
     shipping_address TEXT NOT NULL,
     customer_name TEXT NOT NULL,
     customer_phone TEXT,
+    gifting_info JSONB,
+    utr_number TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -132,6 +134,8 @@ ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS shipped_at TIMESTAMP WITH TIM
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS delivered_at TIMESTAMP WITH TIME ZONE;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS cod_applied BOOLEAN DEFAULT false;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS cod_charge NUMERIC DEFAULT 0;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS gifting_info JSONB;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS utr_number TEXT;
 
 -- Discounts Columns
 ALTER TABLE public.discounts ADD COLUMN IF NOT EXISTS min_order_value NUMERIC;

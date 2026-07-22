@@ -81,6 +81,16 @@ export default function Checkout() {
   const [ribbonColor, setRibbonColor] = useState('Classic Gold');
   const [giftMessage, setGiftMessage] = useState('');
 
+  // UPI Payment States
+  const [utrNumber, setUtrNumber] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyUpi = () => {
+    navigator.clipboard.writeText('9506228972@axl');
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   // Compute total including gift wrapping if enabled
   const total = subtotal + finalShipping - discountAmount + (giftWrapped ? 49 : 0);
 
@@ -134,7 +144,8 @@ export default function Checkout() {
         shipping_address: `${address.trim()}, ${city.trim()} - ${pincode.trim()}`,
         items: cart, // JSONB array of items
         total_amount: total,
-        payment_method: 'whatsapp',
+        payment_method: 'UPI',
+        utr_number: utrNumber.trim(),
         status: 'Pending',
         created_at: new Date().toISOString(),
         gifting_info: giftWrapped ? {
@@ -148,12 +159,14 @@ export default function Checkout() {
         .from('orders')
         .insert(orderPayload);
 
-      if (insertError && insertError.message.includes('gifting_info')) {
-        // Fallback retry: serialize gifting details into internal_notes or items payload
-        const { gifting_info, ...retryPayload } = orderPayload;
-        retryPayload.internal_notes = giftWrapped 
-          ? `[Gift Wrapped] Ribbon: ${ribbonColor}. Message: ${giftMessage.trim()}`
-          : '';
+      if (insertError && (insertError.message.includes('gifting_info') || insertError.message.includes('utr_number'))) {
+        // Fallback retry: serialize details into internal_notes
+        const { gifting_info, utr_number, ...retryPayload } = orderPayload;
+        retryPayload.payment_method = `UPI (UTR: ${utrNumber.trim()})`;
+        retryPayload.internal_notes = [
+          giftWrapped ? `[Gift Wrapped] Ribbon: ${ribbonColor}. Message: ${giftMessage.trim()}` : '',
+          `[UPI Payment] UTR: ${utrNumber.trim()}`
+        ].filter(Boolean).join('\n');
         const retryRes = await supabase.from('orders').insert(retryPayload);
         insertError = retryRes.error;
       }
@@ -192,7 +205,9 @@ export default function Checkout() {
         `*Shipping:* ${finalShipping === 0 ? 'FREE' : '₹' + finalShipping}\n` +
         (giftWrapped ? `*Gift Wrapping:* ₹49\n` : '') +
         (discountAmount > 0 ? `*Discount Applied:* -₹${discountAmount.toLocaleString('en-IN')} (${appliedDiscount?.code})\n` : '') +
-        `*Total Amount (COD):* ₹${total.toLocaleString('en-IN')}*`;
+        `*Payment Method:* Direct UPI\n` +
+        `*UTR / Ref No:* ${utrNumber.trim()}\n\n` +
+        `*Total Amount Paid:* ₹${total.toLocaleString('en-IN')}*`;
 
       const cleanPhone = (num: string) => {
         const digits = num.replace(/[^0-9]/g, '');
@@ -468,19 +483,99 @@ export default function Checkout() {
               )}
 
               <div className="flex justify-between border-t border-brand-border/30 pt-3 text-sm text-brand-heading font-bold">
-                <span>Amount Payable (COD)</span>
+                <span>Amount Payable</span>
                 <span className="text-base text-brand-heading">₹{total.toLocaleString('en-IN')}</span>
+              </div>
+            </div>
+
+            {/* Secure UPI Payment Section */}
+            <div className="bg-[#FAF9F6] border border-[#8FA088]/40 rounded-xl p-4.5 space-y-4 shadow-3xs select-none">
+              <div className="flex items-center justify-between border-b border-brand-border/25 pb-2">
+                <span className="text-xs font-bold text-brand-heading flex items-center gap-1.5">
+                  <span className="text-[#8FA088]">🛡️</span> Secure UPI Payment
+                </span>
+                <span className="text-[10px] text-green-700 font-bold uppercase tracking-wider bg-green-50 px-2 py-0.5 rounded border border-green-200">
+                  Direct Bank
+                </span>
+              </div>
+
+              {/* Instructions */}
+              <div className="text-[10px] text-brand-body/75 space-y-1">
+                <p>1. Scan the QR code or pay using the UPI ID below.</p>
+                <p>2. Enter the exact payable amount: <strong>₹{total.toLocaleString('en-IN')}</strong>.</p>
+                <p>3. Copy/Save your 12-digit transaction UTR number to complete checkout.</p>
+              </div>
+
+              {/* QR Code (Desktop View) */}
+              <div className="hidden md:flex flex-col items-center justify-center py-2 bg-white rounded-xl border border-brand-border/30">
+                <img 
+                  src="/assets/payment-qr.jpeg" 
+                  alt="UPI Payment QR Code" 
+                  className="w-40 h-40 object-contain rounded-md"
+                />
+                <span className="text-[9px] text-brand-body/50 mt-1.5 uppercase font-mono tracking-wider">
+                  Scan to Pay
+                </span>
+              </div>
+
+              {/* UPI ID & Action buttons (Mobile View / Copier) */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between bg-white border border-brand-border/60 rounded-xl p-2 px-3">
+                  <span className="text-xs font-mono font-semibold text-brand-heading select-all">
+                    9506228972@axl
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleCopyUpi}
+                    className="text-[9px] font-bold uppercase tracking-wider text-[#C9A84C] hover:text-[#B08A38] cursor-pointer"
+                  >
+                    {copied ? 'Copied!' : 'Copy ID'}
+                  </button>
+                </div>
+
+                {/* Mobile Intent Button */}
+                <a
+                  href={`upi://pay?pa=9506228972@axl&pn=Fuzzy%20Soft%20Studio&am=${total}&cu=INR`}
+                  className="block md:hidden w-full text-center py-2.5 bg-brand-heading hover:bg-brand-heading-hover text-white text-xs font-bold uppercase tracking-wider rounded-xl transition duration-200 shadow-3xs"
+                >
+                  📲 Pay via UPI App
+                </a>
+              </div>
+
+              {/* UTR Input Section */}
+              <div className="space-y-1.5 pt-2 border-t border-brand-border/25">
+                <label className="block text-[10px] font-semibold uppercase tracking-wider text-brand-heading">
+                  12-Digit Transaction ID (UTR / Ref No.) *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={utrNumber}
+                  onChange={(e) => {
+                    const cleaned = e.target.value.replace(/[^0-9]/g, '');
+                    setUtrNumber(cleaned.slice(0, 12));
+                  }}
+                  placeholder="e.g. 312894760234"
+                  className="w-full h-10 px-3 bg-white rounded-xl border border-brand-border/70 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-brand-accent transition shadow-3xs"
+                />
+                <p className="text-[8px] text-brand-body/50 font-sans italic">
+                  Note: UTR is the 12-digit number found in your UPI app payment receipt details.
+                </p>
               </div>
             </div>
 
             {/* Checkout Action Button */}
             <button
               onClick={handleWhatsAppCheckout}
-              disabled={loading}
-              className="w-full h-12 bg-[#DCA29A] hover:bg-[#D4938A] text-white rounded-full uppercase text-xs tracking-widest font-semibold transition duration-300 cursor-pointer shadow-sm hover:shadow-md active:scale-[0.98] flex items-center justify-center gap-2 select-none min-h-[44px]"
+              disabled={loading || utrNumber.trim().length < 10}
+              className={`w-full h-12 text-white rounded-full uppercase text-xs tracking-widest font-semibold transition duration-300 shadow-sm flex items-center justify-center gap-2 select-none min-h-[44px] ${
+                (loading || utrNumber.trim().length < 10)
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-[#DCA29A] hover:bg-[#D4938A] hover:shadow-md active:scale-[0.98] cursor-pointer'
+              }`}
             >
               <MessageCircle size={15} />
-              <span>{loading ? 'Processing...' : 'Order via WhatsApp'}</span>
+              <span>{loading ? 'Processing...' : 'Place Order'}</span>
             </button>
           </div>
         </div>

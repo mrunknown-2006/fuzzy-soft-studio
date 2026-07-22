@@ -542,6 +542,33 @@ export default function Orders() {
                   </div>
                 )}
 
+                {/* Payment & UTR details */}
+                {((viewingOrder as any).utr_number || (viewingOrder.internal_notes && viewingOrder.internal_notes.includes('UTR:'))) && (
+                  <div className="space-y-3">
+                    <h4 className="font-serif text-sm font-bold text-brand-heading flex items-center gap-1.5 select-none">
+                      <span className="text-[#8FA088]">🛡️</span>
+                      <span>Payment Verification (UPI)</span>
+                    </h4>
+                    <div className="bg-green-50/25 border border-green-200/50 p-3.5 rounded-xl text-xs space-y-2 text-brand-body/80 font-sans shadow-3xs">
+                      <p>
+                        <strong className="text-brand-heading font-medium">Payment Mode:</strong> Direct UPI
+                      </p>
+                      <p className="flex items-center gap-1.5">
+                        <strong className="text-brand-heading font-medium">Transaction UTR:</strong> 
+                        <span className="font-mono font-bold text-[#2C1810] bg-white border border-brand-border/40 px-2 py-0.5 rounded text-[11px] select-all">
+                          {(viewingOrder as any).utr_number || (() => {
+                            const match = viewingOrder.internal_notes?.match(/UTR:\s*([0-9a-zA-Z]+)/);
+                            return match ? match[1].trim() : 'N/A';
+                          })()}
+                        </span>
+                      </p>
+                      <p className="text-[9px] text-[#8FA088] font-semibold italic">
+                        * Please verify this UTR in your bank account statement before approving.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Items Summary */}
                 <div className="space-y-3">
                   <h4 className="font-serif text-sm font-bold text-brand-heading flex items-center gap-1.5 select-none">

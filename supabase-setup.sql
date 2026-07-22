@@ -46,6 +46,8 @@ CREATE TABLE IF NOT EXISTS public.orders (
     shipping_address TEXT NOT NULL,
     customer_name TEXT NOT NULL,
     customer_phone TEXT,
+    gifting_info JSONB,
+    utr_number TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

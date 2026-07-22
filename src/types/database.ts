@@ -57,6 +57,8 @@ export interface SupabaseOrder {
   delivered_at?: string;
   cod_applied?: boolean;
   cod_charge?: number;
+  gifting_info?: any;
+  utr_number?: string;
 }
 
 export interface SupabaseSetting {
