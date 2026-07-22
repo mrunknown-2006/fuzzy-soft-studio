@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, ShieldAlert, ChevronDown, ChevronUp, Clock, Truck } from 'lucide-react';
+import { supabase } from '../lib/supabaseClient';
 
 export function Privacy() {
   return (
@@ -105,41 +106,35 @@ export function Terms() {
 
 export function FAQs() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const [faqsList, setFaqsList] = useState<Array<{ q: string; a: string }>>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const faqsList = [
-    {
-      q: "How long does delivery take?",
-      a: "Our arrangements are handcrafted to order. Hand-crafting takes 3-7 days. Once dispatched, shipping takes 5-10 days to Lucknow, and 7-14 days to the rest of India."
-    },
-    {
-      q: "Are the flowers real?",
-      a: "Our collections feature a mix of high-quality handcrafted faux flowers, crochet creations, and premium preserved/dried flowers that capture the delicate luxury of live flowers but last for years without wilting."
-    },
-    {
-      q: "Can I request custom colors or arrangements?",
-      a: "Yes! We love customizing. Please contact us via our Contact Page or WhatsApp with your reference images and color preferences, and we will happily design a custom bouquet for you."
-    },
-    {
-      q: "Do you ship all over India?",
-      a: "Yes, we ship pan-India. Standard shipping rates apply, and we offer free shipping on all orders above ₹999."
-    },
-    {
-      q: "How should I care for my handmade flowers?",
-      a: "Keep them away from direct sunlight, high heat, and moisture. Dust them gently with a soft dry brush, or use a hair dryer on a cool, low setting from a distance to keep them looking fresh."
-    },
-    {
-      q: "What if my order arrives damaged?",
-      a: "Transit damage is rare, but if it happens, please take a clear unboxing video and share it with us within 24 hours of delivery. We will verify the damage and issue a free replacement."
-    },
-    {
-      q: "Do you accept bulk or event orders?",
-      a: "Yes! We cater to corporate events, weddings, party favors, and bulk gifting. Please reach out to us at least 3-4 weeks in advance of your event so we can prepare your order to perfection."
-    },
-    {
-      q: "How do I track my order?",
-      a: "Once your order is shipped, you will receive a tracking link via email and SMS. You can also view your order status directly under your Account page if you are logged in."
-    }
-  ];
+  useEffect(() => {
+    const loadFaqs = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('site_content')
+          .select('content')
+          .eq('id', 'faqs')
+          .single();
+        
+        if (error && error.code !== 'PGRST116') throw error;
+        
+        if (data && data.content && Array.isArray(data.content.faqs)) {
+          setFaqsList(data.content.faqs);
+        } else {
+          setFaqsList([]);
+        }
+      } catch (err) {
+        console.warn('Failed to load dynamic FAQs:', err);
+        setFaqsList([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadFaqs();
+  }, []);
 
   const toggleIndex = (idx: number) => {
     setOpenIndex(openIndex === idx ? null : idx);
@@ -158,39 +153,55 @@ export function FAQs() {
       <div className="bg-white/60 border border-brand-border/40 rounded-2xl p-8 md:p-12 shadow-sm backdrop-blur-md">
         <h1 className="text-3xl sm:text-4xl font-serif text-brand-heading mb-6 border-b border-brand-border/20 pb-4 text-center">Frequently Asked Questions</h1>
         
-        <div className="mt-8 space-y-4">
-          {faqsList.map((faq, idx) => {
-            const isOpen = openIndex === idx;
-            return (
-              <div 
-                key={idx} 
-                className="border border-brand-border/30 rounded-xl overflow-hidden transition-all duration-300 bg-[#FCFAF8]/80 hover:bg-white animate-fade-in"
-              >
-                <button
-                  onClick={() => toggleIndex(idx)}
-                  className="w-full px-6 py-4 flex items-center justify-between text-left font-serif text-base font-medium text-brand-heading focus:outline-none"
-                >
-                  <span>{faq.q}</span>
-                  {isOpen ? (
-                    <ChevronUp size={18} className="text-brand-accent transition-transform duration-300" />
-                  ) : (
-                    <ChevronDown size={18} className="text-brand-heading/60 transition-transform duration-300" />
-                  )}
-                </button>
-                
-                <div 
-                  className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                    isOpen ? 'max-h-48 border-t border-brand-border/20' : 'max-h-0'
-                  }`}
-                >
-                  <p className="px-6 py-4 font-sans text-sm text-brand-body/80 leading-relaxed bg-brand-cream/20">
-                    {faq.a}
-                  </p>
-                </div>
+        {isLoading ? (
+          <div className="mt-8 space-y-4">
+            {Array.from({ length: 5 }).map((_, idx) => (
+              <div key={idx} className="border border-brand-border/20 rounded-xl p-5 bg-[#FCFAF8]/40 animate-pulse space-y-3">
+                <div className="h-4 bg-brand-cream rounded w-1/3" />
+                <div className="h-3 bg-brand-cream rounded w-3/4" />
               </div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        ) : faqsList.length === 0 ? (
+          <div className="text-center py-12 space-y-3">
+            <p className="text-brand-body/65 text-sm">No FAQs listed at the moment.</p>
+            <span className="text-[10px] uppercase tracking-wider text-brand-body/40">Check back later or contact support.</span>
+          </div>
+        ) : (
+          <div className="mt-8 space-y-4">
+            {faqsList.map((faq, idx) => {
+              const isOpen = openIndex === idx;
+              return (
+                <div 
+                  key={idx} 
+                  className="border border-brand-border/30 rounded-xl overflow-hidden transition-all duration-300 bg-[#FCFAF8]/80 hover:bg-white animate-fade-in"
+                >
+                  <button
+                    onClick={() => toggleIndex(idx)}
+                    className="w-full px-6 py-4 flex items-center justify-between text-left font-serif text-base font-medium text-brand-heading focus:outline-none"
+                  >
+                    <span>{faq.q}</span>
+                    {isOpen ? (
+                      <ChevronUp size={18} className="text-brand-accent transition-transform duration-300" />
+                    ) : (
+                      <ChevronDown size={18} className="text-brand-heading/60 transition-transform duration-300" />
+                    )}
+                  </button>
+                  
+                  <div 
+                    className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                      isOpen ? 'max-h-[500px] border-t border-brand-border/20' : 'max-h-0'
+                    }`}
+                  >
+                    <p className="px-6 py-4 font-sans text-sm text-brand-body/80 leading-relaxed bg-brand-cream/20">
+                      {faq.a}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

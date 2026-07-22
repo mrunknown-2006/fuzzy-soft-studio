@@ -9,7 +9,8 @@ import {
   Megaphone, 
   Upload, 
   ArrowLeft,
-  Trash2
+  Trash2,
+  HelpCircle
 } from 'lucide-react';
 import type { AdminContext } from './types';
 import { supabase } from '../../lib/supabaseClient';
@@ -22,6 +23,17 @@ const DEFAULT_BANNERS = [
   { name: 'Gift Bouquets', slug: 'gift-bouquets', link: '/shop?category=gift-bouquets', image: 'https://hbzmkpeirngvbsdawcld.supabase.co/storage/v1/object/public/product-images/collection-gift-bouquets.png' },
 ];
 
+const DEFAULT_FAQS = [
+  { q: "How long does delivery take?", a: "Our arrangements are handcrafted to order. Hand-crafting takes 3-7 days. Once dispatched, shipping takes 5-10 days to Lucknow, and 7-14 days to the rest of India." },
+  { q: "Are the flowers real?", a: "Our collections feature a mix of high-quality handcrafted faux flowers, crochet creations, and premium preserved/dried flowers that capture the delicate luxury of live flowers but last for years without wilting." },
+  { q: "Can I request custom colors or arrangements?", a: "Yes! We love customizing. Please contact us via our Contact Page or WhatsApp with your reference images and color preferences, and we will happily design a custom bouquet for you." },
+  { q: "Do you ship all over India?", a: "Yes, we ship pan-India. Standard shipping rates apply, and we offer free shipping on all orders above ₹999." },
+  { q: "How should I care for my handmade flowers?", a: "Keep them away from direct sunlight, high heat, and moisture. Dust them gently with a soft dry brush, or use a hair dryer on a cool, low setting from a distance to keep them looking fresh." },
+  { q: "What if my order arrives damaged?", a: "Transit damage is rare, but if it happens, please take a clear unboxing video and share it with us within 24 hours of delivery. We will verify the damage and issue a free replacement." },
+  { q: "Do you accept bulk or event orders?", a: "Yes! We cater to corporate events, weddings, party favors, and bulk gifting. Please reach out to us at least 3-4 weeks in advance of your event so we can prepare your order to perfection." },
+  { q: "How do I track my order?", a: "Once your order is shipped, you will receive a tracking link via email and SMS. You can also view your order status directly under your Account page if you are logged in." }
+];
+
 export default function ContentManager() {
   const { 
     showToast,
@@ -32,9 +44,10 @@ export default function ContentManager() {
   } = useOutletContext<AdminContext>();
 
   // Sub-tabs within Content Manager
-  const [subTab, setSubTab] = useState<'menu' | 'homepage' | 'featured' | 'about' | 'contact' | 'footer' | 'announcements'>('menu');
+  const [subTab, setSubTab] = useState<'menu' | 'homepage' | 'featured' | 'about' | 'contact' | 'footer' | 'announcements' | 'faqs'>('menu');
   const [loading, setLoading] = useState(false);
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
+  const [adminFaqs, setAdminFaqs] = useState<Array<{ q: string; a: string }>>([]);
 
   // 1. Homepage Hero Fields
   const [heroBannerUrl, setHeroBannerUrl] = useState('');
@@ -255,6 +268,14 @@ export default function ContentManager() {
             caption: ''
           }));
           setGardenSlots(slots);
+        }
+
+        // Load FAQs
+        const faqsRow = data?.find((row: any) => row.id === 'faqs');
+        if (faqsRow && faqsRow.content && Array.isArray(faqsRow.content.faqs) && faqsRow.content.faqs.length > 0) {
+          setAdminFaqs(faqsRow.content.faqs);
+        } else {
+          setAdminFaqs(DEFAULT_FAQS);
         }
       } catch (err: any) {
         showToast(`Error fetching content: ${err.message}`, 'error');
@@ -832,6 +853,30 @@ export default function ContentManager() {
     setLoading(false);
   };
 
+  // Save FAQs Content
+  const handleSaveFaqs = async () => {
+    setLoading(true);
+    const sectionPayload = {
+      faqs: adminFaqs
+    };
+
+    const { error } = await supabase
+      .from('site_content')
+      .upsert(
+        { id: 'faqs', content: sectionPayload, updated_at: new Date().toISOString() },
+        { onConflict: 'id' }
+      );
+
+    if (error) {
+      console.error('FAQs SAVE ERROR:', error);
+      showToast('Save failed: ' + error.message, 'error');
+      setLoading(false);
+      return;
+    }
+    showToast('FAQs saved successfully!', 'success');
+    setLoading(false);
+  };
+
   return (
     <div className="space-y-6 animate-fade-in-up pb-10">
       
@@ -857,6 +902,7 @@ export default function ContentManager() {
               { icon: <Phone size={20} />, title: 'Contact Page', desc: 'Studio location, maps, operation hours and contact emails', tab: 'contact' },
               { icon: <Layout size={20} />, title: 'Footer settings', desc: 'Copyright line notes, social links, and brand text hooks', tab: 'footer' },
               { icon: <Megaphone size={20} />, title: 'Announcements', desc: 'Running ticker offers, garden slots and collections banner grids', tab: 'announcements' },
+              { icon: <HelpCircle size={20} />, title: 'Frequently Asked Questions', desc: 'Manage customer support queries, floral care advice, and order policies', tab: 'faqs' },
             ].map(card => (
               <div 
                 key={card.tab} 
@@ -1621,6 +1667,97 @@ export default function ContentManager() {
             className="px-8 h-11 bg-[#DCA29A] hover:bg-[#D4938A] text-white rounded-full uppercase text-xs tracking-widest font-semibold cursor-pointer transition active:scale-95 shadow-xs"
           >
             {loading ? 'Saving...' : 'Save Announcements & Banner Assets'}
+          </button>
+        </div>
+      )}
+      {subTab === 'faqs' && (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center border-b border-brand-border/25 pb-2">
+            <div>
+              <h3 className="font-serif text-2xl text-brand-heading">Frequently Asked Questions</h3>
+              <p className="text-[10px] text-brand-body/50 mt-1">
+                Manage customer support queries, floral care advice, and order policies.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setAdminFaqs([...adminFaqs, { q: '', a: '' }]);
+              }}
+              className="px-4 py-2 bg-[#8FA088]/10 hover:bg-[#8FA088]/20 text-[#6B7C64] border border-[#8FA088]/25 rounded-lg text-xs font-semibold uppercase tracking-wider select-none active:scale-95 transition cursor-pointer"
+            >
+              + Add New FAQ
+            </button>
+          </div>
+
+          {adminFaqs.length === 0 ? (
+            <div className="text-center py-12 bg-white/60 border border-brand-border/30 rounded-2xl">
+              <p className="text-sm text-brand-body/65">No FAQs defined yet.</p>
+              <button
+                onClick={() => setAdminFaqs(DEFAULT_FAQS)}
+                className="mt-3 text-xs text-brand-accent hover:underline uppercase font-bold"
+              >
+                Reset to Default FAQs
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {adminFaqs.map((faq, index) => (
+                <div key={index} className="bg-white/60 border border-brand-border/40 rounded-2xl p-6 shadow-2xs space-y-4 relative group">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm(`Delete FAQ #${index + 1}?`)) {
+                        setAdminFaqs(adminFaqs.filter((_, i) => i !== index));
+                      }
+                    }}
+                    className="absolute top-4 right-4 h-8 w-8 bg-red-50 hover:bg-red-100 border border-red-200 text-red-650 rounded-lg flex items-center justify-center cursor-pointer transition active:scale-95 shadow-3xs"
+                    title="Delete FAQ"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+
+                  <div className="space-y-3 pr-10">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-brand-heading block">Question</label>
+                      <input
+                        type="text"
+                        value={faq.q || ''}
+                        onChange={(e) => {
+                          const updated = [...adminFaqs];
+                          updated[index] = { ...updated[index], q: e.target.value };
+                          setAdminFaqs(updated);
+                        }}
+                        placeholder="e.g. How long does delivery take?"
+                        className="w-full border border-brand-border/40 rounded-lg px-3 py-2 text-xs bg-white focus:outline-none focus:border-brand-accent/50"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-brand-heading block">Answer</label>
+                      <textarea
+                        value={faq.a || ''}
+                        onChange={(e) => {
+                          const updated = [...adminFaqs];
+                          updated[index] = { ...updated[index], a: e.target.value };
+                          setAdminFaqs(updated);
+                        }}
+                        placeholder="e.g. Hand-crafting takes 3-7 days..."
+                        rows={3}
+                        className="w-full border border-brand-border/40 rounded-lg px-3 py-2 text-xs bg-white focus:outline-none focus:border-brand-accent/50 resize-y"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <button 
+            onClick={handleSaveFaqs}
+            disabled={loading}
+            className="px-8 h-11 bg-[#DCA29A] hover:bg-[#D4938A] text-white rounded-full uppercase text-xs tracking-widest font-semibold cursor-pointer transition active:scale-95 shadow-xs"
+          >
+            {loading ? 'Saving...' : 'Save FAQ Content'}
           </button>
         </div>
       )}
