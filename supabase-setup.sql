@@ -22,6 +22,8 @@ CREATE TABLE IF NOT EXISTS public.products (
     description TEXT NOT NULL,
     stock INT NOT NULL DEFAULT 10,
     active BOOLEAN NOT NULL DEFAULT TRUE,
+    customization_options JSONB DEFAULT '{"allow_ribbon_selection": false, "allow_gift_note": false}'::jsonb,
+    crafting_time TEXT DEFAULT '2-3 Days to handcraft',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

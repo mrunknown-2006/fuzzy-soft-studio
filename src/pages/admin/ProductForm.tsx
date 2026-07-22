@@ -109,6 +109,9 @@ export default function ProductForm() {
           if (product.customization_options) {
             setAllowRibbonSelection(!!product.customization_options.allow_ribbon_selection);
             setAllowGiftNote(!!product.customization_options.allow_gift_note);
+          } else if (product.allow_ribbon_selection !== undefined || product.allow_gift_note !== undefined) {
+            setAllowRibbonSelection(!!product.allow_ribbon_selection);
+            setAllowGiftNote(!!product.allow_gift_note);
           } else {
             setAllowRibbonSelection(false);
             setAllowGiftNote(false);
