@@ -36,10 +36,11 @@ export default function ProductForm() {
   const [collection, setCollection] = useState('everyday-luxury');
   const [stock, setStock] = useState('10');
   const [sku, setSku] = useState('');
-  const [lowStockThreshold, setLowStockThreshold] = useState('5');
   const [isActive, setIsActive] = useState(true);
   const [isFeatured, setIsFeatured] = useState(false);
-  const [showInRelated, setShowInRelated] = useState(true);
+  const [craftingTime, setCraftingTime] = useState('2-3 Days to handcraft');
+  const [allowRibbonSelection, setAllowRibbonSelection] = useState(false);
+  const [allowGiftNote, setAllowGiftNote] = useState(false);
 
   // SEO & URL Slug
   const [slug, setSlug] = useState('');
@@ -103,18 +104,25 @@ export default function ProductForm() {
           setCollection(product.collection || 'everyday-luxury');
           setStock(product.stock?.toString() || '0');
           setSku(product.sku || '');
-          setLowStockThreshold(product.low_stock_threshold?.toString() || '5');
+          setCraftingTime(product.crafting_time || '2-3 Days to handcraft');
+          
+          if (product.customization_options) {
+            setAllowRibbonSelection(!!product.customization_options.allow_ribbon_selection);
+            setAllowGiftNote(!!product.customization_options.allow_gift_note);
+          } else {
+            setAllowRibbonSelection(false);
+            setAllowGiftNote(false);
+          }
           
           setIsActive(product.active);
           setIsFeatured(product.is_featured || false);
-          setShowInRelated(product.show_in_related !== undefined ? product.show_in_related : true);
 
           setSlug(product.slug || '');
           setMetaTitle(product.meta_title || '');
           setMetaDescription(product.meta_description || '');
           setDescription(product.description || '');
-          setCareInstructions(product.care_instructions || '');
-          setDeliveryInfo(product.delivery_info || '');
+          setCareInstructions(product.care_instructions || 'Dust with soft dry cloth. Keep away from direct sunlight. Do not wash or wet. Store in cool dry place.');
+          setDeliveryInfo(product.delivery_info || 'Lucknow: 5–10 business days. Rest of India: 7–14 business days.');
           setBadges(product.badges || []);
 
           const urls = Array(6).fill('');
@@ -344,11 +352,11 @@ export default function ProductForm() {
         collection,
         stock: parseInt(stock) || 0,
         sku: sku.trim() || null,
-        low_stock_threshold: parseInt(lowStockThreshold) || 5,
+        low_stock_threshold: 5,
         active: isActive,
         is_active: isActive,
         is_featured: isFeatured,
-        show_in_related: showInRelated,
+        show_in_related: true,
         image: imageUrls[0],
         image_url: imageUrls[0],
         images: imageUrls.filter(Boolean),
@@ -359,6 +367,11 @@ export default function ProductForm() {
         description: description.trim() || 'Handcrafted luxury arrangement.',
         meta_title: metaTitle.trim() || null,
         meta_description: metaDescription.trim() || null,
+        crafting_time: craftingTime.trim() || '2-3 Days to handcraft',
+        customization_options: {
+          allow_ribbon_selection: allowRibbonSelection,
+          allow_gift_note: allowGiftNote
+        }
       };
     } else {
       productData = {
@@ -371,11 +384,11 @@ export default function ProductForm() {
         collection: collection || originalProduct?.collection || 'everyday-luxury',
         stock: !isNaN(parseInt(stock)) ? parseInt(stock) : (originalProduct?.stock || 0),
         sku: sku.trim() || null,
-        low_stock_threshold: !isNaN(parseInt(lowStockThreshold)) ? parseInt(lowStockThreshold) : (originalProduct?.low_stock_threshold || 5),
+        low_stock_threshold: 5,
         active: isActive,
         is_active: isActive,
         is_featured: isFeatured,
-        show_in_related: showInRelated,
+        show_in_related: true,
         image: imageUrls[0] || originalProduct?.image || '',
         image_url: imageUrls[0] || originalProduct?.image_url || '',
         images: imageUrls.filter(Boolean).length > 0 ? imageUrls.filter(Boolean) : (originalProduct?.images || []),
@@ -386,6 +399,11 @@ export default function ProductForm() {
         description: description.trim() || originalProduct?.description || 'Handcrafted luxury arrangement.',
         meta_title: metaTitle.trim() || null,
         meta_description: metaDescription.trim() || null,
+        crafting_time: craftingTime.trim() || '2-3 Days to handcraft',
+        customization_options: {
+          allow_ribbon_selection: allowRibbonSelection,
+          allow_gift_note: allowGiftNote
+        }
       };
     }
 
@@ -395,9 +413,9 @@ export default function ProductForm() {
         const finalProduct = { id: newId, ...productData };
         let { error } = await supabase.from('products').insert(finalProduct);
         
-        if (error && error.message.includes('image_url')) {
-          // Retry without image_url
-          const { image_url, ...retryData } = finalProduct;
+        if (error && (error.message.includes('image_url') || error.message.includes('customization_options') || error.message.includes('crafting_time'))) {
+          // Retry without missing columns
+          const { image_url, customization_options, crafting_time, ...retryData } = finalProduct;
           const retryRes = await supabase.from('products').insert(retryData);
           error = retryRes.error;
         }
@@ -413,9 +431,9 @@ export default function ProductForm() {
           .update(productData)
           .eq('id', id);
           
-        if (error && error.message.includes('image_url')) {
-          // Retry without image_url
-          const { image_url, ...retryData } = productData;
+        if (error && (error.message.includes('image_url') || error.message.includes('customization_options') || error.message.includes('crafting_time'))) {
+          // Retry without missing columns
+          const { image_url, customization_options, crafting_time, ...retryData } = productData;
           const retryRes = await supabase
             .from('products')
             .update(retryData)
@@ -536,7 +554,7 @@ export default function ProductForm() {
                 </div>
               </div>
 
-              {/* Stock, SKU & Low Stock Threshold */}
+              {/* Stock, SKU & Crafting Time */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="space-y-1.5">
                   <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">Stock Qty *</label>
@@ -549,7 +567,7 @@ export default function ProductForm() {
                     className="w-full h-11 px-4 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition"
                   />
                 </div>
-                <div className="space-y-1.5 sm:col-span-2">
+                <div className="space-y-1.5">
                   <div className="flex justify-between">
                     <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">SKU</label>
                     <button 
@@ -568,17 +586,16 @@ export default function ProductForm() {
                     className="w-full h-11 px-4 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition"
                   />
                 </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">Low Stock Threshold</label>
-                <input
-                  type="number"
-                  min={1}
-                  value={lowStockThreshold}
-                  onChange={(e) => setLowStockThreshold(e.target.value)}
-                  className="w-24 h-11 px-4 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition"
-                />
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">Crafting Time</label>
+                  <input
+                    type="text"
+                    value={craftingTime}
+                    onChange={(e) => setCraftingTime(e.target.value)}
+                    placeholder="e.g. 2-3 Days to handcraft"
+                    className="w-full h-11 px-4 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition"
+                  />
+                </div>
               </div>
             </div>
 
@@ -764,13 +781,30 @@ export default function ProductForm() {
                   </div>
                   <Toggle checked={isFeatured} onChange={setIsFeatured} />
                 </div>
+              </div>
+            </div>
+
+            {/* Gifting & Customization Toggles */}
+            <div className="bg-white/60 border border-brand-border/40 rounded-2xl p-6 shadow-xs backdrop-blur-xs space-y-4">
+              <h3 className="font-serif text-lg font-bold text-brand-heading border-b border-brand-border/25 pb-2">
+                Gifting & Customization Toggles
+              </h3>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="block text-xs font-semibold text-brand-heading">Allow Ribbon Color Selection</span>
+                    <span className="text-[10px] text-brand-body/60 font-sans block mt-0.5">Enables customers to pick a ribbon choice on the details page</span>
+                  </div>
+                  <Toggle checked={allowRibbonSelection} onChange={setAllowRibbonSelection} />
+                </div>
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="block text-xs font-semibold text-brand-heading">Related Products</span>
-                    <span className="text-[10px] text-brand-body/60 font-sans block mt-0.5">Recommend in other product detail pages</span>
+                    <span className="block text-xs font-semibold text-brand-heading">Allow Free Gift Note / Message</span>
+                    <span className="text-[10px] text-brand-body/60 font-sans block mt-0.5">Enables gift card notes input box during checkout</span>
                   </div>
-                  <Toggle checked={showInRelated} onChange={setShowInRelated} />
+                  <Toggle checked={allowGiftNote} onChange={setAllowGiftNote} />
                 </div>
               </div>
             </div>
