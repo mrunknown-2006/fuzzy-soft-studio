@@ -2,22 +2,14 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Flower2, Sparkles, Leaf } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
-import { products as staticProducts } from '../data/products';
 import { supabase } from '../lib/supabaseClient';
-
-const DEFAULT_BANNERS = [
-  { name: 'Bridal Blooms', slug: 'bridal-blooms', link: '/shop?category=bridal-blooms', image: 'https://hbzmkpeirngvbsdawcld.supabase.co/storage/v1/object/public/product-images/collection-bridal-blooms.png' },
-  { name: 'Everyday Luxury', slug: 'everyday-luxury', link: '/shop?category=everyday-luxury', image: 'https://hbzmkpeirngvbsdawcld.supabase.co/storage/v1/object/public/product-images/collection-everyday-luxury.png' },
-  { name: 'Seasonal Picks', slug: 'seasonal-picks', link: '/shop?category=seasonal-picks', image: 'https://hbzmkpeirngvbsdawcld.supabase.co/storage/v1/object/public/product-images/collection-seasonal-picks-1.png' },
-  { name: 'Gift Bouquets', slug: 'gift-bouquets', link: '/shop?category=gift-bouquets', image: 'https://hbzmkpeirngvbsdawcld.supabase.co/storage/v1/object/public/product-images/collection-gift-bouquets.png' },
-];
 
 export default function Home() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
-  const [products, setProducts] = useState<any[]>(staticProducts);
-  const [isLoading, setIsLoading] = useState(false);
+  const [products, setProducts] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Announcement state from Settings
   const [offerText, setOfferText] = useState("Mother's Day Special: Use code BLOOM20 for 20% off all bouquets!");
@@ -43,24 +35,7 @@ export default function Home() {
   // Collections section state
   const [collectionsTitle, setCollectionsTitle] = useState('Our Collections');
   const [bannersCount, setBannersCount] = useState(4);
-  const [collectionBanners, setCollectionBanners] = useState<Array<{ name: string; slug: string; image?: string; image_url?: string; link?: string }>>([
-    {
-      name: 'Bridal Blooms',
-      slug: 'bridal-blooms'
-    },
-    {
-      name: 'Everyday Luxury',
-      slug: 'everyday-luxury'
-    },
-    {
-      name: 'Seasonal Picks',
-      slug: 'seasonal-picks'
-    },
-    {
-      name: 'Gift Bouquets',
-      slug: 'gift-bouquets'
-    }
-  ]);
+  const [collectionBanners, setCollectionBanners] = useState<Array<{ name: string; slug: string; image?: string; image_url?: string; link?: string }>>([]);
   const [collectionImageErrors, setCollectionImageErrors] = useState<Record<string, boolean>>({});
 
 
@@ -169,18 +144,12 @@ export default function Home() {
           .select('*')
           .eq('active', true);
         if (error) throw error;
-        if (data) {
-          const dbIds = new Set(data.map(p => p.id));
-          const dbSlugs = new Set(data.map(p => p.slug));
-          const filteredStatic = staticProducts.filter(p => !dbIds.has(p.id) && !dbSlugs.has(p.slug));
-          const merged = [...data, ...filteredStatic];
-          setProducts(merged.slice(0, 8));
-        } else {
-          setProducts(staticProducts.slice(0, 8));
-        }
+        setProducts(data || []);
       } catch (err) {
-        console.warn('Failed to load products from Supabase, using local fallback:', err);
-        setProducts(staticProducts.slice(0, 8));
+        console.warn('Failed to load products from Supabase:', err);
+        setProducts([]);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -207,10 +176,7 @@ export default function Home() {
       color: colors[Math.floor(Math.random() * colors.length)]
     }));
     setPetals(generated);
-    if (isLoading) {
-      setIsLoading(false);
-    }
-  }, [isLoading]);
+  }, []);
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
@@ -590,51 +556,60 @@ export default function Home() {
           <span className="section-underline" />
         </div>
 
-        <div className={`grid gap-5 ${
-          bannersCount === 6 ? 'grid-cols-2 lg:grid-cols-3' : 'grid-cols-2 lg:grid-cols-4'
-        }`}>
-          {collectionBanners.slice(0, bannersCount).map((col, index) => {
-            const imageUrl = col.image || col.image_url || (index < 4 ? DEFAULT_BANNERS[index].image : '');
-            const destinationLink = col.link || `/shop?category=${col.slug}`;
-            return (
-              <Link
-                key={col.slug || index}
-                to={destinationLink}
-                className="collection-card group relative overflow-hidden rounded-2xl aspect-square ring-1 ring-transparent hover:ring-[#C9A84C] transition-all duration-500"
-              >
-                {collectionImageErrors[col.slug || index] ? (
-                  <div className="w-full h-full bg-gradient-to-br from-rose-100 to-pink-50 flex items-center justify-center">
-                    <span className="font-serif text-xl text-rose-800">{col.name}</span>
-                  </div>
-                ) : (
-                  <>
-                    {/* Image */}
-                    <img
-                      src={imageUrl}
-                      alt={col.name}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                      onError={(e) => {
-                        setCollectionImageErrors(prev => ({ ...prev, [col.slug || index]: true }));
-                        e.currentTarget.style.display = 'none';
-                        if (e.currentTarget.parentElement) {
-                          e.currentTarget.parentElement.style.background = 
-                            'linear-gradient(135deg, #fce4ec, #f8bbd0)';
-                        }
-                      }}
-                    />
-                    {/* Bottom Gradient overlay */}
-                    <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-brand-cream via-brand-cream/60 to-transparent" />
-                    {/* Centered Collection Name */}
-                    <h3 className="absolute bottom-5 inset-x-0 text-center font-serif text-xl text-brand-heading">
-                      {col.name}
-                    </h3>
-                  </>
-                )}
-              </Link>
-            );
-          })}
-        </div>
+        {isLoading ? (
+          <div className={`grid gap-5 ${
+            bannersCount === 6 ? 'grid-cols-2 lg:grid-cols-3' : 'grid-cols-2 lg:grid-cols-4'
+          }`}>
+            {Array.from({ length: bannersCount }).map((_, i) => (
+              <div key={i} className="animate-pulse bg-brand-cream/40 border border-brand-border/20 rounded-2xl aspect-square flex flex-col justify-end p-5 space-y-3">
+                <div className="h-4 bg-brand-cream rounded w-2/3 mx-auto" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className={`grid gap-5 ${
+            bannersCount === 6 ? 'grid-cols-2 lg:grid-cols-3' : 'grid-cols-2 lg:grid-cols-4'
+          }`}>
+            {collectionBanners.slice(0, bannersCount).map((col, index) => {
+              const imageUrl = col.image || col.image_url || '';
+              const destinationLink = col.link || `/shop?category=${col.slug}`;
+              return (
+                <Link
+                  key={col.slug || index}
+                  to={destinationLink}
+                  className="collection-card group relative overflow-hidden rounded-2xl aspect-square ring-1 ring-transparent hover:ring-[#C9A84C] transition-all duration-500"
+                >
+                  {!imageUrl || collectionImageErrors[col.slug || index] ? (
+                    <div className="w-full h-full bg-gradient-to-br from-[#F5EDE6] to-[#EADFD5] flex flex-col items-center justify-center border border-brand-border/20">
+                      <span className="font-serif text-lg text-brand-heading/60 font-semibold">{col.name}</span>
+                      <span className="text-[10px] tracking-wider uppercase text-brand-body/40 mt-1">No Image</span>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Image */}
+                      <img
+                        src={imageUrl}
+                        alt={col.name}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        onError={(e) => {
+                          setCollectionImageErrors(prev => ({ ...prev, [col.slug || index]: true }));
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                      {/* Bottom Gradient overlay */}
+                      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-brand-cream via-brand-cream/60 to-transparent" />
+                      {/* Centered Collection Name */}
+                      <h3 className="absolute bottom-5 inset-x-0 text-center font-serif text-xl text-brand-heading">
+                        {col.name}
+                      </h3>
+                    </>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       {/* 4. MOST LOVED ARRANGEMENTS */}
@@ -649,16 +624,34 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Displaying featured products */}
-          <div className={`grid gap-6 md:gap-8 ${
-            featuredCount === 6 || featuredCount === 12
-              ? 'grid-cols-2 lg:grid-cols-3'
-              : 'grid-cols-2 lg:grid-cols-4'
-          }`}>
-            {products.slice(0, featuredCount).map((prod) => (
-              <ProductCard key={prod.id} product={prod} />
-            ))}
-          </div>
+          {isLoading ? (
+            <div className={`grid gap-6 md:gap-8 ${
+              featuredCount === 6 || featuredCount === 12
+                ? 'grid-cols-2 lg:grid-cols-3'
+                : 'grid-cols-2 lg:grid-cols-4'
+            }`}>
+              {Array.from({ length: featuredCount }).map((_, i) => (
+                <div key={i} className="animate-pulse bg-white/60 border border-brand-border/40 rounded-2xl overflow-hidden shadow-2xs">
+                  <div className="aspect-[3/4] bg-brand-cream/80" />
+                  <div className="p-4 space-y-3">
+                    <div className="h-4 bg-brand-cream rounded w-3/4" />
+                    <div className="h-3 bg-brand-cream rounded w-1/2" />
+                    <div className="h-8 bg-brand-cream/60 rounded-full mt-4" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className={`grid gap-6 md:gap-8 ${
+              featuredCount === 6 || featuredCount === 12
+                ? 'grid-cols-2 lg:grid-cols-3'
+                : 'grid-cols-2 lg:grid-cols-4'
+            }`}>
+              {products.slice(0, featuredCount).map((prod) => (
+                <ProductCard key={prod.id} product={prod} />
+              ))}
+            </div>
+          )}
         </section>
       )}
 
