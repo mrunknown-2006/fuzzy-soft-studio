@@ -32,11 +32,13 @@ export default function ContentManager() {
   // 1. Homepage Hero Fields
   const [heroBannerUrl, setHeroBannerUrl] = useState('');
   const [heroBadge, setHeroBadge] = useState('');
+  const [heroTitle, setHeroTitle] = useState('');
   const [heroTitle1, setHeroTitle1] = useState('');
   const [heroTitle2, setHeroTitle2] = useState('');
   const [heroTitle3, setHeroTitle3] = useState('');
   const [heroTagline, setHeroTagline] = useState('');
   const [heroCta, setHeroCta] = useState('');
+  const [heroCtaLink, setHeroCtaLink] = useState('/shop');
 
   // 2. Featured Section Fields
   const [featuredTitle, setFeaturedTitle] = useState('');
@@ -56,6 +58,9 @@ export default function ContentManager() {
   const [aboutBlock2Text2, setAboutBlock2Text2] = useState('');
   const [aboutBlock2Image, setAboutBlock2Image] = useState('');
   const [aboutFounderImage, setAboutFounderImage] = useState('');
+  const [founderName, setFounderName] = useState('');
+  const [founderRole, setFounderRole] = useState('');
+  const [founderBio, setFounderBio] = useState('');
 
   // 4. Contact Fields
   const [contactTitle, setContactTitle] = useState('');
@@ -80,6 +85,7 @@ export default function ContentManager() {
   const [offerLine, setOfferLine] = useState('');
   const [marqueeVisible, setMarqueeVisible] = useState(true);
   const [homeBannerUrl, setHomeBannerUrl] = useState('');
+  const [bannerSlotCount, setBannerSlotCount] = useState(4);
 
   // 6.5 Collections & Garden slots states
   const [bridalUrl, setBridalUrl] = useState('');
@@ -116,11 +122,13 @@ export default function ContentManager() {
         // Hero
         setHeroBannerUrl(loaded.hero_banner_url || '');
         setHeroBadge(loaded.hero_badge || '');
+        setHeroTitle(loaded.hero_main_title || loaded.hero_title_1 || '');
         setHeroTitle1(loaded.hero_title_1 || '');
         setHeroTitle2(loaded.hero_title_2 || '');
         setHeroTitle3(loaded.hero_title_3 || '');
         setHeroTagline(loaded.hero_tagline || '');
         setHeroCta(loaded.hero_cta_text || '');
+        setHeroCtaLink(loaded.hero_cta_link || '/shop');
 
         // Featured
         setFeaturedTitle(loaded.featured_section_title || '');
@@ -140,12 +148,31 @@ export default function ContentManager() {
         setAboutBlock2Text2(loaded.about_block2_text2 || '');
         setAboutBlock2Image(loaded.about_block2_image || loaded.block2_image || '');
         setAboutFounderImage(loaded.founder_image || loaded.about_founder_image || '');
+        setFounderName(loaded.founder_name || '');
+        setFounderRole(loaded.founder_role || '');
+        setFounderBio(loaded.founder_bio || '');
 
-        // Contact
+        // Contact & Two-way sync: Load from store_settings first
+        let finalWhatsapp = loaded.contact_whatsapp || '';
+        let finalEmail = loaded.contact_email || '';
+        try {
+          const { data: storeSettingsData } = await supabase
+            .from('store_settings')
+            .select('value')
+            .eq('key', 'general')
+            .single();
+          if (storeSettingsData && storeSettingsData.value) {
+            const val = storeSettingsData.value;
+            if (val.whatsapp_number) finalWhatsapp = val.whatsapp_number;
+            if (val.contact_email) finalEmail = val.contact_email;
+          }
+        } catch (e) {
+          console.warn('Failed to load contact details from store_settings:', e);
+        }
         setContactTitle(loaded.contact_title || '');
         setContactIntro(loaded.contact_intro || '');
-        setContactWhatsapp(loaded.contact_whatsapp || '');
-        setContactEmail(loaded.contact_email || '');
+        setContactWhatsapp(finalWhatsapp);
+        setContactEmail(finalEmail);
         setContactLocation(loaded.contact_location || '');
         setContactHours(loaded.contact_hours || '');
         setContactMapUrl(loaded.contact_map_url || '');
@@ -164,6 +191,7 @@ export default function ContentManager() {
         setOfferLine(loaded.offer_line || '');
         setMarqueeVisible(loaded.marquee_visible !== 'false' && loaded.marquee_visible !== false);
         setHomeBannerUrl(loaded.banner_url || '');
+        setBannerSlotCount(Number(loaded.collection_banners_count) || 4);
 
         if (loaded.collection_banners) {
           try {
@@ -588,11 +616,13 @@ export default function ContentManager() {
     const sectionPayload = {
       hero_banner_url: heroBannerUrl,
       hero_badge: heroBadge,
+      hero_main_title: heroTitle.trim(),
       hero_title_1: heroTitle1,
       hero_title_2: heroTitle2,
       hero_title_3: heroTitle3,
       hero_tagline: heroTagline,
       hero_cta_text: heroCta,
+      hero_cta_link: heroCtaLink.trim(),
     };
 
     const { data, error } = await supabase
@@ -661,6 +691,9 @@ export default function ContentManager() {
       block2_image: aboutBlock2Image,
       about_founder_image: aboutFounderImage,
       founder_image: aboutFounderImage,
+      founder_name: founderName.trim(),
+      founder_role: founderRole.trim(),
+      founder_bio: founderBio.trim(),
     };
 
     const { data, error } = await supabase
@@ -709,6 +742,30 @@ export default function ContentManager() {
       setLoading(false);
       return;
     }
+
+    // Two-way sync: update store_settings
+    try {
+      const { data: generalData } = await supabase
+        .from('store_settings')
+        .select('*')
+        .eq('key', 'general')
+        .single();
+      const existingValue = generalData?.value || {};
+      const updatedValue = {
+        ...existingValue,
+        whatsapp_number: contactWhatsapp.trim(),
+        contact_email: contactEmail.trim(),
+      };
+      await supabase
+        .from('store_settings')
+        .upsert(
+          { key: 'general', value: updatedValue, updated_at: new Date().toISOString() },
+          { onConflict: 'key' }
+        );
+    } catch (err) {
+      console.warn('Failed to sync contact details to store_settings:', err);
+    }
+
     console.log('CONTENT SAVED:', data);
     alert('Saved successfully!');
     setLoading(false);
@@ -726,6 +783,8 @@ export default function ContentManager() {
       footer_whatsapp_url: footerWhatsappUrl,
       footer_copyright: footerCopyright,
       footer_note: footerNote,
+      footer_whatsapp: contactWhatsapp,
+      footer_email: contactEmail,
     };
 
     const { data, error } = await supabase
@@ -742,6 +801,30 @@ export default function ContentManager() {
       setLoading(false);
       return;
     }
+
+    // Two-way sync: update store_settings
+    try {
+      const { data: generalData } = await supabase
+        .from('store_settings')
+        .select('*')
+        .eq('key', 'general')
+        .single();
+      const existingValue = generalData?.value || {};
+      const updatedValue = {
+        ...existingValue,
+        whatsapp_number: contactWhatsapp.trim(),
+        contact_email: contactEmail.trim(),
+      };
+      await supabase
+        .from('store_settings')
+        .upsert(
+          { key: 'general', value: updatedValue, updated_at: new Date().toISOString() },
+          { onConflict: 'key' }
+        );
+    } catch (err) {
+      console.warn('Failed to sync contact details to store_settings:', err);
+    }
+
     console.log('CONTENT SAVED:', data);
     alert('Saved successfully!');
     setLoading(false);
@@ -755,6 +838,7 @@ export default function ContentManager() {
       marquee_visible: marqueeVisible,
       banner_url: homeBannerUrl,
       collection_banners: adminCollectionBanners,
+      collection_banners_count: bannerSlotCount,
       garden_images: gardenImages
     };
 
@@ -887,20 +971,16 @@ export default function ContentManager() {
               />
             </div>
 
-            {/* Title words */}
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-1.5">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">Title Word 1</label>
-                <input type="text" value={heroTitle1} onChange={e => setHeroTitle1(e.target.value)} placeholder="Fuzzy" className="w-full h-11 px-4 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none" />
-              </div>
-              <div className="space-y-1.5">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">Title Word 2</label>
-                <input type="text" value={heroTitle2} onChange={e => setHeroTitle2(e.target.value)} placeholder="Soft" className="w-full h-11 px-4 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none" />
-              </div>
-              <div className="space-y-1.5">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">Title Word 3</label>
-                <input type="text" value={heroTitle3} onChange={e => setHeroTitle3(e.target.value)} placeholder="Studio" className="w-full h-11 px-4 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none" />
-              </div>
+            {/* Unified Hero Main Title */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">Hero Main Title</label>
+              <input 
+                type="text" 
+                value={heroTitle} 
+                onChange={e => setHeroTitle(e.target.value)} 
+                placeholder="Fuzzy Soft Studio" 
+                className="w-full h-11 px-4 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none" 
+              />
             </div>
 
             {/* Tagline */}
@@ -915,16 +995,28 @@ export default function ContentManager() {
               />
             </div>
 
-            {/* CTA */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">CTA Button Label</label>
-              <input 
-                type="text" 
-                value={heroCta} 
-                onChange={e => setHeroCta(e.target.value)} 
-                placeholder="SHOP NOW" 
-                className="w-full h-11 px-4 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none" 
-              />
+            {/* CTA Button & Link */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">CTA Button Label</label>
+                <input 
+                  type="text" 
+                  value={heroCta} 
+                  onChange={e => setHeroCta(e.target.value)} 
+                  placeholder="SHOP NOW" 
+                  className="w-full h-11 px-4 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none" 
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">CTA Button Destination Route / URL</label>
+                <input 
+                  type="text" 
+                  value={heroCtaLink} 
+                  onChange={e => setHeroCtaLink(e.target.value)} 
+                  placeholder="/shop" 
+                  className="w-full h-11 px-4 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none" 
+                />
+              </div>
             </div>
           </div>
 
@@ -959,6 +1051,9 @@ export default function ContentManager() {
                 <option value="4">4 Products</option>
                 <option value="6">6 Products</option>
                 <option value="8">8 Products</option>
+                <option value="12">12 Products</option>
+                <option value="16">16 Products</option>
+                <option value="20">20 Products</option>
               </select>
             </div>
 
@@ -1119,6 +1214,22 @@ export default function ContentManager() {
                 </div>
               </div>
             </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">Founder Name</label>
+                <input type="text" value={founderName} onChange={e => setFounderName(e.target.value)} placeholder="Warisha Shariq" className="w-full h-11 px-4 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">Founder Role / Title</label>
+                <input type="text" value={founderRole} onChange={e => setFounderRole(e.target.value)} placeholder="Founder" className="w-full h-11 px-4 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none" />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">Founder Bio / Personal Quote</label>
+              <textarea value={founderBio} onChange={e => setFounderBio(e.target.value)} rows={3} placeholder="Every bouquet is personally designed and handcrafted..." className="w-full p-4 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none resize-none" />
+            </div>
           </div>
 
           <button 
@@ -1221,6 +1332,17 @@ export default function ContentManager() {
               </div>
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">WhatsApp Helpline</label>
+                <input type="text" value={contactWhatsapp} onChange={e => setContactWhatsapp(e.target.value)} placeholder="+91-XXXXX-XXXXX" className="w-full h-11 px-4 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">Support Email</label>
+                <input type="email" value={contactEmail} onChange={e => setContactEmail(e.target.value)} placeholder="hello@fuzzysoftstudio.com" className="w-full h-11 px-4 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none" />
+              </div>
+            </div>
+
             <div className="space-y-1.5">
               <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">Copyright Text</label>
               <input type="text" value={footerCopyright} onChange={e => setFooterCopyright(e.target.value)} placeholder="© 2026 Fuzzy Soft Studio. All rights reserved." className="w-full h-11 px-4 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none" />
@@ -1311,65 +1433,93 @@ export default function ContentManager() {
 
           {/* Collection Banners Grid */}
           <div className="bg-white/60 border border-brand-border/40 rounded-2xl p-6 shadow-xs space-y-4">
-            <h4 className="font-serif text-lg font-bold text-brand-heading select-none border-b border-brand-border/20 pb-2">Collection Banners</h4>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-brand-border/20 pb-2">
+              <h4 className="font-serif text-lg font-bold text-brand-heading select-none">Collection Banners</h4>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-brand-heading uppercase tracking-wider">Banner Slot Count:</span>
+                <select 
+                  value={bannerSlotCount} 
+                  onChange={e => setBannerSlotCount(Number(e.target.value))}
+                  className="h-8 px-2 bg-white rounded-lg border border-brand-border/50 text-xs font-sans focus:outline-none cursor-pointer"
+                >
+                  <option value={4}>4 Slots</option>
+                  <option value={6}>6 Slots</option>
+                  <option value={8}>8 Slots</option>
+                </select>
+              </div>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {adminCollectionBanners.map((banner, index) => (
-                <div key={banner.slug} className="border border-brand-border/40 rounded-xl p-4 bg-white/50 space-y-3">
-                  <div className="flex justify-between items-center">
-                    <p className="font-semibold text-sm text-brand-heading">{banner.name}</p>
-                    <span className="text-[10px] text-brand-body/55 font-mono select-all">/{banner.slug}</span>
-                  </div>
-
-                  {banner.image && (
-                    <div className="w-full h-32 rounded-lg overflow-hidden border border-brand-border/20 bg-brand-cream/25">
-                      <img src={banner.image} alt={banner.name} className="w-full h-full object-cover" />
+              {Array.from({ length: bannerSlotCount }).map((_, index) => {
+                const banner = adminCollectionBanners[index] || {
+                  name: `Custom Banner Slot ${index + 1}`,
+                  slug: `custom-slot-${index + 1}`,
+                  image: ''
+                };
+                return (
+                  <div key={banner.slug || index} className="border border-brand-border/40 rounded-xl p-4 bg-white/50 space-y-3">
+                    <div className="flex justify-between items-center">
+                      <p className="font-semibold text-sm text-brand-heading">{banner.name}</p>
+                      <span className="text-[10px] text-brand-body/55 font-mono select-all">/{banner.slug}</span>
                     </div>
-                  )}
 
-                  <div className="space-y-2">
-                    <input 
-                      type="text"
-                      value={banner.image || ''}
-                      onChange={(e) => {
-                        const updated = [...adminCollectionBanners];
-                        updated[index] = { ...updated[index], image: e.target.value };
-                        setAdminCollectionBanners(updated);
-                      }}
-                      placeholder="Paste banner image URL"
-                      className="w-full border border-brand-border/40 rounded-lg px-3 py-1.5 text-xs bg-white/80"
-                    />
-                    <div className="flex gap-2">
-                      <label className="h-8 flex-grow bg-brand-cream/80 hover:bg-brand-cream border border-brand-border text-brand-heading rounded-lg flex items-center justify-center gap-1.5 cursor-pointer text-[10px] font-bold select-none active:scale-95 transition">
-                        <Upload size={12} />
-                        <span>Upload WebP Banner</span>
-                        <input 
-                          type="file"
-                          accept="image/*"
-                          onChange={e => handleCollectionBannerUpload(e, index, banner.slug)}
-                          className="hidden"
-                        />
-                      </label>
-                      {banner.image && (
-                        <button
-                          type="button"
-                          onClick={() => handleCollectionBannerDelete(index, banner.slug)}
-                          className="h-8 w-8 bg-red-50 hover:bg-red-100 border border-red-200 text-red-650 rounded-lg flex items-center justify-center cursor-pointer transition active:scale-95 shrink-0"
-                          title="Delete Banner"
-                        >
-                          <Trash2 size={12} />
-                        </button>
-                      )}
+                    {banner.image && (
+                      <div className="w-full h-32 rounded-lg overflow-hidden border border-brand-border/20 bg-brand-cream/25">
+                        <img src={banner.image} alt={banner.name} className="w-full h-full object-cover" />
+                      </div>
+                    )}
+
+                    <div className="space-y-2">
+                      <input 
+                        type="text"
+                        value={banner.image || ''}
+                        onChange={(e) => {
+                          const updated = [...adminCollectionBanners];
+                          while (updated.length <= index) {
+                            updated.push({
+                              name: `Custom Banner Slot ${updated.length + 1}`,
+                              slug: `custom-slot-${updated.length + 1}`,
+                              image: ''
+                            });
+                          }
+                          updated[index] = { ...updated[index], image: e.target.value };
+                          setAdminCollectionBanners(updated);
+                        }}
+                        placeholder="Paste banner image URL"
+                        className="w-full border border-brand-border/40 rounded-lg px-3 py-1.5 text-xs bg-white/80"
+                      />
+                      <div className="flex gap-2">
+                        <label className="h-8 flex-grow bg-brand-cream/80 hover:bg-brand-cream border border-brand-border text-brand-heading rounded-lg flex items-center justify-center gap-1.5 cursor-pointer text-[10px] font-bold select-none active:scale-95 transition">
+                          <Upload size={12} />
+                          <span>Upload WebP Banner</span>
+                          <input 
+                            type="file"
+                            accept="image/*"
+                            onChange={e => handleCollectionBannerUpload(e, index, banner.slug)}
+                            className="hidden"
+                          />
+                        </label>
+                        {banner.image && (
+                          <button
+                            type="button"
+                            onClick={() => handleCollectionBannerDelete(index, banner.slug)}
+                            className="h-8 w-8 bg-red-50 hover:bg-red-100 border border-red-200 text-red-650 rounded-lg flex items-center justify-center cursor-pointer transition active:scale-95 shrink-0"
+                            title="Delete Banner"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
           {/* Garden Slot configuration */}
           <div className="bg-white/60 border border-brand-border/40 rounded-2xl p-6 shadow-xs space-y-5">
             <div>
-              <h4 className="font-serif text-lg font-bold text-brand-heading select-none">From Our Garden Grid (6 Slots)</h4>
+              <h4 className="font-serif text-lg font-bold text-brand-heading select-none">Studio Showcase & Instagram Grid (6 Slots)</h4>
               <p className="text-[10px] text-brand-body/50 mt-1 leading-relaxed">
                 Featured flower block layouts on the home landing section. WebP upload is supported.
               </p>

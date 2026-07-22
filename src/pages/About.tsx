@@ -15,6 +15,9 @@ export default function About() {
   const [block2Text1, setBlock2Text1] = useState('We believe that flowers should hold more than just a temporary place in our lives. Our crochet arrangements are hand-threaded to order, ensuring each set of petals carries custom character and enduring warmth.');
   const [block2Text2, setBlock2Text2] = useState('By creating made-to-order floral statements, we ensure nothing is wasted, and every box is a custom work of art.');
   const [founderImage, setFounderImage] = useState('');
+  const [founderName, setFounderName] = useState('Warisha Shariq');
+  const [founderRole, setFounderRole] = useState('Founder');
+  const [founderBio, setFounderBio] = useState('Every bouquet, arrangement, and custom card is personally designed and handcrafted by Warisha. Her passion for blending organic textures with high-quality yarn brings the studio\'s cozy and romantic vision to life.');
   const [isLoading, setIsLoading] = useState(true);
   const [img1Error, setImg1Error] = useState(false);
   const [img2Error, setImg2Error] = useState(false);
@@ -53,6 +56,9 @@ export default function About() {
           if (loaded.about_block2_text2) setBlock2Text2(loaded.about_block2_text2);
           if (loaded.about_founder_image) setFounderImage(loaded.about_founder_image);
           else if (loaded.founder_image) setFounderImage(loaded.founder_image);
+          if (loaded.founder_name) setFounderName(loaded.founder_name);
+          if (loaded.founder_role) setFounderRole(loaded.founder_role);
+          if (loaded.founder_bio) setFounderBio(loaded.founder_bio);
         }
       } catch (err) {
         console.warn('Failed to load about page settings:', err);
@@ -148,18 +154,16 @@ export default function About() {
             ) : (
               <img
                 src={getImageUrl(founderImage)}
-                alt="Warisha Shariq, Founder"
+                alt={founderName}
                 className="w-full h-full object-cover"
                 onError={() => setFounderImgError(true)}
               />
             )}
           </div>
           <div className="space-y-4 font-sans text-brand-body/80 leading-relaxed text-sm">
-            <span className="text-xs uppercase tracking-widest text-[#8FA088] font-sans font-semibold">MEET THE MAKER</span>
-            <h2 className="font-serif text-2xl font-bold text-brand-heading">Warisha Shariq</h2>
-            <p>
-              Every bouquet, arrangement, and custom card is personally designed and handcrafted by Warisha. Her passion for blending organic textures with high-quality yarn brings the studio's cozy and romantic vision to life.
-            </p>
+            <span className="text-xs uppercase tracking-widest text-[#8FA088] font-sans font-semibold">{founderRole}</span>
+            <h2 className="font-serif text-2xl font-bold text-brand-heading">{founderName}</h2>
+            <p>{founderBio}</p>
           </div>
         </div>
 

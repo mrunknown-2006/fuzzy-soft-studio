@@ -18,11 +18,13 @@ export default function Home() {
 
   // Hero content state (dynamic via Supabase settings)
   const [heroBadge, setHeroBadge] = useState('FLORAL LIFESTYLE · EST. 2026');
+  const [heroMainTitle, setHeroMainTitle] = useState('');
   const [heroTitle1, setHeroTitle1] = useState('Fuzzy');
   const [heroTitle2, setHeroTitle2] = useState('Soft');
   const [heroTitle3, setHeroTitle3] = useState('Studio');
   const [heroTagline, setHeroTagline] = useState('Where Every Petal Tells a Story');
   const [heroCta, setHeroCta] = useState('SHOP NOW');
+  const [heroCtaLink, setHeroCtaLink] = useState('/shop');
   const [marqueeVisible, setMarqueeVisible] = useState(true);
 
   // Featured section state
@@ -33,7 +35,8 @@ export default function Home() {
 
   // Collections section state
   const [collectionsTitle, setCollectionsTitle] = useState('Our Collections');
-  const [collectionBanners, setCollectionBanners] = useState([
+  const [bannersCount, setBannersCount] = useState(4);
+  const [collectionBanners, setCollectionBanners] = useState<Array<{ name: string; slug: string; image?: string }>>([
     {
       name: 'Bridal Blooms',
       slug: 'bridal-blooms'
@@ -173,11 +176,14 @@ export default function Home() {
 
         // Apply hero content (either loaded from site_content or default fallback values)
         setHeroBadge(s.hero_badge || 'FLORAL LIFESTYLE · EST. 2026');
+        setHeroMainTitle(s.hero_main_title || '');
         setHeroTitle1(s.hero_title_1 || 'Fuzzy');
         setHeroTitle2(s.hero_title_2 || 'Soft');
         setHeroTitle3(s.hero_title_3 || 'Studio');
         setHeroTagline(s.hero_tagline || 'Where Every Petal Tells a Story');
         setHeroCta(s.hero_cta_text || 'SHOP NOW');
+        setHeroCtaLink(s.hero_cta_link || '/shop');
+        setBannersCount(Number(s.collection_banners_count) || 4);
 
         // Fetch hero banner image from site_content where id='hero'
         const heroRow = siteData?.find((row: any) => row.id === 'hero');
@@ -535,17 +541,23 @@ export default function Home() {
             </p>
             
             <h1 
-              className="text-5xl md:text-7xl lg:text-[10rem] leading-none tracking-tight text-brand-heading font-serif"
+              className="text-5xl md:text-7xl lg:text-[8rem] leading-none tracking-tight text-brand-heading font-serif text-center max-w-5xl"
               style={{ 
                 animation: 'fadeInUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards',
                 opacity: 0
               }}
             >
-              {heroTitle1} <span className="font-script text-[1.2em] text-brand-accent block md:inline-block md:-ml-3 mt-1 md:mt-0 font-normal">{heroTitle2}</span> {heroTitle3}
+              {heroMainTitle ? (
+                heroMainTitle
+              ) : (
+                <>
+                  {heroTitle1} <span className="font-script text-[1.2em] text-brand-accent block md:inline-block md:-ml-3 mt-1 md:mt-0 font-normal">{heroTitle2}</span> {heroTitle3}
+                </>
+              )}
             </h1>
             
             <p 
-              className="text-sm md:text-base lg:text-lg italic text-white/90 mt-4 mb-8 px-4 font-serif select-none"
+              className="text-sm md:text-base lg:text-lg italic text-white/90 mt-4 mb-8 px-4 font-serif select-none text-center max-w-2xl"
               style={{ 
                 animation: 'fadeInUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards', 
                 opacity: 0 
@@ -562,7 +574,7 @@ export default function Home() {
               }}
             >
               <button
-                onClick={() => navigate('/shop')}
+                onClick={() => navigate(heroCtaLink)}
                 className="group relative overflow-hidden inline-flex items-center gap-3 bg-brand-accent hover:bg-brand-accent-hover text-white min-h-[44px] px-8 md:px-12 py-4.5 rounded-full text-xs font-semibold uppercase tracking-[0.2em] transition-all duration-300 hover:scale-[1.02] shadow-lg shadow-brand-accent/20 animate-none cursor-pointer"
               >
                 <span className="relative z-10 flex items-center gap-2">
@@ -623,9 +635,11 @@ export default function Home() {
           <span className="section-underline" />
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
-          {collectionBanners.map((col) => {
-            const imageUrl = collectionUrls[col.slug] || '';
+        <div className={`grid gap-5 ${
+          bannersCount === 6 ? 'grid-cols-2 lg:grid-cols-3' : 'grid-cols-2 lg:grid-cols-4'
+        }`}>
+          {collectionBanners.slice(0, bannersCount).map((col) => {
+            const imageUrl = col.image || collectionUrls[col.slug] || '';
             return (
               <Link
                 key={col.slug}
@@ -679,8 +693,12 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Displaying first 4 products */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+          {/* Displaying featured products */}
+          <div className={`grid gap-6 md:gap-8 ${
+            featuredCount === 6 || featuredCount === 12
+              ? 'grid-cols-2 lg:grid-cols-3'
+              : 'grid-cols-2 lg:grid-cols-4'
+          }`}>
             {products.slice(0, featuredCount).map((prod) => (
               <ProductCard key={prod.id} product={prod} />
             ))}
@@ -721,11 +739,11 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 6. FROM OUR GARDEN (Corrected floral Images) */}
+      {/* 6. STUDIO SHOWCASE & INSTAGRAM GRID */}
       <section className="py-20 px-6 lg:px-10 max-w-7xl mx-auto w-full">
         <div className="text-center mb-12">
           <p className="text-4xl text-brand-heading font-script">
-            From Our Garden
+            Studio Showcase & Instagram Grid
           </p>
         </div>
 
@@ -741,7 +759,7 @@ export default function Home() {
               >
                 <img
                   src={photo.url}
-                  alt={photo.caption || `Garden Floral ${i + 1}`}
+                  alt={photo.caption || `Studio Showcase ${i + 1}`}
                   className="w-full h-full object-cover aspect-[3/4] transition-transform duration-700 group-hover:scale-105"
                   loading="lazy"
                   onError={(e) => {
