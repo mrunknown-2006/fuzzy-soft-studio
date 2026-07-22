@@ -69,7 +69,6 @@ class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasErr
 export default function App() {
   const [logoUrl, setLogoUrl] = useState('/logo.png');
   const [maintenance, setMaintenance] = useState(false);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkMaintenance = async () => {
@@ -103,41 +102,12 @@ export default function App() {
         }
       } catch (err) {
         console.warn('Failed to fetch store status:', err);
-      } finally {
-        setTimeout(() => {
-          setLoading(false);
-        }, 300);
       }
     };
-
-    if (document.fonts) {
-      document.fonts.ready.then(() => {
-        checkMaintenance();
-      }).catch(() => {
-        checkMaintenance();
-      });
-    } else {
-      checkMaintenance();
-    }
+    checkMaintenance();
   }, []);
 
   const isAdminRoute = window.location.pathname.startsWith('/admin');
-
-  if (loading) {
-    return (
-      <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#FCFAF8] text-center select-none">
-        <div className="space-y-6 flex flex-col items-center animate-pulse">
-          <p className="font-serif italic text-3xl tracking-widest text-[#2C1810] opacity-90">
-            Fuzzy Soft Studio
-          </p>
-          <div className="relative w-8 h-8 flex items-center justify-center mt-2">
-            <div className="absolute inset-0 rounded-full border-[2px] border-[#C4A0A0]/20"></div>
-            <div className="absolute inset-0 rounded-full border-[2px] border-t-[#C4A0A0] animate-spin"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (maintenance && !isAdminRoute) {
     return (
