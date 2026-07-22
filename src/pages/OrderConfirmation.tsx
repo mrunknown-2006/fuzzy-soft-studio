@@ -167,6 +167,12 @@ export default function OrderConfirmation() {
                 {order.pricing.deliveryCharge === 0 ? 'Free' : `₹${order.pricing.deliveryCharge}`}
               </span>
             </div>
+            {order.pricing.giftWrappingCharge > 0 && (
+              <div className="flex justify-between">
+                <span>Gift Wrapping:</span>
+                <span className="font-semibold text-brand-heading">₹{order.pricing.giftWrappingCharge}</span>
+              </div>
+            )}
             {order.pricing.discountAmount && (
               <div className="flex justify-between text-green-700">
                 <span>Discount Applied:</span>

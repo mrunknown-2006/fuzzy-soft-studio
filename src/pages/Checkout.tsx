@@ -76,8 +76,13 @@ export default function Checkout() {
     return Math.round(subtotal * appliedDiscount.value / 100);
   }, [subtotal, appliedDiscount]);
 
-  // Compute total
-  const total = subtotal + finalShipping - discountAmount;
+  // Gifting Add-On States
+  const [giftWrapped, setGiftWrapped] = useState(false);
+  const [ribbonColor, setRibbonColor] = useState('Classic Gold');
+  const [giftMessage, setGiftMessage] = useState('');
+
+  // Compute total including gift wrapping if enabled
+  const total = subtotal + finalShipping - discountAmount + (giftWrapped ? 49 : 0);
 
   // Form validator
   const validateForm = () => {
@@ -119,22 +124,39 @@ export default function Checkout() {
       const { data: sessionData } = await supabase.auth.getSession();
       const userId = sessionData?.session?.user?.id || 'guest';
 
-      // 1. Insert order to database
-      const { error: insertError } = await supabase
+      // 1. Insert order to database with robust schema column fallback retry
+      const orderPayload: any = {
+        order_id: orderNumber,
+        user_id: userId,
+        customer_name: name.trim(),
+        customer_phone: phone.trim(),
+        customer_email: email.trim() || null,
+        shipping_address: `${address.trim()}, ${city.trim()} - ${pincode.trim()}`,
+        items: cart, // JSONB array of items
+        total_amount: total,
+        payment_method: 'whatsapp',
+        status: 'Pending',
+        created_at: new Date().toISOString(),
+        gifting_info: giftWrapped ? {
+          gift_wrapped: true,
+          ribbon_color: ribbonColor,
+          gift_message: giftMessage.trim()
+        } : null
+      };
+
+      let { error: insertError } = await supabase
         .from('orders')
-        .insert({
-          order_id: orderNumber,
-          user_id: userId,
-          customer_name: name.trim(),
-          customer_phone: phone.trim(),
-          customer_email: email.trim() || null,
-          shipping_address: `${address.trim()}, ${city.trim()} - ${pincode.trim()}`,
-          items: cart, // JSONB array of items
-          total_amount: total,
-          payment_method: 'whatsapp',
-          status: 'Pending',
-          created_at: new Date().toISOString()
-        });
+        .insert(orderPayload);
+
+      if (insertError && insertError.message.includes('gifting_info')) {
+        // Fallback retry: serialize gifting details into internal_notes or items payload
+        const { gifting_info, ...retryPayload } = orderPayload;
+        retryPayload.internal_notes = giftWrapped 
+          ? `[Gift Wrapped] Ribbon: ${ribbonColor}. Message: ${giftMessage.trim()}`
+          : '';
+        const retryRes = await supabase.from('orders').insert(retryPayload);
+        insertError = retryRes.error;
+      }
 
       if (insertError) throw insertError;
 
@@ -165,8 +187,10 @@ export default function Checkout() {
         `*Address:* ${address.trim()}, ${city.trim()} - ${pincode.trim()}\n` +
         `*Email:* ${email.trim() || 'N/A'}\n\n` +
         `*Items Ordered:*\n${itemsList}\n\n` +
+        (giftWrapped ? `*Gifting Add-On (₹49):* YES\n*Ribbon Color:* ${ribbonColor}\n*Gift Message:* ${giftMessage.trim() || 'None'}\n\n` : '') +
         `*Subtotal:* ₹${subtotal.toLocaleString('en-IN')}\n` +
         `*Shipping:* ${finalShipping === 0 ? 'FREE' : '₹' + finalShipping}\n` +
+        (giftWrapped ? `*Gift Wrapping:* ₹49\n` : '') +
         (discountAmount > 0 ? `*Discount Applied:* -₹${discountAmount.toLocaleString('en-IN')} (${appliedDiscount?.code})\n` : '') +
         `*Total Amount (COD):* ₹${total.toLocaleString('en-IN')}*`;
 
@@ -192,6 +216,7 @@ export default function Checkout() {
               subtotal: subtotal,
               deliveryCharge: finalShipping,
               discountAmount: discountAmount,
+              giftWrappingCharge: giftWrapped ? 49 : 0,
               total: total
             },
             shippingDetails: {
@@ -360,6 +385,60 @@ export default function Checkout() {
               ))}
             </div>
 
+            {/* Global Gift Add-on Card */}
+            <div className="bg-[#FCFAF8] border border-brand-border/40 rounded-xl p-4 space-y-3 select-none shadow-3xs transition duration-200 hover:border-brand-accent/25">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input 
+                  type="checkbox"
+                  checked={giftWrapped}
+                  onChange={(e) => setGiftWrapped(e.target.checked)}
+                  className="w-4 h-4 accent-brand-accent cursor-pointer rounded border-brand-border/50"
+                />
+                <div>
+                  <span className="block text-xs font-bold text-brand-heading">🎁 Add Luxury Gift Wrapping (+₹49)</span>
+                  <span className="block text-[9px] text-brand-body/50 mt-0.5">Satin ribbon tie, designer wrapping, and a handwritten card.</span>
+                </div>
+              </label>
+
+              {giftWrapped && (
+                <div className="space-y-3 pt-3 border-t border-brand-border/25 animate-fade-in">
+                  {/* Ribbon Color Select */}
+                  <div className="space-y-1.5">
+                    <span className="block text-[9px] font-semibold uppercase tracking-wider text-brand-heading">Ribbon Color Choice</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {['Satin Red', 'Blush Pink', 'Classic Gold', 'Cream White', 'Surprise Me'].map((color) => (
+                        <button
+                          key={color}
+                          type="button"
+                          onClick={() => setRibbonColor(color)}
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-semibold border transition cursor-pointer select-none ${
+                            ribbonColor === color 
+                              ? 'bg-brand-heading text-white border-brand-heading'
+                              : 'bg-white text-brand-body/75 border-brand-border/60 hover:bg-brand-cream/35'
+                          }`}
+                        >
+                          {color}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Gift Message Textarea */}
+                  <div className="space-y-1">
+                    <span className="block text-[9px] font-semibold uppercase tracking-wider text-brand-heading">Custom Gift Message</span>
+                    <textarea
+                      value={giftMessage}
+                      onChange={(e) => setGiftMessage(e.target.value)}
+                      placeholder="Write a heartfelt message for the recipient..."
+                      rows={3}
+                      maxLength={200}
+                      className="w-full p-2.5 bg-white border border-brand-border/60 rounded-xl text-xs font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition resize-none"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Pricing Details */}
             <div className="space-y-3 pt-4 border-t border-brand-border/20 text-xs font-sans text-brand-body/80">
               <div className="flex justify-between">
@@ -372,6 +451,12 @@ export default function Checkout() {
                   {finalShipping === 0 ? <span className="text-green-700 font-bold uppercase text-[10px]">Free</span> : `₹${finalShipping}`}
                 </span>
               </div>
+              {giftWrapped && (
+                <div className="flex justify-between">
+                  <span>Gift Wrapping</span>
+                  <span className="font-semibold text-brand-heading">₹49</span>
+                </div>
+              )}
               {appliedDiscount && (
                 <div className="flex justify-between text-green-700">
                   <span className="flex items-center gap-1">

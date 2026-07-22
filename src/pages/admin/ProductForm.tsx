@@ -39,8 +39,6 @@ export default function ProductForm() {
   const [isActive, setIsActive] = useState(true);
   const [isFeatured, setIsFeatured] = useState(false);
   const [craftingTime, setCraftingTime] = useState('2-3 Days to handcraft');
-  const [allowRibbonSelection, setAllowRibbonSelection] = useState(false);
-  const [allowGiftNote, setAllowGiftNote] = useState(false);
 
   // SEO & URL Slug
   const [slug, setSlug] = useState('');
@@ -105,17 +103,6 @@ export default function ProductForm() {
           setStock(product.stock?.toString() || '0');
           setSku(product.sku || '');
           setCraftingTime(product.crafting_time || '2-3 Days to handcraft');
-          
-          if (product.customization_options) {
-            setAllowRibbonSelection(!!product.customization_options.allow_ribbon_selection);
-            setAllowGiftNote(!!product.customization_options.allow_gift_note);
-          } else if (product.allow_ribbon_selection !== undefined || product.allow_gift_note !== undefined) {
-            setAllowRibbonSelection(!!product.allow_ribbon_selection);
-            setAllowGiftNote(!!product.allow_gift_note);
-          } else {
-            setAllowRibbonSelection(false);
-            setAllowGiftNote(false);
-          }
           
           setIsActive(product.active);
           setIsFeatured(product.is_featured || false);
@@ -370,11 +357,7 @@ export default function ProductForm() {
         description: description.trim() || 'Handcrafted luxury arrangement.',
         meta_title: metaTitle.trim() || null,
         meta_description: metaDescription.trim() || null,
-        crafting_time: craftingTime.trim() || '2-3 Days to handcraft',
-        customization_options: {
-          allow_ribbon_selection: allowRibbonSelection,
-          allow_gift_note: allowGiftNote
-        }
+        crafting_time: craftingTime.trim() || '2-3 Days to handcraft'
       };
     } else {
       productData = {
@@ -402,11 +385,7 @@ export default function ProductForm() {
         description: description.trim() || originalProduct?.description || 'Handcrafted luxury arrangement.',
         meta_title: metaTitle.trim() || null,
         meta_description: metaDescription.trim() || null,
-        crafting_time: craftingTime.trim() || '2-3 Days to handcraft',
-        customization_options: {
-          allow_ribbon_selection: allowRibbonSelection,
-          allow_gift_note: allowGiftNote
-        }
+        crafting_time: craftingTime.trim() || '2-3 Days to handcraft'
       };
     }
 
@@ -416,9 +395,9 @@ export default function ProductForm() {
         const finalProduct = { id: newId, ...productData };
         let { error } = await supabase.from('products').insert(finalProduct);
         
-        if (error && (error.message.includes('image_url') || error.message.includes('customization_options') || error.message.includes('crafting_time'))) {
+        if (error && (error.message.includes('image_url') || error.message.includes('crafting_time'))) {
           // Retry without missing columns
-          const { image_url, customization_options, crafting_time, ...retryData } = finalProduct;
+          const { image_url, crafting_time, ...retryData } = finalProduct;
           const retryRes = await supabase.from('products').insert(retryData);
           error = retryRes.error;
         }
@@ -434,9 +413,9 @@ export default function ProductForm() {
           .update(productData)
           .eq('id', id);
           
-        if (error && (error.message.includes('image_url') || error.message.includes('customization_options') || error.message.includes('crafting_time'))) {
+        if (error && (error.message.includes('image_url') || error.message.includes('crafting_time'))) {
           // Retry without missing columns
-          const { image_url, customization_options, crafting_time, ...retryData } = productData;
+          const { image_url, crafting_time, ...retryData } = productData;
           const retryRes = await supabase
             .from('products')
             .update(retryData)
@@ -787,30 +766,7 @@ export default function ProductForm() {
               </div>
             </div>
 
-            {/* Gifting & Customization Toggles */}
-            <div className="bg-white/60 border border-brand-border/40 rounded-2xl p-6 shadow-xs backdrop-blur-xs space-y-4">
-              <h3 className="font-serif text-lg font-bold text-brand-heading border-b border-brand-border/25 pb-2">
-                Gifting & Customization Toggles
-              </h3>
 
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="block text-xs font-semibold text-brand-heading">Allow Ribbon Color Selection</span>
-                    <span className="text-[10px] text-brand-body/60 font-sans block mt-0.5">Enables customers to pick a ribbon choice on the details page</span>
-                  </div>
-                  <Toggle checked={allowRibbonSelection} onChange={setAllowRibbonSelection} />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="block text-xs font-semibold text-brand-heading">Allow Free Gift Note / Message</span>
-                    <span className="text-[10px] text-brand-body/60 font-sans block mt-0.5">Enables gift card notes input box during checkout</span>
-                  </div>
-                  <Toggle checked={allowGiftNote} onChange={setAllowGiftNote} />
-                </div>
-              </div>
-            </div>
 
             {/* H: SEO Details Accordion */}
             <div className="bg-white/60 border border-brand-border/40 rounded-2xl shadow-xs backdrop-blur-xs overflow-hidden">
