@@ -371,7 +371,7 @@ export default function Checkout() {
           <div className="bg-[#8FA088]/10 border border-[#8FA088]/30 rounded-2xl p-4 flex gap-3 items-center">
             <ShieldCheck className="text-[#8FA088] shrink-0" size={20} />
             <p className="text-[11px] font-sans text-[#2C1810]/80">
-              Orders are paid via <strong>Cash on Delivery (COD)</strong>. Once you submit details, a confirmation draft will be generated for direct dispatch via WhatsApp helpline.
+              🔒 <strong>100% Secure Checkout.</strong> Your handmade order will be carefully crafted upon payment confirmation.
             </p>
           </div>
         </form>
@@ -582,11 +582,11 @@ export default function Checkout() {
                   </div>
 
                   <a
-                    href={`upi://pay?pa=9506228972@axl&pn=Fuzzy%20Soft%20Studio&am=${total}&cu=INR`}
+                    href={`upi://pay?pa=9506228972@axl&pn=Fuzzy%20Soft%20Studio&cu=INR&am=${total}`}
                     className="w-full py-3 bg-brand-heading hover:bg-brand-heading-hover text-white text-xs font-bold uppercase tracking-widest rounded-xl transition-all duration-300 shadow-sm hover:shadow-md flex items-center justify-center gap-2"
                   >
                     <Smartphone size={15} />
-                    <span>Open GPay / PhonePe</span>
+                    <span>📱 PAY VIA ANY UPI APP</span>
                   </a>
                 </div>
               )}
