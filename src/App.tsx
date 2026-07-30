@@ -22,6 +22,7 @@ import Wishlist from './pages/Wishlist';
 import Account from './pages/Account';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import UpdatePassword from './pages/UpdatePassword';
 import Admin from './pages/Admin';
 import AdminLogin from './pages/AdminLogin';
 import Dashboard from './pages/admin/Dashboard';
@@ -162,6 +163,7 @@ export default function App() {
             <Route path="/account" element={<Account />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/update-password" element={<UpdatePassword />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/faqs" element={<FAQs />} />

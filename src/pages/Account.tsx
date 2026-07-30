@@ -547,6 +547,43 @@ export default function Account() {
                   {savingProfile ? 'Saving Changes...' : 'Save Profile Changes'}
                 </button>
               </form>
+
+              {/* Security & Password Section */}
+              <div className="pt-6 border-t border-brand-border/20 space-y-4">
+                <div>
+                  <h3 className="font-serif text-sm font-bold text-brand-heading">Security & Password</h3>
+                  <p className="text-xs text-brand-body/60 font-sans">
+                    Need to change or forgot your password? Trigger a secure reset link.
+                  </p>
+                </div>
+
+                <div className="bg-brand-cream/40 border border-brand-border/50 rounded-2xl p-4.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div>
+                    <span className="block text-xs font-bold text-brand-heading">Reset Password via Email</span>
+                    <span className="block text-[11px] text-brand-body/60 mt-0.5">
+                      Sends a recovery link to <strong>{user.email}</strong>
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const redirectUrl = `${window.location.origin}/update-password`;
+                        const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+                          redirectTo: redirectUrl,
+                        });
+                        if (error) throw error;
+                        showToast('Password reset link sent to your email!', 'success');
+                      } catch (err: any) {
+                        showToast(err.message || 'Failed to send reset email.', 'error');
+                      }
+                    }}
+                    className="px-4 py-2 bg-white border border-brand-border text-brand-heading hover:bg-brand-cream text-xs font-bold uppercase tracking-wider rounded-xl transition cursor-pointer shadow-2xs whitespace-nowrap"
+                  >
+                    Send Reset Link
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
