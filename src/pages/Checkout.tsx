@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
-import { MessageCircle, ArrowLeft, ShieldCheck, Tag } from 'lucide-react';
+import { MessageCircle, ArrowLeft, ShieldCheck, Tag, QrCode, Smartphone, Copy, Check } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { supabase } from '../lib/supabaseClient';
 
@@ -84,6 +84,7 @@ export default function Checkout() {
   // UPI Payment States
   const [utrNumber, setUtrNumber] = useState('');
   const [copied, setCopied] = useState(false);
+  const [paymentTab, setPaymentTab] = useState<'qr' | 'app'>('qr');
 
   const handleCopyUpi = () => {
     navigator.clipboard.writeText('9506228972@axl');
@@ -489,63 +490,116 @@ export default function Checkout() {
             </div>
 
             {/* Secure UPI Payment Section */}
-            <div className="bg-[#FAF9F6] border border-[#8FA088]/40 rounded-xl p-4.5 space-y-4 shadow-3xs select-none">
-              <div className="flex items-center justify-between border-b border-brand-border/25 pb-2">
+            <div className="bg-[#FAF9F6] border border-[#8FA088]/40 rounded-2xl p-5 space-y-4 shadow-xs select-none">
+              <div className="flex items-center justify-between border-b border-brand-border/25 pb-3">
                 <span className="text-xs font-bold text-brand-heading flex items-center gap-1.5">
                   <span className="text-[#8FA088]">🛡️</span> Secure UPI Payment
                 </span>
-                <span className="text-[10px] text-green-700 font-bold uppercase tracking-wider bg-green-50 px-2 py-0.5 rounded border border-green-200">
+                <span className="text-[10px] text-green-700 font-bold uppercase tracking-wider bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
                   Direct Bank
                 </span>
               </div>
 
               {/* Instructions */}
-              <div className="text-[10px] text-brand-body/75 space-y-1">
-                <p>1. Scan the QR code or pay using the UPI ID below.</p>
-                <p>2. Enter the exact payable amount: <strong>₹{total.toLocaleString('en-IN')}</strong>.</p>
-                <p>3. Copy/Save your 12-digit transaction UTR number to complete checkout.</p>
+              <div className="text-[10px] text-brand-body/75 space-y-0.5">
+                <p>1. Select your preferred payment view below to pay <strong>₹{total.toLocaleString('en-IN')}</strong>.</p>
+                <p>2. Copy/Save your 12-digit transaction UTR number to complete checkout.</p>
               </div>
 
-              {/* QR Code (Desktop View) */}
-              <div className="hidden md:flex flex-col items-center justify-center py-2 bg-white rounded-xl border border-brand-border/30">
-                <img 
-                  src="/assets/payment-qr.jpeg" 
-                  alt="UPI Payment QR Code" 
-                  className="w-40 h-40 object-contain rounded-md"
-                />
-                <span className="text-[9px] text-brand-body/50 mt-1.5 uppercase font-mono tracking-wider">
-                  Scan to Pay
-                </span>
-              </div>
-
-              {/* UPI ID & Action buttons (Mobile View / Copier) */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between bg-white border border-brand-border/60 rounded-xl p-2 px-3">
-                  <span className="text-xs font-mono font-semibold text-brand-heading select-all">
-                    9506228972@axl
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleCopyUpi}
-                    className="text-[9px] font-bold uppercase tracking-wider text-[#C9A84C] hover:text-[#B08A38] cursor-pointer"
-                  >
-                    {copied ? 'Copied!' : 'Copy ID'}
-                  </button>
-                </div>
-
-                {/* Mobile Intent Button */}
-                <a
-                  href={`upi://pay?pa=9506228972@axl&pn=Fuzzy%20Soft%20Studio&am=${total}&cu=INR`}
-                  className="block md:hidden w-full text-center py-2.5 bg-brand-heading hover:bg-brand-heading-hover text-white text-xs font-bold uppercase tracking-wider rounded-xl transition duration-200 shadow-3xs"
+              {/* Interactive State-Driven Tabs */}
+              <div className="flex bg-stone-200/60 p-1 rounded-xl gap-1">
+                <button
+                  type="button"
+                  onClick={() => setPaymentTab('qr')}
+                  className={`flex-1 py-2 px-3 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all duration-200 cursor-pointer ${
+                    paymentTab === 'qr'
+                      ? 'bg-white text-brand-heading shadow-xs font-bold'
+                      : 'text-brand-body/60 hover:text-brand-heading'
+                  }`}
                 >
-                  📲 Pay via UPI App
-                </a>
+                  <QrCode size={14} />
+                  <span>Scan QR Code</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPaymentTab('app')}
+                  className={`flex-1 py-2 px-3 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all duration-200 cursor-pointer ${
+                    paymentTab === 'app'
+                      ? 'bg-white text-brand-heading shadow-xs font-bold'
+                      : 'text-brand-body/60 hover:text-brand-heading'
+                  }`}
+                >
+                  <Smartphone size={14} />
+                  <span>Pay via UPI App</span>
+                </button>
               </div>
 
-              {/* UTR Input Section */}
-              <div className="space-y-1.5 pt-2 border-t border-brand-border/25">
-                <label className="block text-[10px] font-semibold uppercase tracking-wider text-brand-heading">
-                  12-Digit Transaction ID (UTR / Ref No.) *
+              {/* View 1: Scan QR Code */}
+              {paymentTab === 'qr' && (
+                <div className="animate-fade-in flex flex-col items-center justify-center py-2">
+                  <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-md flex flex-col items-center">
+                    <img 
+                      src="/assets/payment-qr.jpeg" 
+                      alt="UPI Payment QR Code" 
+                      className="w-48 h-48 object-contain rounded-xl"
+                    />
+                    <span className="text-[9px] font-mono tracking-widest text-brand-body/50 uppercase mt-3 text-center">
+                      Scan with GPay / PhonePe / Paytm / Any UPI App
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* View 2: Pay via UPI App */}
+              {paymentTab === 'app' && (
+                <div className="animate-fade-in space-y-3.5 py-1">
+                  <div className="space-y-1.5">
+                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-brand-heading">
+                      Official Store UPI ID
+                    </label>
+                    <div className="flex items-center justify-between bg-white border border-brand-border/70 rounded-xl p-2.5 px-3.5 shadow-2xs">
+                      <span className="text-xs sm:text-sm font-mono font-bold text-brand-heading select-all">
+                        9506228972@axl
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleCopyUpi}
+                        className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-[#C9A84C] hover:text-[#B08A38] transition cursor-pointer bg-brand-cream/80 hover:bg-brand-cream px-2.5 py-1 rounded-lg border border-brand-border/40"
+                      >
+                        {copied ? (
+                          <>
+                            <Check size={12} className="text-green-600" />
+                            <span className="text-green-600">Copied</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy size={12} />
+                            <span>Copy ID</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  <a
+                    href={`upi://pay?pa=9506228972@axl&pn=Fuzzy%20Soft%20Studio&am=${total}&cu=INR`}
+                    className="w-full py-3 bg-brand-heading hover:bg-brand-heading-hover text-white text-xs font-bold uppercase tracking-widest rounded-xl transition-all duration-300 shadow-sm hover:shadow-md flex items-center justify-center gap-2"
+                  >
+                    <Smartphone size={15} />
+                    <span>Open GPay / PhonePe</span>
+                  </a>
+                </div>
+              )}
+
+              {/* UTR Input Section (Global) */}
+              <div className="space-y-1.5 pt-3 border-t border-brand-border/25">
+                <label className="block text-[10px] font-semibold uppercase tracking-wider text-brand-heading flex items-center justify-between">
+                  <span>12-Digit Transaction ID (UTR / Ref No.) *</span>
+                  {utrNumber.trim().length >= 10 && (
+                    <span className="text-green-600 flex items-center gap-0.5 text-[9px] font-bold">
+                      <Check size={11} /> Valid UTR
+                    </span>
+                  )}
                 </label>
                 <input
                   type="text"
@@ -559,7 +613,7 @@ export default function Checkout() {
                   className="w-full h-10 px-3 bg-white rounded-xl border border-brand-border/70 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-brand-accent transition shadow-3xs"
                 />
                 <p className="text-[8px] text-brand-body/50 font-sans italic">
-                  Note: UTR is the 12-digit number found in your UPI app payment receipt details.
+                  Note: Enter the 12-digit UTR/Ref number from your UPI app receipt after payment.
                 </p>
               </div>
             </div>
