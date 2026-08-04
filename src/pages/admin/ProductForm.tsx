@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useOutletContext, useNavigate, useParams } from 'react-router-dom';
 import { Upload, X, Check } from 'lucide-react';
 import type { AdminContext } from './types';
@@ -75,10 +75,15 @@ export default function ProductForm() {
     }
   }, [categories, category]);
 
+  const loadedIdRef = useRef<string | null>(null);
+
   // Load existing product details on Edit Mode
   useEffect(() => {
     let active = true;
     if (mode === 'edit' && id) {
+      if (loadedIdRef.current === id) {
+        return; // Prevent window re-focus or context updates from wiping unsaved form state!
+      }
       const loadProduct = async () => {
         // Try finding locally first
         let product = products.find(p => p.id === id);
@@ -100,6 +105,7 @@ export default function ProductForm() {
         }
         
         if (product && active) {
+          loadedIdRef.current = id;
           setOriginalProduct(product);
           setName(product.name || '');
           setPrice(product.price?.toString() || '');
@@ -140,6 +146,8 @@ export default function ProductForm() {
         }
       };
       loadProduct();
+    } else {
+      loadedIdRef.current = null;
     }
     return () => {
       active = false;

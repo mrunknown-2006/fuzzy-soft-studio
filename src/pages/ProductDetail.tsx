@@ -432,17 +432,23 @@ export default function ProductDetail() {
 
           {/* Highlights Section (Badges & Tags Pills) */}
           {(() => {
-            const hList = product.highlights || product.badges || [];
+            let hList = product.highlights || product.badges || [];
+            if (typeof hList === 'string') {
+              try { hList = JSON.parse(hList); } catch { hList = [hList]; }
+            }
             if (!Array.isArray(hList) || hList.length === 0) return null;
+            const validTags = hList.filter((t: any) => typeof t === 'string' && t.trim().length > 0);
+            if (validTags.length === 0) return null;
+
             return (
               <div className="flex flex-wrap gap-2 py-4 border-y border-brand-border/30 text-xs font-sans text-brand-body/80 select-none">
-                {hList.map((badge: string, idx: number) => (
+                {validTags.map((tag: string, idx: number) => (
                   <div
                     key={idx}
                     className="flex items-center gap-2 bg-white/70 border border-brand-border/30 px-3.5 py-1.5 rounded-full shadow-2xs hover:border-brand-accent/40 transition duration-300"
                   >
                     <Leaf size={12} className="text-[#8FA088] shrink-0" />
-                    <span className="font-semibold text-brand-heading tracking-wide text-xs">{badge}</span>
+                    <span className="font-semibold text-brand-heading tracking-wide text-xs">{tag}</span>
                   </div>
                 ))}
               </div>
@@ -585,18 +591,28 @@ export default function ProductDetail() {
                 {product.full_description || product.description || 'No detailed description available for this arrangement.'}
               </p>
 
-              {Array.isArray(product.bullet_points) && product.bullet_points.filter(Boolean).length > 0 && (
-                <div className="pt-2">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-brand-heading mb-2">Key Specifications & Features</h4>
-                  <ul className="list-disc pl-5 mt-2 space-y-2 text-stone-600 font-sans">
-                    {product.bullet_points.filter(Boolean).map((pt: string, idx: number) => (
-                      <li key={idx} className="leading-relaxed">
-                        {pt}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              {(() => {
+                let bps = product.bullet_points || [];
+                if (typeof bps === 'string') {
+                  try { bps = JSON.parse(bps); } catch { bps = [bps]; }
+                }
+                if (!Array.isArray(bps)) return null;
+                const validPts = bps.filter((p: any) => typeof p === 'string' && p.trim().length > 0);
+                if (validPts.length === 0) return null;
+
+                return (
+                  <div className="pt-2">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-brand-heading mb-2">Key Specifications & Features</h4>
+                    <ul className="list-disc pl-5 mt-2 space-y-2 text-stone-600 font-sans">
+                      {validPts.map((pt: string, idx: number) => (
+                        <li key={idx} className="leading-relaxed">
+                          {pt}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })()}
             </div>
           )}
           {activeTab === 'care' && (
