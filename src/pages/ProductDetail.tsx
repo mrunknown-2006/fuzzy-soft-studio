@@ -436,26 +436,26 @@ export default function ProductDetail() {
             {product.short_summary || product.description}
           </p>
 
-          {/* Highlights Section (Badges & Tags Pills) */}
+          {/* Highlights Badges */}
           {(() => {
-            let hList = product.highlights || product.badges || [];
-            if (typeof hList === 'string') {
-              try { hList = JSON.parse(hList); } catch { hList = [hList]; }
+            let tags = product.highlights || product.badges || [];
+            if (typeof tags === 'string') {
+              try { tags = JSON.parse(tags); } catch { tags = [tags]; }
             }
-            if (!Array.isArray(hList) || hList.length === 0) return null;
-            const validTags = hList.filter((t: any) => typeof t === 'string' && t.trim().length > 0);
+            if (!Array.isArray(tags) || tags.length === 0) return null;
+            const validTags = tags.filter((t: any) => typeof t === 'string' && t.trim().length > 0);
             if (validTags.length === 0) return null;
 
             return (
               <div className="flex flex-wrap gap-2 py-4 border-y border-brand-border/30 text-xs font-sans text-brand-body/80 select-none">
-                {validTags.map((tag: string, idx: number) => (
-                  <div
-                    key={idx}
-                    className="flex items-center gap-2 bg-white/70 border border-brand-border/30 px-3.5 py-1.5 rounded-full shadow-2xs hover:border-brand-accent/40 transition duration-300"
+                {validTags.map((tag: string, index: number) => (
+                  <span
+                    key={index}
+                    className="inline-flex items-center gap-1.5 bg-white/70 border border-brand-border/30 px-3.5 py-1.5 rounded-full shadow-2xs font-medium text-brand-heading text-xs"
                   >
                     <Leaf size={12} className="text-[#8FA088] shrink-0" />
-                    <span className="font-semibold text-brand-heading tracking-wide text-xs">{tag}</span>
-                  </div>
+                    <span>{tag}</span>
+                  </span>
                 ))}
               </div>
             );
@@ -593,7 +593,7 @@ export default function ProductDetail() {
         <div className="min-h-[120px] transition-all duration-500 py-2">
           {activeTab === 'description' && (
             <div className="space-y-4 max-w-4xl text-sm text-brand-body/85 leading-relaxed whitespace-pre-wrap">
-              <p>
+              <p className="whitespace-pre-wrap">
                 {product.full_description || product.description || 'No detailed description available for this arrangement.'}
               </p>
             </div>
