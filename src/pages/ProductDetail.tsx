@@ -415,15 +415,6 @@ export default function ProductDetail() {
             <div className="text-2xl sm:text-3xl font-serif text-brand-heading font-light pt-2 select-none flex items-center gap-4 flex-wrap">
               <span>₹{product.price.toLocaleString('en-IN')}</span>
             </div>
-            {/* 2. Crafting Time */}
-            {product.crafting_time && (
-              <div className="pt-1">
-                <span className="inline-flex items-center gap-1.5 text-xs text-brand-body/75 font-sans tracking-wide bg-brand-cream/80 border border-brand-border/40 px-3 py-1 rounded-full font-medium">
-                  <span>⏳</span>
-                  <span className="font-semibold text-brand-heading">{product.crafting_time}</span>
-                </span>
-              </div>
-            )}
             {/* Out of Stock badge */}
             {product.stock === 0 && (
               <div className="inline-flex items-center gap-1.5 bg-red-50 border border-red-200 text-red-600 text-[11px] font-semibold tracking-wider uppercase px-3 py-1 rounded-full mt-2">
@@ -477,7 +468,7 @@ export default function ProductDetail() {
 
           {/* 4. Short Summary */}
           {product.short_summary && (
-            <p className="mt-4 text-stone-600 text-sm md:text-base leading-relaxed font-light whitespace-pre-line">
+            <p className="mt-4 text-base md:text-[17px] leading-[1.8] text-[#5C4F45] font-light whitespace-pre-line">
               {product.short_summary}
             </p>
           )}
@@ -495,7 +486,7 @@ export default function ProductDetail() {
                 {product.stock !== undefined && product.stock <= 3 ? (
                   <span className="text-amber-600 font-semibold">Only {product.stock} left!</span>
                 ) : (
-                  <span className="text-brand-body/80">In Stock - Hand-tied & shipped to order</span>
+                  <span className="text-brand-body/80">Hand-tied & shipped to order</span>
                 )}
               </>
             )}
@@ -613,7 +604,7 @@ export default function ProductDetail() {
         {/* Tab Contents */}
         <div className="min-h-[120px] transition-all duration-500 py-2">
           {activeTab === 'description' && (
-            <div className="whitespace-pre-wrap text-stone-600 leading-relaxed font-sans text-sm max-w-4xl">
+            <div className="whitespace-pre-wrap text-base md:text-[17px] leading-[1.8] text-[#5C4F45] font-sans max-w-4xl">
               {product.full_description || 'No detailed description available for this arrangement.'}
             </div>
           )}

@@ -38,7 +38,6 @@ export default function ProductForm() {
   const [sku, setSku] = useState('');
   const [isActive, setIsActive] = useState(true);
   const [isFeatured, setIsFeatured] = useState(false);
-  const [craftingTime, setCraftingTime] = useState('2-3 Days to handcraft');
 
   // SEO & URL Slug
   const [slug, setSlug] = useState('');
@@ -110,7 +109,6 @@ export default function ProductForm() {
           setCollection(product.collection || 'everyday-luxury');
           setStock(product.stock?.toString() || '0');
           setSku(product.sku || '');
-          setCraftingTime(product.crafting_time || '2-3 Days to handcraft');
           
           setIsActive(product.active);
           setIsFeatured(product.is_featured || false);
@@ -361,8 +359,7 @@ export default function ProductForm() {
         short_summary: shortSummary.trim(),
         full_description: fullDescription.trim(),
         meta_title: metaTitle.trim() || null,
-        meta_description: metaDescription.trim() || null,
-        crafting_time: craftingTime.trim() || '2-3 Days to handcraft'
+        meta_description: metaDescription.trim() || null
       };
     } else {
       productData = {
@@ -391,8 +388,7 @@ export default function ProductForm() {
         short_summary: shortSummary.trim(),
         full_description: fullDescription.trim(),
         meta_title: metaTitle.trim() || null,
-        meta_description: metaDescription.trim() || null,
-        crafting_time: craftingTime.trim() || '2-3 Days to handcraft'
+        meta_description: metaDescription.trim() || null
       };
     }
 
@@ -565,8 +561,8 @@ export default function ProductForm() {
                 </div>
               </div>
 
-              {/* Stock, SKU & Crafting Time */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Stock & SKU */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">Stock Qty *</label>
                   <input
@@ -594,16 +590,6 @@ export default function ProductForm() {
                     value={sku}
                     onChange={(e) => setSku(e.target.value)}
                     placeholder="e.g. BOU-4310"
-                    className="w-full h-11 px-4 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">Crafting Time</label>
-                  <input
-                    type="text"
-                    value={craftingTime}
-                    onChange={(e) => setCraftingTime(e.target.value)}
-                    placeholder="e.g. 2-3 Days to handcraft"
                     className="w-full h-11 px-4 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition"
                   />
                 </div>

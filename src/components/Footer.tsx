@@ -128,8 +128,8 @@ export default function Footer() {
               {footerAbout}
             </p>
             <div className="pt-1.5 space-y-1">
-              <p className="font-serif text-lg text-white/90">Handcrafted Blooms</p>
-              <p className="text-xs text-white/50 tracking-widest uppercase">Est. 2026 · Lucknow, India</p>
+              <p className="font-serif text-lg text-brand-heading font-medium">Handcrafted Blooms</p>
+              <p className="text-xs text-[#8C7A6B] tracking-widest uppercase font-semibold">Est. 2026 · Lucknow, India</p>
             </div>
           </div>
 
