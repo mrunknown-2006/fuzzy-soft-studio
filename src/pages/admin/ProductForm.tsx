@@ -203,20 +203,15 @@ export default function ProductForm() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!name) {
-      showToast('Please enter a product name first to generate a stable URL.', 'error');
-      return;
-    }
-
     setUploadingSlot(slotIndex);
     showToast('Compressing and uploading image...', 'success');
 
     try {
       const webpBlob = await convertToWebP(file);
-      const productSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-      const fixedName = slotIndex === 0 
-        ? `product-${productSlug}-hero.webp` 
-        : `product-${productSlug}-${slotIndex + 1}.webp`;
+      const randomId = typeof crypto !== 'undefined' && crypto.randomUUID 
+        ? crypto.randomUUID() 
+        : `img-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      const fixedName = `product-${randomId}-slot${slotIndex + 1}.webp`;
       const filePath = `products/${fixedName}`;
 
       const { error } = await supabase.storage
@@ -260,20 +255,15 @@ export default function ProductForm() {
     const file = e.dataTransfer.files?.[0];
     if (!file) return;
 
-    if (!name) {
-      showToast('Please enter a product name first to generate a stable URL.', 'error');
-      return;
-    }
-
     setUploadingSlot(slotIndex);
     showToast('Compressing and uploading dropped image...', 'success');
 
     try {
       const webpBlob = await convertToWebP(file);
-      const productSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-      const fixedName = slotIndex === 0 
-        ? `product-${productSlug}-hero.webp` 
-        : `product-${productSlug}-${slotIndex + 1}.webp`;
+      const randomId = typeof crypto !== 'undefined' && crypto.randomUUID 
+        ? crypto.randomUUID() 
+        : `img-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      const fixedName = `product-${randomId}-slot${slotIndex + 1}.webp`;
       const filePath = `products/${fixedName}`;
 
       const { error } = await supabase.storage
@@ -336,9 +326,9 @@ export default function ProductForm() {
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!name.trim()) return showToast('Product Name is required', 'error');
-    if (!price || parseFloat(price) <= 0) return showToast('Price must be greater than 0', 'error');
-    if (!imageUrls[0]) return showToast('Hero image (Slot 1) is required', 'error');
+    if (!name.trim()) return showToast('Please fill out Product Name', 'error');
+    if (!price || isNaN(parseFloat(price)) || parseFloat(price) <= 0) return showToast('Please fill out a valid Price', 'error');
+    if (!imageUrls[0]) return showToast('Please upload a Primary Image (Slot 1)', 'error');
 
     const matchedCategory = dbCategories.find(c => c.name === category);
     const categoryId = matchedCategory ? matchedCategory.id : null;
@@ -415,15 +405,22 @@ export default function ProductForm() {
         const finalProduct = { id: newId, ...productData };
         let { error } = await supabase.from('products').insert(finalProduct);
         
-        if (error && (error.message.includes('image_url') || error.message.includes('crafting_time') || error.message.includes('short_summary') || error.message.includes('full_description'))) {
-          // Retry without missing columns
-          const { image_url, crafting_time, short_summary, full_description, ...retryData } = finalProduct;
-          retryData.description = shortSummary.trim() || description.trim();
+        if (error) {
+          console.warn('Initial insert failed, attempting schema fallback insert:', error.message);
+          const { image_url, crafting_time, short_summary, full_description, highlights, badges, bullet_points, ...retryData } = finalProduct;
+          retryData.description = shortSummary.trim() || description.trim() || 'Handcrafted luxury arrangement.';
           const retryRes = await supabase.from('products').insert(retryData);
-          error = retryRes.error;
+          if (!retryRes.error) {
+            error = null;
+          } else {
+            error = retryRes.error;
+          }
         }
         
-        if (error) throw error;
+        if (error) {
+          showToast(`Database Insert Error: ${error.message}`, 'error');
+          throw error;
+        }
 
         setProducts([finalProduct, ...products]);
         loadProducts().catch(err => console.warn('Background refetch failed:', err));
@@ -434,18 +431,25 @@ export default function ProductForm() {
           .update(productData)
           .eq('id', id);
           
-        if (error && (error.message.includes('image_url') || error.message.includes('crafting_time') || error.message.includes('short_summary') || error.message.includes('full_description'))) {
-          // Retry without missing columns
-          const { image_url, crafting_time, short_summary, full_description, ...retryData } = productData;
-          retryData.description = shortSummary.trim() || description.trim();
+        if (error) {
+          console.warn('Initial update failed, attempting schema fallback update:', error.message);
+          const { image_url, crafting_time, short_summary, full_description, highlights, badges, bullet_points, ...retryData } = productData;
+          retryData.description = shortSummary.trim() || description.trim() || originalProduct?.description || 'Handcrafted luxury arrangement.';
           const retryRes = await supabase
             .from('products')
             .update(retryData)
             .eq('id', id);
-          error = retryRes.error;
+          if (!retryRes.error) {
+            error = null;
+          } else {
+            error = retryRes.error;
+          }
         }
         
-        if (error) throw error;
+        if (error) {
+          showToast(`Database Update Error: ${error.message}`, 'error');
+          throw error;
+        }
 
         setProducts(products.map(p => p.id === id ? { ...p, ...productData } : p));
         loadProducts().catch(err => console.warn('Background refetch failed:', err));
@@ -454,7 +458,7 @@ export default function ProductForm() {
       navigate('/admin/products');
     } catch (err: any) {
       console.error('SUPABASE SAVE PRODUCT FAILURE:', err);
-      showToast(err.message || 'Failed to save product', 'error');
+      showToast(`Save failed: ${err.message || 'Unknown database error'}`, 'error');
     }
   };
 
