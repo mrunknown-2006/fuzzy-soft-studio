@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
-import { Heart, Star, ShoppingBag, Plus, Minus, Truck, HeartCrack, Share2, Sparkles } from 'lucide-react';
+import { Heart, Star, ShoppingBag, Plus, Minus, Truck, HeartCrack, Share2, Sparkles, ShieldCheck } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import type { WishlistItem } from '../store/useStore';
 import { products as staticProducts } from '../data/products';
@@ -434,7 +434,7 @@ export default function ProductDetail() {
 
           <hr className="border-brand-border/40" />
 
-          {/* 3. Highlights Badges */}
+          {/* 3. Highlights Badges Grid (2x2 Cards) */}
           {(() => {
             let tags = (product.highlights && product.highlights.length > 0) ? product.highlights : (product.badges || []);
             if (typeof tags === 'string') {
@@ -444,16 +444,32 @@ export default function ProductDetail() {
             const validTags = tags.filter((t: any) => typeof t === 'string' && t.trim().length > 0);
             if (validTags.length === 0) return null;
 
+            const getBadgeIcon = (tagStr: string) => {
+              const lower = tagStr.toLowerCase();
+              if (lower.includes('pet') || lower.includes('safe') || lower.includes('allergen')) {
+                return <Heart size={15} />;
+              }
+              if (lower.includes('custom') || lower.includes('order')) {
+                return <ShieldCheck size={15} />;
+              }
+              if (lower.includes('star') || lower.includes('best') || lower.includes('top')) {
+                return <Star size={15} />;
+              }
+              return <Sparkles size={15} />;
+            };
+
             return (
-              <div className="flex flex-wrap gap-3 mt-4 select-none">
-                {validTags.map((tag: string, i: number) => (
-                  <span
-                    key={i}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#FAF7F2] border border-[#EAE3DA] text-[#6B5D54] text-xs font-medium rounded-full shadow-xs tracking-wide capitalize font-sans"
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6 mb-4 select-none">
+                {validTags.map((tag: string, index: number) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-3 px-4 py-3.5 bg-[#FAF7F2] border border-[#EAE3DA]/60 rounded-2xl shadow-2xs hover:border-[#D1BFA5] transition duration-300"
                   >
-                    <Sparkles size={12} className="text-[#D1BFA5] shrink-0" />
-                    <span>{tag}</span>
-                  </span>
+                    <div className="flex shrink-0 items-center justify-center w-8 h-8 rounded-full bg-[#EFE8DD] text-[#8C7A6B]">
+                      {getBadgeIcon(tag)}
+                    </div>
+                    <span className="text-sm font-semibold text-[#5C4F45] tracking-wide font-sans">{tag}</span>
+                  </div>
                 ))}
               </div>
             );
