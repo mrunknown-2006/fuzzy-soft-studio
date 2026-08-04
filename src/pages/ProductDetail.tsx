@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
-import { Heart, Star, ShoppingBag, Plus, Minus, Truck, ShieldCheck, HeartCrack, Leaf, Share2 } from 'lucide-react';
+import { Heart, Star, ShoppingBag, Plus, Minus, Truck, HeartCrack, Leaf, Share2 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import type { WishlistItem } from '../store/useStore';
 import { products as staticProducts } from '../data/products';
@@ -406,8 +406,14 @@ export default function ProductDetail() {
               {product.name}
             </h1>
             {/* Price */}
-            <div className="text-2xl sm:text-3xl font-serif text-brand-heading font-light pt-2 select-none">
-              ₹{product.price.toLocaleString('en-IN')}
+            <div className="text-2xl sm:text-3xl font-serif text-brand-heading font-light pt-2 select-none flex items-center gap-4 flex-wrap">
+              <span>₹{product.price.toLocaleString('en-IN')}</span>
+              {product.crafting_time && (
+                <span className="inline-flex items-center gap-1.5 text-xs text-brand-body/75 font-sans tracking-wide bg-brand-cream/80 border border-brand-border/40 px-3 py-1 rounded-full font-medium">
+                  <span>⏳</span>
+                  <span className="font-semibold text-brand-heading">{product.crafting_time}</span>
+                </span>
+              )}
             </div>
             {/* Out of Stock badge */}
             {product.stock === 0 && (
@@ -419,49 +425,29 @@ export default function ProductDetail() {
 
           <hr className="border-brand-border/40" />
 
-          {/* Description */}
+          {/* Short Summary Description */}
           <p className="text-sm md:text-base text-brand-body/75 leading-relaxed font-light whitespace-pre-line">
             {product.short_summary || product.description}
           </p>
 
-          {/* Highlights Section */}
-          <div className="grid grid-cols-2 gap-4 py-6 border-y border-brand-border/30 text-xs sm:text-sm font-sans text-brand-body/80 select-none">
-            <div className="flex items-center gap-3 bg-white/45 border border-brand-border/20 px-4 py-3 rounded-2xl shadow-xs hover:border-brand-accent/40 transition duration-300">
-              <div className="w-8 h-8 rounded-full bg-[#F6EBE2] flex items-center justify-center shrink-0 shadow-xs">
-                <Leaf size={14} className="text-[#8FA088]" />
+          {/* Highlights Section (Badges & Tags Pills) */}
+          {(() => {
+            const hList = product.highlights || product.badges || [];
+            if (!Array.isArray(hList) || hList.length === 0) return null;
+            return (
+              <div className="flex flex-wrap gap-2 py-4 border-y border-brand-border/30 text-xs font-sans text-brand-body/80 select-none">
+                {hList.map((badge: string, idx: number) => (
+                  <div
+                    key={idx}
+                    className="flex items-center gap-2 bg-white/70 border border-brand-border/30 px-3.5 py-1.5 rounded-full shadow-2xs hover:border-brand-accent/40 transition duration-300"
+                  >
+                    <Leaf size={12} className="text-[#8FA088] shrink-0" />
+                    <span className="font-semibold text-brand-heading tracking-wide text-xs">{badge}</span>
+                  </div>
+                ))}
               </div>
-              <span className="font-semibold text-brand-heading tracking-wide">
-                {(Array.isArray(product.bullet_points) && product.bullet_points[0]) || '100% Handcrafted'}
-              </span>
-            </div>
-            
-            <div className="flex items-center gap-3 bg-white/45 border border-brand-border/20 px-4 py-3 rounded-2xl shadow-xs hover:border-brand-accent/40 transition duration-300">
-              <div className="w-8 h-8 rounded-full bg-[#F6EBE2] flex items-center justify-center shrink-0 shadow-xs">
-                <Star size={14} className="text-[#C9A84C]" fill="#C9A84C" />
-              </div>
-              <span className="font-semibold text-brand-heading tracking-wide">
-                {(Array.isArray(product.bullet_points) && product.bullet_points[1]) || 'Long-lasting Bloom'}
-              </span>
-            </div>
-            
-            <div className="flex items-center gap-3 bg-white/45 border border-brand-border/20 px-4 py-3 rounded-2xl shadow-xs hover:border-brand-accent/40 transition duration-300">
-              <div className="w-8 h-8 rounded-full bg-[#F6EBE2] flex items-center justify-center shrink-0 shadow-xs">
-                <ShieldCheck size={14} className="text-[#8FA088]" />
-              </div>
-              <span className="font-semibold text-brand-heading tracking-wide">
-                {(Array.isArray(product.bullet_points) && product.bullet_points[2]) || 'Customizable Order'}
-              </span>
-            </div>
-            
-            <div className="flex items-center gap-3 bg-white/45 border border-brand-border/20 px-4 py-3 rounded-2xl shadow-xs hover:border-brand-accent/40 transition duration-300">
-              <div className="w-8 h-8 rounded-full bg-[#F6EBE2] flex items-center justify-center shrink-0 shadow-xs">
-                <Heart size={14} className="text-brand-accent" fill="currentColor" />
-              </div>
-              <span className="font-semibold text-brand-heading tracking-wide">
-                {(Array.isArray(product.bullet_points) && product.bullet_points[3]) || 'Allergen & Pet Safe'}
-              </span>
-            </div>
-          </div>
+            );
+          })()}
 
           {/* Stock Indicator */}
           <div className="flex items-center gap-2 text-xs font-medium select-none">
@@ -598,6 +584,19 @@ export default function ProductDetail() {
               <p>
                 {product.full_description || product.description || 'No detailed description available for this arrangement.'}
               </p>
+
+              {Array.isArray(product.bullet_points) && product.bullet_points.filter(Boolean).length > 0 && (
+                <div className="pt-2">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-brand-heading mb-2">Key Specifications & Features</h4>
+                  <ul className="list-disc pl-5 mt-2 space-y-2 text-stone-600 font-sans">
+                    {product.bullet_points.filter(Boolean).map((pt: string, idx: number) => (
+                      <li key={idx} className="leading-relaxed">
+                        {pt}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
           {activeTab === 'care' && (

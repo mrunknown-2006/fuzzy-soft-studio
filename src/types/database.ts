@@ -25,6 +25,7 @@ export interface SupabaseProduct {
   is_featured?: boolean;
   is_active?: boolean;
   badges?: string[];
+  highlights?: string[];
   customization_options?: {
     allow_ribbon_selection?: boolean;
     allow_gift_note?: boolean;

@@ -127,7 +127,7 @@ export default function ProductForm() {
           setBullet4(bp[3] || '');
           setCareInstructions(product.care_instructions || 'Dust with soft dry cloth. Keep away from direct sunlight. Do not wash or wet. Store in cool dry place.');
           setDeliveryInfo(product.delivery_info || 'Lucknow: 5–10 business days. Rest of India: 7–14 business days.');
-          setBadges(product.badges || []);
+          setBadges(product.highlights || product.badges || []);
 
           const urls = Array(6).fill('');
           if (product.image) urls[0] = product.image;
@@ -365,7 +365,8 @@ export default function ProductForm() {
         image_url: imageUrls[0],
         images: imageUrls.filter(Boolean),
         bullet_points: [bullet1.trim(), bullet2.trim(), bullet3.trim(), bullet4.trim()].filter(Boolean),
-        badges: [bullet1.trim(), bullet2.trim(), bullet3.trim(), bullet4.trim()].filter(Boolean),
+        badges: badges,
+        highlights: badges,
         care_instructions: careInstructions.trim(),
         delivery_info: deliveryInfo.trim(),
         description: shortSummary.trim() || description.trim() || 'Handcrafted luxury arrangement.',
@@ -395,7 +396,8 @@ export default function ProductForm() {
         image_url: imageUrls[0] || originalProduct?.image_url || '',
         images: imageUrls.filter(Boolean).length > 0 ? imageUrls.filter(Boolean) : (originalProduct?.images || []),
         bullet_points: [bullet1.trim(), bullet2.trim(), bullet3.trim(), bullet4.trim()].filter(Boolean),
-        badges: [bullet1.trim(), bullet2.trim(), bullet3.trim(), bullet4.trim()].filter(Boolean),
+        badges: badges.length > 0 ? badges : (originalProduct?.badges || []),
+        highlights: badges.length > 0 ? badges : (originalProduct?.highlights || originalProduct?.badges || []),
         care_instructions: careInstructions.trim() || originalProduct?.care_instructions || '',
         delivery_info: deliveryInfo.trim() || originalProduct?.delivery_info || '',
         description: shortSummary.trim() || description.trim() || originalProduct?.description || 'Handcrafted luxury arrangement.',
