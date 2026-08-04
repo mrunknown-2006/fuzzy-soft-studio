@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
-import { Heart, Star, ShoppingBag, Plus, Minus, Truck, HeartCrack, Share2 } from 'lucide-react';
+import { Heart, Star, ShoppingBag, Plus, Minus, Truck, HeartCrack, Share2, Sparkles } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import type { WishlistItem } from '../store/useStore';
 import { products as staticProducts } from '../data/products';
@@ -445,13 +445,14 @@ export default function ProductDetail() {
             if (validTags.length === 0) return null;
 
             return (
-              <div className="flex flex-wrap gap-2 mt-4 select-none">
+              <div className="flex flex-wrap gap-3 mt-4 select-none">
                 {validTags.map((tag: string, i: number) => (
                   <span
                     key={i}
-                    className="bg-stone-200 text-stone-800 text-xs px-3 py-1 rounded-full uppercase tracking-widest font-sans font-medium"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#FAF7F2] border border-[#EAE3DA] text-[#6B5D54] text-xs font-medium rounded-full shadow-xs tracking-wide capitalize font-sans"
                   >
-                    {tag}
+                    <Sparkles size={12} className="text-[#D1BFA5] shrink-0" />
+                    <span>{tag}</span>
                   </span>
                 ))}
               </div>
