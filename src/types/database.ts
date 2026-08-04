@@ -11,7 +11,7 @@ export interface SupabaseProduct {
   collection: string;
   image: string;
   images: string[];
-  bullet_points: string[];
+  bullet_points?: string[];
   care_instructions?: string;
   delivery_info?: string;
   description: string;

@@ -29,10 +29,6 @@ export default function AdminProductForm({
   const [prodImage2, setProdImage2] = useState('');
   const [prodImage3, setProdImage3] = useState('');
   const [prodImage4, setProdImage4] = useState('');
-  const [prodBullet1, setProdBullet1] = useState('100% Handcrafted');
-  const [prodBullet2, setProdBullet2] = useState('Long-lasting Bloom');
-  const [prodBullet3, setProdBullet3] = useState('Customizable Order');
-  const [prodBullet4, setProdBullet4] = useState('Allergen & Pet Safe');
   const [prodCareInstructions, setProdCareInstructions] = useState('Dust with soft dry cloth. Keep away from direct sunlight. Do not wash or wet. Store in cool dry place.');
   const [prodDeliveryInfo, setProdDeliveryInfo] = useState('Lucknow: 5–10 business days. Rest of India: 7–14 business days.');
   const [prodDescription, setProdDescription] = useState('');
@@ -49,10 +45,6 @@ export default function AdminProductForm({
       setProdImage2(initialData.images && initialData.images[1] ? initialData.images[1] : '');
       setProdImage3(initialData.images && initialData.images[2] ? initialData.images[2] : '');
       setProdImage4(initialData.images && initialData.images[3] ? initialData.images[3] : '');
-      setProdBullet1(initialData.bullet_points && initialData.bullet_points[0] ? initialData.bullet_points[0] : '100% Handcrafted');
-      setProdBullet2(initialData.bullet_points && initialData.bullet_points[1] ? initialData.bullet_points[1] : 'Long-lasting Bloom');
-      setProdBullet3(initialData.bullet_points && initialData.bullet_points[2] ? initialData.bullet_points[2] : 'Customizable Order');
-      setProdBullet4(initialData.bullet_points && initialData.bullet_points[3] ? initialData.bullet_points[3] : 'Allergen & Pet Safe');
       setProdCareInstructions(initialData.care_instructions || 'Dust with soft dry cloth. Keep away from direct sunlight. Do not wash or wet. Store in cool dry place.');
       setProdDeliveryInfo(initialData.delivery_info || 'Lucknow: 5–10 business days. Rest of India: 7–14 business days.');
       setProdDescription(initialData.description || '');
@@ -70,7 +62,6 @@ export default function AdminProductForm({
       collection: prodCollection,
       image: prodImage,
       images: [prodImage, prodImage2, prodImage3, prodImage4].filter(Boolean),
-      bullet_points: [prodBullet1, prodBullet2, prodBullet3, prodBullet4].filter(Boolean),
       care_instructions: prodCareInstructions,
       delivery_info: prodDeliveryInfo,
       description: prodDescription,
@@ -326,51 +317,7 @@ export default function AdminProductForm({
 
           {/* Bottom section: Highlights, Care, Delivery Info (12 columns) */}
           <div className="lg:col-span-12 grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-brand-border/25">
-            <div className="space-y-6">
-              <h3 className="font-serif text-lg font-bold text-brand-heading border-b border-brand-border/25 pb-2">Bullet Points & Highlights</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">Highlight 1</label>
-                  <input
-                    type="text"
-                    value={prodBullet1}
-                    onChange={(e) => setProdBullet1(e.target.value)}
-                    placeholder="e.g. 100% Handcrafted"
-                    className="w-full h-10 px-3 bg-white rounded-xl border border-brand-border/70 text-xs font-sans focus:outline-none"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">Highlight 2</label>
-                  <input
-                    type="text"
-                    value={prodBullet2}
-                    onChange={(e) => setProdBullet2(e.target.value)}
-                    placeholder="e.g. Long-lasting Bloom"
-                    className="w-full h-10 px-3 bg-white rounded-xl border border-brand-border/70 text-xs font-sans focus:outline-none"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">Highlight 3</label>
-                  <input
-                    type="text"
-                    value={prodBullet3}
-                    onChange={(e) => setProdBullet3(e.target.value)}
-                    placeholder="e.g. Customizable Order"
-                    className="w-full h-10 px-3 bg-white rounded-xl border border-brand-border/70 text-xs font-sans focus:outline-none"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">Highlight 4</label>
-                  <input
-                    type="text"
-                    value={prodBullet4}
-                    onChange={(e) => setProdBullet4(e.target.value)}
-                    placeholder="e.g. Allergen & Pet Safe"
-                    className="w-full h-10 px-3 bg-white rounded-xl border border-brand-border/70 text-xs font-sans focus:outline-none"
-                  />
-                </div>
-              </div>
-            </div>
+
 
             <div className="space-y-6">
               <h3 className="font-serif text-lg font-bold text-brand-heading border-b border-brand-border/25 pb-2">Care & Shipping Instructions</h3>

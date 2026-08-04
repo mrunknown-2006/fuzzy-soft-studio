@@ -59,6 +59,12 @@ export default function ProductDetail() {
   // Sync main image when product changes
   useEffect(() => {
     if (product) {
+      console.log('Fetched Product Details:', {
+        name: product.name,
+        short_summary: product.short_summary,
+        full_description: product.full_description,
+        highlights: product.highlights || product.badges
+      });
       setMainImage(product.image);
       setQuantity(1);
       window.scrollTo(0, 0);
@@ -590,29 +596,6 @@ export default function ProductDetail() {
               <p>
                 {product.full_description || product.description || 'No detailed description available for this arrangement.'}
               </p>
-
-              {(() => {
-                let bps = product.bullet_points || [];
-                if (typeof bps === 'string') {
-                  try { bps = JSON.parse(bps); } catch { bps = [bps]; }
-                }
-                if (!Array.isArray(bps)) return null;
-                const validPts = bps.filter((p: any) => typeof p === 'string' && p.trim().length > 0);
-                if (validPts.length === 0) return null;
-
-                return (
-                  <div className="pt-2">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-brand-heading mb-2">Key Specifications & Features</h4>
-                    <ul className="list-disc pl-5 mt-2 space-y-2 text-stone-600 font-sans">
-                      {validPts.map((pt: string, idx: number) => (
-                        <li key={idx} className="leading-relaxed">
-                          {pt}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                );
-              })()}
             </div>
           )}
           {activeTab === 'care' && (
