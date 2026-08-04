@@ -121,6 +121,7 @@ ALTER TABLE public.products ADD COLUMN IF NOT EXISTS customization_options JSONB
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS crafting_time TEXT DEFAULT '2-3 Days to handcraft';
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS short_summary TEXT;
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS full_description TEXT;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS highlights JSONB DEFAULT '[]'::jsonb;
 
 -- Orders Columns & Constraints
 ALTER TABLE public.orders DROP CONSTRAINT IF EXISTS orders_status_check;

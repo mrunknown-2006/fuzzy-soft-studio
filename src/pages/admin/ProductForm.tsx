@@ -400,15 +400,15 @@ export default function ProductForm() {
       if (mode === 'add') {
         const newId = `p-${Date.now()}`;
         const finalProduct = { id: newId, ...productData };
-        let { error } = await supabase.from('products').insert(finalProduct);
+        let { data, error } = await supabase.from('products').insert(finalProduct).select('*').single();
         
         if (error) {
           console.warn('Initial insert failed, attempting schema fallback insert:', error.message);
-          const { image_url, crafting_time, short_summary, full_description, highlights, badges, ...retryData } = finalProduct;
-          retryData.description = shortSummary.trim() || description.trim() || 'Handcrafted luxury arrangement.';
-          const retryRes = await supabase.from('products').insert(retryData);
+          const { image_url, ...retryData } = finalProduct;
+          const retryRes = await supabase.from('products').insert(retryData).select('*').single();
           if (!retryRes.error) {
             error = null;
+            data = retryRes.data;
           } else {
             error = retryRes.error;
           }
@@ -419,25 +419,30 @@ export default function ProductForm() {
           throw error;
         }
 
-        setProducts([finalProduct, ...products]);
+        const savedItem = data || finalProduct;
+        setProducts([savedItem, ...products]);
         loadProducts().catch(err => console.warn('Background refetch failed:', err));
         showToast('Saved successfully!', 'success');
       } else {
-        let { error } = await supabase
+        let { data, error } = await supabase
           .from('products')
           .update(productData)
-          .eq('id', id);
+          .eq('id', id)
+          .select('*')
+          .single();
           
         if (error) {
           console.warn('Initial update failed, attempting schema fallback update:', error.message);
-          const { image_url, crafting_time, short_summary, full_description, highlights, badges, bullet_points, ...retryData } = productData;
-          retryData.description = shortSummary.trim() || description.trim() || originalProduct?.description || 'Handcrafted luxury arrangement.';
+          const { image_url, ...retryData } = productData;
           const retryRes = await supabase
             .from('products')
             .update(retryData)
-            .eq('id', id);
+            .eq('id', id)
+            .select('*')
+            .single();
           if (!retryRes.error) {
             error = null;
+            data = retryRes.data;
           } else {
             error = retryRes.error;
           }
@@ -448,7 +453,8 @@ export default function ProductForm() {
           throw error;
         }
 
-        setProducts(products.map(p => p.id === id ? { ...p, ...productData } : p));
+        const updatedItem = data || { ...originalProduct, ...productData };
+        setProducts(products.map(p => p.id === id ? updatedItem : p));
         loadProducts().catch(err => console.warn('Background refetch failed:', err));
         showToast('Saved successfully!', 'success');
       }
