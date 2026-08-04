@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
-import { Heart, Star, ShoppingBag, Plus, Minus, Truck, HeartCrack, Leaf, Share2 } from 'lucide-react';
+import { Heart, Star, ShoppingBag, Plus, Minus, Truck, HeartCrack, Share2 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import type { WishlistItem } from '../store/useStore';
 import { products as staticProducts } from '../data/products';
@@ -407,23 +407,26 @@ export default function ProductDetail() {
             <span className="text-[11px] tracking-[0.2em] text-[#8FA088] uppercase font-bold block select-none font-sans">
               {product.category}
             </span>
-            {/* Product Name */}
+            {/* 1. Product Name */}
             <h1 className="text-4xl sm:text-5xl lg:text-[3.25rem] font-serif text-brand-heading font-normal leading-[1.1] tracking-tight">
               {product.name}
             </h1>
-            {/* Price */}
+            {/* 1. Price */}
             <div className="text-2xl sm:text-3xl font-serif text-brand-heading font-light pt-2 select-none flex items-center gap-4 flex-wrap">
               <span>₹{product.price.toLocaleString('en-IN')}</span>
-              {product.crafting_time && (
+            </div>
+            {/* 2. Crafting Time */}
+            {product.crafting_time && (
+              <div className="pt-1">
                 <span className="inline-flex items-center gap-1.5 text-xs text-brand-body/75 font-sans tracking-wide bg-brand-cream/80 border border-brand-border/40 px-3 py-1 rounded-full font-medium">
                   <span>⏳</span>
                   <span className="font-semibold text-brand-heading">{product.crafting_time}</span>
                 </span>
-              )}
-            </div>
+              </div>
+            )}
             {/* Out of Stock badge */}
             {product.stock === 0 && (
-              <div className="inline-flex items-center gap-1.5 bg-red-50 border border-red-200 text-red-600 text-[11px] font-semibold tracking-wider uppercase px-3 py-1 rounded-full">
+              <div className="inline-flex items-center gap-1.5 bg-red-50 border border-red-200 text-red-600 text-[11px] font-semibold tracking-wider uppercase px-3 py-1 rounded-full mt-2">
                 Currently Out of Stock
               </div>
             )}
@@ -431,14 +434,9 @@ export default function ProductDetail() {
 
           <hr className="border-brand-border/40" />
 
-          {/* Short Summary Description */}
-          <p className="text-sm md:text-base text-brand-body/75 leading-relaxed font-light whitespace-pre-line">
-            {product.short_summary || product.description}
-          </p>
-
-          {/* Highlights Badges */}
+          {/* 3. Highlights Badges */}
           {(() => {
-            let tags = product.highlights || product.badges || [];
+            let tags = (product.highlights && product.highlights.length > 0) ? product.highlights : (product.badges || []);
             if (typeof tags === 'string') {
               try { tags = JSON.parse(tags); } catch { tags = [tags]; }
             }
@@ -447,22 +445,28 @@ export default function ProductDetail() {
             if (validTags.length === 0) return null;
 
             return (
-              <div className="flex flex-wrap gap-2 py-4 border-y border-brand-border/30 text-xs font-sans text-brand-body/80 select-none">
-                {validTags.map((tag: string, index: number) => (
+              <div className="flex flex-wrap gap-2 mt-4 select-none">
+                {validTags.map((tag: string, i: number) => (
                   <span
-                    key={index}
-                    className="inline-flex items-center gap-1.5 bg-white/70 border border-brand-border/30 px-3.5 py-1.5 rounded-full shadow-2xs font-medium text-brand-heading text-xs"
+                    key={i}
+                    className="bg-stone-200 text-stone-800 text-xs px-3 py-1 rounded-full uppercase tracking-widest font-sans font-medium"
                   >
-                    <Leaf size={12} className="text-[#8FA088] shrink-0" />
-                    <span>{tag}</span>
+                    {tag}
                   </span>
                 ))}
               </div>
             );
           })()}
 
+          {/* 4. Short Summary */}
+          {product.short_summary && (
+            <p className="mt-4 text-stone-600 text-sm md:text-base leading-relaxed font-light whitespace-pre-line">
+              {product.short_summary}
+            </p>
+          )}
+
           {/* Stock Indicator */}
-          <div className="flex items-center gap-2 text-xs font-medium select-none">
+          <div className="flex items-center gap-2 text-xs font-medium select-none pt-2">
             {product.stock === 0 ? (
               <>
                 <span className="w-2.5 h-2.5 rounded-full bg-red-400"></span>
@@ -480,7 +484,7 @@ export default function ProductDetail() {
             )}
           </div>
 
-          {/* Delivery Indicator */}
+          {/* Delivery Lead Times */}
           <div className="flex items-start gap-2.5 bg-white/40 border border-brand-border/25 rounded-2xl p-4 text-xs text-brand-body/80 select-none shadow-sm">
             <Truck size={16} className="text-brand-accent shrink-0 mt-0.5" />
             <div className="space-y-1">
@@ -523,7 +527,7 @@ export default function ProductDetail() {
                 </button>
               </div>
 
-              {/* Add to Cart (Full width) */}
+              {/* Add to Cart */}
               <button
                 onClick={handleAddToCart}
                 disabled={product.stock === 0}
@@ -592,20 +596,18 @@ export default function ProductDetail() {
         {/* Tab Contents */}
         <div className="min-h-[120px] transition-all duration-500 py-2">
           {activeTab === 'description' && (
-            <div className="space-y-4 max-w-4xl text-sm text-brand-body/85 leading-relaxed whitespace-pre-wrap">
-              <p className="whitespace-pre-wrap">
-                {product.full_description || product.description || 'No detailed description available for this arrangement.'}
-              </p>
+            <div className="whitespace-pre-wrap text-stone-600 leading-relaxed font-sans text-sm max-w-4xl">
+              {product.full_description || 'No detailed description available for this arrangement.'}
             </div>
           )}
           {activeTab === 'care' && (
-            <div className="max-w-4xl text-sm text-brand-body/85 leading-relaxed space-y-3">
+            <div className="max-w-4xl text-sm text-brand-body/85 leading-relaxed space-y-3 font-sans">
               <div className="font-semibold text-brand-heading select-none">Floral Care Guide</div>
               <p>{product.care_instructions || 'Dust with soft dry cloth. Keep away from direct sunlight. Do not wash or wet. Store in cool dry place.'}</p>
             </div>
           )}
           {activeTab === 'delivery' && (
-            <div className="max-w-4xl text-sm text-brand-body/85 leading-relaxed space-y-3">
+            <div className="max-w-4xl text-sm text-brand-body/85 leading-relaxed space-y-3 font-sans">
               <div className="font-semibold text-brand-heading select-none">Shipping & Handling Details</div>
               {product.delivery_info ? (
                 <p>{product.delivery_info}</p>
