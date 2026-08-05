@@ -411,10 +411,21 @@ export default function ProductDetail() {
             <h1 className="text-4xl sm:text-5xl lg:text-[3.25rem] font-serif text-brand-heading font-normal leading-[1.1] tracking-tight">
               {product.name}
             </h1>
-            {/* 1. Price */}
-            <div className="text-2xl sm:text-3xl font-serif text-brand-heading font-light pt-2 select-none flex items-center gap-4 flex-wrap">
-              <span>₹{product.price.toLocaleString('en-IN')}</span>
-            </div>
+            {/* 1. Price & Compare-At Price */}
+            {product.compare_at_price && Number(product.compare_at_price) > Number(product.price) ? (
+              <div className="flex items-center gap-3 pt-2 select-none">
+                <span className="text-2xl font-serif text-[#5C4F45]">
+                  ₹{product.price.toLocaleString('en-IN')}
+                </span>
+                <span className="text-lg font-medium text-stone-400 line-through">
+                  ₹{Number(product.compare_at_price).toLocaleString('en-IN')}
+                </span>
+              </div>
+            ) : (
+              <div className="text-2xl font-serif text-[#5C4F45] pt-2 select-none">
+                ₹{product.price.toLocaleString('en-IN')}
+              </div>
+            )}
             {/* Out of Stock badge */}
             {product.stock === 0 && (
               <div className="inline-flex items-center gap-1.5 bg-red-50 border border-red-200 text-red-600 text-[11px] font-semibold tracking-wider uppercase px-3 py-1 rounded-full mt-2">
