@@ -411,21 +411,29 @@ export default function ProductDetail() {
             <h1 className="text-4xl sm:text-5xl lg:text-[3.25rem] font-serif text-brand-heading font-normal leading-[1.1] tracking-tight">
               {product.name}
             </h1>
-            {/* 1. Price & Compare-At Price */}
-            {product.compare_at_price && Number(product.compare_at_price) > Number(product.price) ? (
-              <div className="flex items-center gap-3 pt-2 select-none">
-                <span className="text-2xl font-serif text-[#5C4F45]">
+            {/* 1. Price & Compare-At Price with Discount Badge */}
+            {(() => {
+              const hasCompare = product.compare_at_price && Number(product.compare_at_price) > Number(product.price);
+              const discountPercent = hasCompare ? Math.round(((Number(product.compare_at_price) - Number(product.price)) / Number(product.compare_at_price)) * 100) : 0;
+
+              return hasCompare ? (
+                <div className="flex items-center gap-3 mt-1 select-none flex-wrap">
+                  <span className="text-3xl sm:text-4xl font-serif text-[#4A3F35]">
+                    ₹{product.price.toLocaleString('en-IN')}
+                  </span>
+                  <span className="text-lg sm:text-xl text-stone-400 line-through decoration-1 font-sans">
+                    ₹{Number(product.compare_at_price).toLocaleString('en-IN')}
+                  </span>
+                  <span className="ml-1 px-2.5 py-1 text-[11px] sm:text-xs font-bold tracking-widest uppercase text-[#8C7A6B] bg-[#EFE8DD] rounded-full border border-[#E3D6C5] shadow-2xs">
+                    Save {discountPercent}%
+                  </span>
+                </div>
+              ) : (
+                <div className="text-3xl sm:text-4xl font-serif text-[#4A3F35] mt-1 select-none">
                   ₹{product.price.toLocaleString('en-IN')}
-                </span>
-                <span className="text-lg font-medium text-stone-400 line-through">
-                  ₹{Number(product.compare_at_price).toLocaleString('en-IN')}
-                </span>
-              </div>
-            ) : (
-              <div className="text-2xl font-serif text-[#5C4F45] pt-2 select-none">
-                ₹{product.price.toLocaleString('en-IN')}
-              </div>
-            )}
+                </div>
+              );
+            })()}
             {/* Out of Stock badge */}
             {product.stock === 0 && (
               <div className="inline-flex items-center gap-1.5 bg-red-50 border border-red-200 text-red-600 text-[11px] font-semibold tracking-wider uppercase px-3 py-1 rounded-full mt-2">
