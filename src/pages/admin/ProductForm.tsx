@@ -33,7 +33,6 @@ export default function ProductForm() {
   const [price, setPrice] = useState('');
   const [compareAtPrice, setCompareAtPrice] = useState('');
   const [category, setCategory] = useState('');
-  const [collection, setCollection] = useState('everyday-luxury');
   const [stock, setStock] = useState('10');
   const [sku, setSku] = useState('');
   const [isActive, setIsActive] = useState(true);
@@ -106,7 +105,6 @@ export default function ProductForm() {
           setPrice(product.price?.toString() || '');
           setCompareAtPrice(product.compare_at_price?.toString() || '');
           setCategory(product.category || categories[0] || '');
-          setCollection(product.collection || 'everyday-luxury');
           setStock(product.stock?.toString() || '0');
           setSku(product.sku || '');
           
@@ -340,7 +338,6 @@ export default function ProductForm() {
         compare_at_price: compareAtPrice ? parseFloat(compareAtPrice) : null,
         category,
         category_id: categoryId,
-        collection,
         stock: parseInt(stock) || 0,
         sku: sku.trim() || null,
         low_stock_threshold: 5,
@@ -369,7 +366,6 @@ export default function ProductForm() {
         compare_at_price: compareAtPrice ? parseFloat(compareAtPrice) : null,
         category: category || originalProduct?.category || '',
         category_id: categoryId || originalProduct?.category_id || null,
-        collection: collection || originalProduct?.collection || 'everyday-luxury',
         stock: !isNaN(parseInt(stock)) ? parseInt(stock) : (originalProduct?.stock || 0),
         sku: sku.trim() || null,
         low_stock_threshold: 5,
@@ -532,33 +528,18 @@ export default function ProductForm() {
                 </div>
               </div>
 
-              {/* Categories & Collections */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">Category *</label>
-                  <select
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    className="w-full h-11 px-3 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition cursor-pointer"
-                  >
-                    {categories.map((cat) => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">Collection *</label>
-                  <select
-                    value={collection}
-                    onChange={(e) => setCollection(e.target.value)}
-                    className="w-full h-11 px-3 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition cursor-pointer"
-                  >
-                    <option value="bridal-blooms">Bridal Blooms</option>
-                    <option value="everyday-luxury">Everyday Luxury</option>
-                    <option value="seasonal-picks">Seasonal Picks</option>
-                    <option value="gift-bouquets">Gift Bouquets</option>
-                  </select>
-                </div>
+              {/* Category */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">Category *</label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full h-11 px-3 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition cursor-pointer"
+                >
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
               </div>
 
               {/* Stock & SKU */}

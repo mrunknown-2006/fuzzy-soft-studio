@@ -55,7 +55,6 @@ export default function Shop() {
   // Read URL parameters
   const searchQueryParam = searchParams.get('search') || '';
   const categoryQueryParam = searchParams.get('category') || 'all';
-  const collectionQueryParam = searchParams.get('collection') || '';
   const maxPriceQueryParam = searchParams.get('maxPrice') || '3000';
   const sortQueryParam = searchParams.get('sort') || 'featured';
 
@@ -95,9 +94,7 @@ export default function Shop() {
   // Handle Category Filter Click
   const handleCategoryClick = (categorySlug: string) => {
     updateURL({ 
-      category: categorySlug === 'all' ? null : categorySlug,
-      // Clear collection param when switching categories to keep things clean
-      collection: null 
+      category: categorySlug === 'all' ? null : categorySlug
     });
   };
 
@@ -109,19 +106,14 @@ export default function Shop() {
         if (searchQueryParam) {
           const query = searchQueryParam.toLowerCase();
           const matchName = prod.name.toLowerCase().includes(query);
-          const matchDesc = prod.description.toLowerCase().includes(query);
+          const matchDesc = (prod.description || '').toLowerCase().includes(query);
           if (!matchName && !matchDesc) return false;
         }
 
         // Category filter (text links list)
         if (categoryQueryParam !== 'all') {
-          const formattedCategory = prod.category.toLowerCase().replace(/\s+/g, '-');
+          const formattedCategory = (prod.category || '').toLowerCase().replace(/\s+/g, '-');
           if (formattedCategory !== categoryQueryParam) return false;
-        }
-
-        // Collection filter (from navbar dropdowns)
-        if (collectionQueryParam) {
-          if (prod.collection !== collectionQueryParam) return false;
         }
 
         // Max Price range filter
@@ -144,7 +136,7 @@ export default function Shop() {
         const dateB = b.created_at ? new Date(b.created_at).getTime() : (b.dateAdded ? new Date(b.dateAdded).getTime() : 0);
         return dateB - dateA;
       });
-  }, [searchQueryParam, categoryQueryParam, collectionQueryParam, maxPriceQueryParam, sortQueryParam, products]);
+  }, [searchQueryParam, categoryQueryParam, maxPriceQueryParam, sortQueryParam, products]);
 
   const categories = useMemo(() => {
     const list = dbCategories.map(catName => ({
@@ -179,40 +171,6 @@ export default function Shop() {
                 }`}
               >
                 {cat.name}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 1.5. Collections filter */}
-      <div>
-        <h3 className="text-sm uppercase tracking-[0.15em] text-brand-heading font-serif font-bold mb-4 select-none">
-          Collections
-        </h3>
-        <div className="flex flex-col space-y-3.5">
-          {[
-            { label: 'All Collections', value: '' },
-            { label: 'Bridal Blooms', value: 'bridal-blooms' },
-            { label: 'Everyday Luxury', value: 'everyday-luxury' },
-            { label: 'Seasonal Picks', value: 'seasonal-picks' },
-            { label: 'Gift Bouquets', value: 'gift-bouquets' },
-          ].map((col) => {
-            const isActive = collectionQueryParam === col.value;
-            return (
-              <button
-                key={col.value || 'all'}
-                onClick={() => {
-                  updateURL({ collection: col.value || '' });
-                  setIsMobileFiltersOpen(false);
-                }}
-                className={`text-left text-sm font-sans tracking-wide transition-all duration-300 cursor-pointer ${
-                  isActive
-                    ? 'text-brand-accent font-semibold scale-[1.02]'
-                    : 'text-brand-body/80 hover:text-brand-accent hover:pl-1'
-                }`}
-              >
-                {col.label}
               </button>
             );
           })}
@@ -298,7 +256,7 @@ export default function Shop() {
             >
               <SlidersHorizontal size={13} />
               <span>Filter & Sort</span>
-              {(categoryQueryParam !== 'all' || maxPriceQueryParam !== '3000' || sortQueryParam !== 'featured' || collectionQueryParam) && (
+              {(categoryQueryParam !== 'all' || maxPriceQueryParam !== '3000' || sortQueryParam !== 'featured') && (
                 <span className="w-1.5 h-1.5 rounded-full bg-brand-accent inline-block"></span>
               )}
             </button>

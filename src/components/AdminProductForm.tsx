@@ -24,7 +24,6 @@ export default function AdminProductForm({
   const [prodPrice, setProdPrice] = useState('');
   const [prodStock, setProdStock] = useState('10');
   const [prodCategory, setProdCategory] = useState(categories[0] || 'Bouquets');
-  const [prodCollection, setProdCollection] = useState('everyday-luxury');
   const [prodImage, setProdImage] = useState('');
   const [prodImage2, setProdImage2] = useState('');
   const [prodImage3, setProdImage3] = useState('');
@@ -40,7 +39,6 @@ export default function AdminProductForm({
       setProdPrice(initialData.price?.toString() || '');
       setProdStock(initialData.stock?.toString() || '10');
       setProdCategory(initialData.category || categories[0] || 'Bouquets');
-      setProdCollection(initialData.collection || 'everyday-luxury');
       setProdImage(initialData.image || '');
       setProdImage2(initialData.images && initialData.images[1] ? initialData.images[1] : '');
       setProdImage3(initialData.images && initialData.images[2] ? initialData.images[2] : '');
@@ -59,7 +57,6 @@ export default function AdminProductForm({
       price: parseFloat(prodPrice),
       stock: parseInt(prodStock),
       category: prodCategory,
-      collection: prodCollection,
       image: prodImage,
       images: [prodImage, prodImage2, prodImage3, prodImage4].filter(Boolean),
       care_instructions: prodCareInstructions,
@@ -130,35 +127,18 @@ export default function AdminProductForm({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              {/* Category */}
-              <div className="space-y-1.5">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">Category *</label>
-                <select
-                  value={prodCategory}
-                  onChange={(e) => setProdCategory(e.target.value)}
-                  className="w-full h-11 px-3 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition cursor-pointer"
-                >
-                  {categories.map((cat) => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Collection */}
-              <div className="space-y-1.5">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">Collection *</label>
-                <select
-                  value={prodCollection}
-                  onChange={(e) => setProdCollection(e.target.value)}
-                  className="w-full h-11 px-3 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition cursor-pointer"
-                >
-                  <option value="bridal-blooms">Bridal Blooms</option>
-                  <option value="everyday-luxury">Everyday Luxury</option>
-                  <option value="seasonal-picks">Seasonal Picks</option>
-                  <option value="gift-bouquets">Gift Bouquets</option>
-                </select>
-              </div>
+            {/* Category */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading">Category *</label>
+              <select
+                value={prodCategory}
+                onChange={(e) => setProdCategory(e.target.value)}
+                className="w-full h-11 px-3 bg-white rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition cursor-pointer"
+              >
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
             </div>
 
             {/* Description */}
