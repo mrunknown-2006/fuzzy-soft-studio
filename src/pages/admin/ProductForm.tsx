@@ -328,9 +328,9 @@ export default function ProductForm() {
     const matchedCategory = dbCategories.find(c => c.name === category);
     const categoryId = matchedCategory ? matchedCategory.id : null;
 
-    const cleanPrice = parseFloat(price) || 0;
-    const cleanCompareAt = compareAtPrice ? (parseFloat(compareAtPrice) || null) : null;
-    const cleanStock = parseInt(stock) || 0;
+    const cleanPrice = Number(price) || 0;
+    const cleanCompareAt = compareAtPrice ? (Number(compareAtPrice) || null) : null;
+    const cleanStock = Number(stock) || 0;
     let cleanHighlights: string[] = [];
     if (Array.isArray(badges)) {
       cleanHighlights = badges.filter(b => typeof b === 'string' && b.trim().length > 0);
@@ -338,35 +338,33 @@ export default function ProductForm() {
 
     const productSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
-    // Strict Payload: ABSOLUTELY NO dead fields (collection, bullet_points, crafting_time)
+    // 1:1 Synchronized Schema Payload: ABSOLUTELY NO dead fields (collection, bullet_points, crafting_time)
     const strictPayload: any = {
       name: name.trim(),
-      slug: productSlug,
       price: cleanPrice,
       compare_at_price: cleanCompareAt,
       category: category || categories[0] || 'Bouquets',
       category_id: categoryId || null,
-      stock: cleanStock,
       stock_qty: cleanStock,
+      stock: cleanStock,
       sku: sku.trim() || null,
-      low_stock_threshold: 5,
+      short_summary: shortSummary.trim(),
+      full_description: fullDescription.trim(),
+      care_instructions: careInstructions.trim(),
+      delivery_info: deliveryInfo.trim(),
+      highlights: cleanHighlights,
+      badges: cleanHighlights,
+      is_published: isActive,
       active: isActive,
       is_active: isActive,
-      is_published: isActive,
       is_featured: isFeatured,
-      show_in_related: true,
+      slug: productSlug,
+      meta_title: metaTitle.trim() || null,
+      meta_description: metaDescription.trim() || null,
       image: imageUrls[0] || '',
       image_url: imageUrls[0] || '',
       images: imageUrls.filter(Boolean),
-      badges: cleanHighlights,
-      highlights: cleanHighlights,
-      care_instructions: careInstructions.trim(),
-      delivery_info: deliveryInfo.trim(),
-      description: shortSummary.trim() || description.trim() || 'Handcrafted luxury arrangement.',
-      short_summary: shortSummary.trim(),
-      full_description: fullDescription.trim(),
-      meta_title: metaTitle.trim() || null,
-      meta_description: metaDescription.trim() || null
+      description: shortSummary.trim() || description.trim() || 'Handcrafted luxury arrangement.'
     };
 
     try {
