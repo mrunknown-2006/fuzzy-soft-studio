@@ -56,7 +56,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     >
       <div>
         {/* Product Image Box - Editorial 4:5 Aspect Ratio */}
-        <div className="relative overflow-hidden rounded-t-xl sm:rounded-xl aspect-[4/5] bg-brand-cream select-none -mx-2.5 -mt-2.5 sm:mx-0 sm:mt-0">
+        <div className="relative overflow-hidden rounded-t-2xl sm:rounded-t-xl rounded-b-none aspect-[4/5] bg-brand-cream select-none -mx-2.5 -mt-2.5 sm:-mx-3 sm:-mt-3">
           <img
             src={product.image}
             alt={product.name}
