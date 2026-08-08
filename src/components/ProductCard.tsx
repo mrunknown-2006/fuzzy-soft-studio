@@ -89,18 +89,18 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
 
         {/* Details */}
-        <div className="mt-3.5">
-          <h3 className="font-serif text-base text-brand-heading font-medium">
+        <div className="mt-2 sm:mt-3.5">
+          <h3 className="font-serif text-sm md:text-base text-brand-heading font-medium line-clamp-2">
             {product.name}
           </h3>
-          <p className="text-[11px] text-brand-body/60 line-clamp-2 leading-relaxed mt-0.5">
-            {product.description}
+          <p className="hidden md:block text-[11px] text-brand-body/60 line-clamp-2 leading-relaxed mt-0.5">
+            {product.short_summary || product.description}
           </p>
         </div>
       </div>
       
       {/* Price and Cart Row — responsive side-by-side / icon on mobile, elegant pill on desktop */}
-      <div className="mt-3.5 flex items-center justify-between gap-2 select-none">
+      <div className="mt-2 sm:mt-3.5 flex items-center justify-between gap-2 select-none">
         {/* Price */}
         <span className="font-serif text-sm sm:text-[15px] font-semibold text-brand-heading tracking-wide shrink-0">
           ₹{product.price.toLocaleString('en-IN')}

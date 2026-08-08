@@ -10,6 +10,9 @@ export interface Product {
   description: string;
   dateAdded: string; // ISO date format for newest sorting (YYYY-MM-DD)
   stock?: number; // optional — Supabase products have this field
+  compare_at_price?: number;
+  short_summary?: string;
+  full_description?: string;
   bullet_points?: string[];
   care_instructions?: string;
   delivery_info?: string;
