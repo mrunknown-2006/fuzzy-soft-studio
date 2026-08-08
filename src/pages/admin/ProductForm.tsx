@@ -328,76 +328,57 @@ export default function ProductForm() {
     const matchedCategory = dbCategories.find(c => c.name === category);
     const categoryId = matchedCategory ? matchedCategory.id : null;
 
-    const productSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-    let productData: any = {};
-    if (mode === 'add') {
-      productData = {
-        name: name.trim(),
-        slug: productSlug,
-        price: parseFloat(price),
-        compare_at_price: compareAtPrice ? parseFloat(compareAtPrice) : null,
-        category,
-        category_id: categoryId,
-        stock: parseInt(stock) || 0,
-        sku: sku.trim() || null,
-        low_stock_threshold: 5,
-        active: isActive,
-        is_active: isActive,
-        is_featured: isFeatured,
-        show_in_related: true,
-        image: imageUrls[0],
-        image_url: imageUrls[0],
-        images: imageUrls.filter(Boolean),
-        badges: badges,
-        highlights: badges,
-        care_instructions: careInstructions.trim(),
-        delivery_info: deliveryInfo.trim(),
-        description: shortSummary.trim() || description.trim() || 'Handcrafted luxury arrangement.',
-        short_summary: shortSummary.trim(),
-        full_description: fullDescription.trim(),
-        meta_title: metaTitle.trim() || null,
-        meta_description: metaDescription.trim() || null
-      };
-    } else {
-      productData = {
-        name: name.trim() || originalProduct?.name || '',
-        slug: productSlug || originalProduct?.slug || '',
-        price: !isNaN(parseFloat(price)) ? parseFloat(price) : (originalProduct?.price || 0),
-        compare_at_price: compareAtPrice ? parseFloat(compareAtPrice) : null,
-        category: category || originalProduct?.category || '',
-        category_id: categoryId || originalProduct?.category_id || null,
-        stock: !isNaN(parseInt(stock)) ? parseInt(stock) : (originalProduct?.stock || 0),
-        sku: sku.trim() || null,
-        low_stock_threshold: 5,
-        active: isActive,
-        is_active: isActive,
-        is_featured: isFeatured,
-        show_in_related: true,
-        image: imageUrls[0] || originalProduct?.image || '',
-        image_url: imageUrls[0] || originalProduct?.image_url || '',
-        images: imageUrls.filter(Boolean).length > 0 ? imageUrls.filter(Boolean) : (originalProduct?.images || []),
-        badges: badges.length > 0 ? badges : (originalProduct?.badges || []),
-        highlights: badges.length > 0 ? badges : (originalProduct?.highlights || originalProduct?.badges || []),
-        care_instructions: careInstructions.trim() || originalProduct?.care_instructions || '',
-        delivery_info: deliveryInfo.trim() || originalProduct?.delivery_info || '',
-        description: shortSummary.trim() || description.trim() || originalProduct?.description || 'Handcrafted luxury arrangement.',
-        short_summary: shortSummary.trim(),
-        full_description: fullDescription.trim(),
-        meta_title: metaTitle.trim() || null,
-        meta_description: metaDescription.trim() || null
-      };
+    const cleanPrice = parseFloat(price) || 0;
+    const cleanCompareAt = compareAtPrice ? (parseFloat(compareAtPrice) || null) : null;
+    const cleanStock = parseInt(stock) || 0;
+    let cleanHighlights: string[] = [];
+    if (Array.isArray(badges)) {
+      cleanHighlights = badges.filter(b => typeof b === 'string' && b.trim().length > 0);
     }
+
+    const productSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+    // Strict Payload: ABSOLUTELY NO dead fields (collection, bullet_points, crafting_time)
+    const strictPayload: any = {
+      name: name.trim(),
+      slug: productSlug,
+      price: cleanPrice,
+      compare_at_price: cleanCompareAt,
+      category: category || categories[0] || 'Bouquets',
+      category_id: categoryId || null,
+      stock: cleanStock,
+      stock_qty: cleanStock,
+      sku: sku.trim() || null,
+      low_stock_threshold: 5,
+      active: isActive,
+      is_active: isActive,
+      is_published: isActive,
+      is_featured: isFeatured,
+      show_in_related: true,
+      image: imageUrls[0] || '',
+      image_url: imageUrls[0] || '',
+      images: imageUrls.filter(Boolean),
+      badges: cleanHighlights,
+      highlights: cleanHighlights,
+      care_instructions: careInstructions.trim(),
+      delivery_info: deliveryInfo.trim(),
+      description: shortSummary.trim() || description.trim() || 'Handcrafted luxury arrangement.',
+      short_summary: shortSummary.trim(),
+      full_description: fullDescription.trim(),
+      meta_title: metaTitle.trim() || null,
+      meta_description: metaDescription.trim() || null
+    };
 
     try {
       if (mode === 'add') {
         const newId = `p-${Date.now()}`;
-        const finalProduct = { id: newId, ...productData };
+        const finalProduct = { id: newId, ...strictPayload };
         let { data, error } = await supabase.from('products').insert(finalProduct).select('*').single();
         
         if (error) {
           console.warn('Initial insert failed, attempting schema fallback insert:', error.message);
-          const { image_url, ...retryData } = finalProduct;
-          const retryRes = await supabase.from('products').insert(retryData).select('*').single();
+          const { image_url, stock_qty, ...fallbackPayload } = finalProduct;
+          const retryRes = await supabase.from('products').insert(fallbackPayload).select('*').single();
           if (!retryRes.error) {
             error = null;
             data = retryRes.data;
@@ -407,6 +388,7 @@ export default function ProductForm() {
         }
         
         if (error) {
+          alert(`DATABASE REJECTION: ${error.message} | Details: ${error.details || error.hint || 'None'}`);
           showToast(`Database Insert Error: ${error.message}`, 'error');
           throw error;
         }
@@ -418,17 +400,17 @@ export default function ProductForm() {
       } else {
         let { data, error } = await supabase
           .from('products')
-          .update(productData)
+          .update(strictPayload)
           .eq('id', id)
           .select('*')
           .single();
           
         if (error) {
           console.warn('Initial update failed, attempting schema fallback update:', error.message);
-          const { image_url, ...retryData } = productData;
+          const { image_url, stock_qty, ...fallbackPayload } = strictPayload;
           const retryRes = await supabase
             .from('products')
-            .update(retryData)
+            .update(fallbackPayload)
             .eq('id', id)
             .select('*')
             .single();
@@ -441,11 +423,12 @@ export default function ProductForm() {
         }
         
         if (error) {
+          alert(`DATABASE REJECTION: ${error.message} | Details: ${error.details || error.hint || 'None'}`);
           showToast(`Database Update Error: ${error.message}`, 'error');
           throw error;
         }
 
-        const updatedItem = data || { ...originalProduct, ...productData };
+        const updatedItem = data || { ...originalProduct, ...strictPayload };
         setProducts(products.map(p => p.id === id ? updatedItem : p));
         loadProducts().catch(err => console.warn('Background refetch failed:', err));
         showToast('Saved successfully!', 'success');
