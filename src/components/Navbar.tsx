@@ -238,30 +238,30 @@ export default function Navbar() {
 
       {/* Mobile Menu Side-drawer panel */}
       <div
-        className={`fixed top-0 right-0 h-full w-[85%] max-w-[380px] bg-[#FAF7F2] border-l border-[#EAE3DA] z-50 shadow-2xl p-7 sm:p-8 flex flex-col justify-between transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 right-0 h-full w-[85%] max-w-[360px] bg-[#FAF7F2] border-l border-[#EAE3DA] z-50 shadow-2xl p-6 flex flex-col justify-between transition-transform duration-300 ease-in-out ${
           isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         <div>
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-[#EAE3DA] pb-5 mb-8">
-            <span className="font-script text-3.5xl text-brand-heading leading-none">
+          <div className="flex items-center justify-between border-b border-[#EAE3DA] pb-4 mb-6">
+            <span className="font-script text-3xl text-brand-heading leading-none">
               Fuzzy Soft Studio
             </span>
             <button
               onClick={() => setIsMobileMenuOpen(false)}
-              className="w-9 h-9 rounded-full bg-[#EFE8DD] flex items-center justify-center text-brand-heading hover:text-brand-accent transition-all duration-300 cursor-pointer"
+              className="w-8 h-8 rounded-full bg-[#EFE8DD] flex items-center justify-center text-brand-heading hover:text-brand-accent transition-all duration-300 cursor-pointer"
               aria-label="Close Menu"
             >
-              <X size={18} strokeWidth={1.5} />
+              <X size={16} strokeWidth={1.5} />
             </button>
           </div>
 
           {/* Nav Links */}
-          <nav className="flex flex-col space-y-5">
+          <nav className="flex flex-col space-y-3.5">
             <Link
               to="/"
-              className="font-serif text-2xl text-brand-heading hover:text-brand-accent transition-all duration-300 py-1"
+              className="font-serif text-base font-medium tracking-wide text-brand-heading hover:text-brand-accent transition-colors duration-300 py-1.5 border-b border-[#EAE3DA]/50"
               onClick={() => {
                 setIsMobileMenuOpen(false);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -272,7 +272,7 @@ export default function Navbar() {
 
             <Link
               to="/shop"
-              className="font-serif text-2xl text-brand-heading hover:text-brand-accent transition-all duration-300 py-1"
+              className="font-serif text-base font-medium tracking-wide text-brand-heading hover:text-brand-accent transition-colors duration-300 py-1.5 border-b border-[#EAE3DA]/50"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Shop
@@ -280,7 +280,7 @@ export default function Navbar() {
 
             <Link
               to="/about"
-              className="font-serif text-2xl text-brand-heading hover:text-brand-accent transition-all duration-300 py-1"
+              className="font-serif text-base font-medium tracking-wide text-brand-heading hover:text-brand-accent transition-colors duration-300 py-1.5 border-b border-[#EAE3DA]/50"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Our Story
@@ -288,7 +288,7 @@ export default function Navbar() {
 
             <Link
               to="/contact"
-              className="font-serif text-2xl text-brand-heading hover:text-brand-accent transition-all duration-300 py-1"
+              className="font-serif text-base font-medium tracking-wide text-brand-heading hover:text-brand-accent transition-colors duration-300 py-1.5 border-b border-[#EAE3DA]/50"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Contact
@@ -296,12 +296,12 @@ export default function Navbar() {
 
             <Link
               to="/wishlist"
-              className="font-serif text-2xl text-brand-heading hover:text-brand-accent transition-all duration-300 py-1 flex items-center justify-between"
+              className="font-serif text-base font-medium tracking-wide text-brand-heading hover:text-brand-accent transition-colors duration-300 py-1.5 border-b border-[#EAE3DA]/50 flex items-center justify-between"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               <span>Wishlist</span>
               {wishlistCount > 0 && (
-                <span className="bg-[#EFE8DD] text-[#8C7A6B] text-xs font-bold px-2.5 py-0.5 rounded-full font-sans">
+                <span className="bg-[#EFE8DD] text-[#8C7A6B] text-[11px] font-bold px-2 py-0.5 rounded-full font-sans">
                   {wishlistCount}
                 </span>
               )}
@@ -309,7 +309,7 @@ export default function Navbar() {
 
             <Link
               to="/account"
-              className="font-serif text-2xl text-brand-heading hover:text-brand-accent transition-all duration-300 py-1"
+              className="font-serif text-base font-medium tracking-wide text-brand-heading hover:text-brand-accent transition-colors duration-300 py-1.5 border-b border-[#EAE3DA]/50"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               My Account
@@ -318,7 +318,7 @@ export default function Navbar() {
         </div>
 
         {/* Footer Micro-Copy */}
-        <div className="pt-6 border-t border-[#EAE3DA] text-center select-none">
+        <div className="pt-4 border-t border-[#EAE3DA] text-center select-none">
           <p className="font-serif text-xs italic text-brand-body/60">
             Handcrafted with love — Fuzzy Soft Studio
           </p>
