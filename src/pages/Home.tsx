@@ -201,7 +201,7 @@ export default function Home() {
       icon: <Leaf className="w-4 h-4 text-[#8FA088]" strokeWidth={1.5} />
     },
     {
-      title: 'Same-Day Delivery',
+      title: 'Everlasting Blooms',
       icon: <Sparkles className="w-4 h-4 text-[#B28A8A]" strokeWidth={1.5} />
     }
   ];
@@ -656,7 +656,7 @@ export default function Home() {
       )}
 
       {/* 5. TRUST BADGES */}
-      <section className="py-20 bg-[#F3ECE3] relative overflow-hidden w-full flex items-center justify-center">
+      <section className="py-12 md:py-16 bg-[#F3ECE3] relative overflow-hidden w-full flex items-center justify-center">
         {/* Floating background SVGs rotated on left and right */}
         <div className="absolute left-8 top-1/2 -translate-y-1/2 opacity-70 pointer-events-none hidden md:block -rotate-12">
           <svg width="35" height="45" viewBox="0 0 32 32" fill="none">
