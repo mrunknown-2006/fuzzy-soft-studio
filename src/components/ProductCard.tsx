@@ -52,11 +52,11 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <div 
       onClick={handleCardClick}
-      className="group relative bg-white p-2 rounded-[1.5rem] shadow-[0_8px_24px_rgba(0,0,0,0.06)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.12)] border border-stone-100 hover:border-[#C9A84C]/40 transition-all duration-500 cursor-pointer flex flex-col justify-between h-full"
+      className="group relative bg-[#FAF7F2] p-1.5 sm:p-2 rounded-[1.5rem] shadow-[0_8px_24px_rgba(0,0,0,0.06)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.12)] border border-[#EAE3DA] hover:border-[#C9A84C]/40 transition-all duration-500 cursor-pointer flex flex-col justify-between h-full"
     >
       <div>
-        {/* Product Image Box - Fully Rounded Boutique Canvas */}
-        <div className="relative overflow-hidden rounded-2xl aspect-[4/5] bg-brand-cream select-none">
+        {/* Product Image Box - Maximized Warm Ivory Canvas */}
+        <div className="relative overflow-hidden rounded-xl sm:rounded-2xl aspect-[4/5] bg-brand-cream select-none">
           <img
             src={product.image}
             alt={product.name}
@@ -74,7 +74,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           {/* Wishlist Toggle Heart inside Image */}
           <button
             onClick={handleToggleWishlist}
-            className="absolute top-3 right-3 w-8.5 h-8.5 grid place-items-center rounded-full shadow-sm bg-white/95 text-brand-heading hover:text-brand-accent cursor-pointer hover:scale-105 transition-all duration-300 z-10"
+            className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 w-8 h-8 sm:w-8.5 sm:h-8.5 grid place-items-center rounded-full shadow-sm bg-white/95 text-brand-heading hover:text-brand-accent cursor-pointer hover:scale-105 transition-all duration-300 z-10"
             aria-label={wished ? 'Remove from wishlist' : 'Add to wishlist'}
           >
             <Heart
@@ -87,7 +87,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
 
         {/* Details */}
-        <div className="px-2 pb-1 pt-3">
+        <div className="px-1.5 sm:px-2 pb-1 pt-2.5">
           <h3 className="font-serif text-sm md:text-base text-brand-heading font-medium line-clamp-2">
             {product.name}
           </h3>
@@ -98,7 +98,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       </div>
       
       {/* Price and Cart Row — responsive side-by-side / icon on mobile, elegant pill on desktop */}
-      <div className="px-2 pb-2 mt-2 flex items-center justify-between gap-2 select-none">
+      <div className="px-1.5 sm:px-2 pb-1.5 mt-2 flex items-center justify-between gap-2 select-none">
         {/* Price */}
         <span className="font-serif text-sm sm:text-[15px] font-semibold text-brand-heading tracking-wide shrink-0">
           ₹{product.price.toLocaleString('en-IN')}
