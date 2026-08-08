@@ -52,15 +52,15 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <div 
       onClick={handleCardClick}
-      className="group relative p-3 border border-transparent hover:border-[#C9A84C] hover:bg-white/40 hover:shadow-lg rounded-2xl transition-all duration-500 cursor-pointer flex flex-col justify-between h-full"
+      className="group relative p-2.5 sm:p-3 border border-transparent hover:border-[#C9A84C] hover:bg-white/40 hover:shadow-lg rounded-2xl transition-all duration-500 cursor-pointer flex flex-col justify-between h-full bg-white/30 overflow-hidden"
     >
       <div>
-        {/* Product Image Box */}
-        <div className="relative overflow-hidden rounded-xl aspect-[3/4] bg-brand-cream select-none">
+        {/* Product Image Box - Editorial 4:5 Aspect Ratio */}
+        <div className="relative overflow-hidden rounded-t-xl sm:rounded-xl aspect-[4/5] bg-brand-cream select-none -mx-2.5 -mt-2.5 sm:mx-0 sm:mt-0">
           <img
             src={product.image}
             alt={product.name}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
             loading="lazy"
           />
 
