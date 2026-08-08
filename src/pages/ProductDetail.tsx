@@ -3,7 +3,6 @@ import { useParams, Link, useLocation } from 'react-router-dom';
 import { Heart, Star, ShoppingBag, Plus, Minus, Truck, HeartCrack, Share2, Sparkles, ShieldCheck } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import type { WishlistItem } from '../store/useStore';
-import { products as staticProducts } from '../data/products';
 import ProductCard from '../components/ProductCard';
 import { supabase } from '../lib/supabaseClient';
 
@@ -11,7 +10,7 @@ import { supabase } from '../lib/supabaseClient';
 export default function ProductDetail() {
   const { slug } = useParams<{ slug: string }>();
   const location = useLocation();
-  const [products, setProducts] = useState<any[]>(staticProducts);
+  const [products, setProducts] = useState<any[]>([]);
   const [isLoadingProduct, setIsLoadingProduct] = useState(true);
 
   useEffect(() => {
@@ -22,17 +21,10 @@ export default function ProductDetail() {
           .from('products')
           .select('*');
         if (error) throw error;
-        if (data) {
-          const dbIds = new Set(data.map(p => p.id));
-          const dbSlugs = new Set(data.map(p => p.slug));
-          const filteredStatic = staticProducts.filter(p => !dbIds.has(p.id) && !dbSlugs.has(p.slug));
-          setProducts([...data, ...filteredStatic]);
-        } else {
-          setProducts(staticProducts);
-        }
+        setProducts(data || []);
       } catch (err) {
         console.warn('Failed to load products in details view:', err);
-        setProducts(staticProducts);
+        setProducts([]);
       } finally {
         setIsLoadingProduct(false);
       }

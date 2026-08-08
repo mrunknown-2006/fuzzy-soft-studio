@@ -1,14 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { SlidersHorizontal, X, ChevronDown } from 'lucide-react';
-import { products as staticProducts } from '../data/products';
 import ProductCard from '../components/ProductCard';
 import { supabase } from '../lib/supabaseClient';
 
 export default function Shop() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
-  const [products, setProducts] = useState<any[]>(staticProducts);
+  const [products, setProducts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [dbCategories, setDbCategories] = useState<string[]>(['Bouquets', 'Arrangements', 'Gift Boxes', 'Dried Flowers']);
 
@@ -21,17 +20,10 @@ export default function Shop() {
           .select('*')
           .eq('active', true);
         if (error) throw error;
-        if (data) {
-          const dbIds = new Set(data.map(p => p.id));
-          const dbSlugs = new Set(data.map(p => p.slug));
-          const filteredStatic = staticProducts.filter(p => !dbIds.has(p.id) && !dbSlugs.has(p.slug));
-          setProducts([...data, ...filteredStatic]);
-        } else {
-          setProducts(staticProducts);
-        }
+        setProducts(data || []);
       } catch (err) {
         console.warn('Failed to load products in Shop from Supabase:', err);
-        setProducts(staticProducts);
+        setProducts([]);
       }
 
       try {
