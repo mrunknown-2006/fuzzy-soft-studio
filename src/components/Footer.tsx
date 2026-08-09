@@ -66,8 +66,8 @@ export default function Footer() {
   }, []);
 
   return (
-    <footer className="bg-[#EADFD5] text-brand-body pt-10 pb-0 border-t border-brand-border/30 relative">
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+    <footer className="bg-[#EADFD5] text-brand-body pt-10 pb-0 border-t border-brand-border/30 relative w-full">
+      <div className="w-full max-w-[90rem] mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
         
         {/* Top: Logo & Tagline Centered */}
         <div className="flex flex-col items-center justify-center text-center mb-8 select-none">
@@ -75,7 +75,7 @@ export default function Footer() {
             <img 
               src={footerLogoUrl || "/logo.png?v=2"} 
               alt="Fuzzy Soft Studio" 
-              className="h-20 sm:h-24 md:h-28 lg:h-36 w-auto object-contain mix-blend-multiply contrast-125 brightness-90 drop-shadow-[0_1px_1px_rgba(0,0,0,0.15)]" 
+              className="h-20 sm:h-24 md:h-28 lg:h-36 w-auto object-contain mix-blend-multiply contrast-125 brightness-95 drop-shadow-sm [image-rendering:_crisp-edges] [image-rendering:_-webkit-optimize-contrast]" 
             />
           </Link>
           <p className="mt-3 text-xs font-serif italic text-brand-body/75 max-w-sm">
@@ -249,7 +249,7 @@ export default function Footer() {
         </div>
 
         {/* Bottom copyright info block */}
-        <div className="bg-[#DFD1C7] -mx-6 sm:-mx-8 lg:-mx-12 px-6 sm:px-8 lg:px-12 py-3.5 mt-8 flex flex-col sm:flex-row items-center justify-between text-[11px] tracking-wide text-brand-body/85 font-sans space-y-2 sm:space-y-0 select-none">
+        <div className="bg-[#DFD1C7] -mx-4 sm:-mx-6 md:-mx-8 lg:-mx-12 px-4 sm:px-6 md:px-8 lg:px-12 py-3.5 mt-8 flex flex-col sm:flex-row items-center justify-between text-[11px] tracking-wide text-brand-body/85 font-sans space-y-2 sm:space-y-0 select-none">
           <p>{footerCopyright}</p>
           {footerNote && <span className="text-brand-body/60">· {footerNote}</span>}
           <div className="flex space-x-5 font-medium">
