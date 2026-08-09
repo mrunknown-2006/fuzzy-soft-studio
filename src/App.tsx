@@ -37,6 +37,7 @@ import ContentManager from './pages/admin/ContentManager';
 import Analytics from './pages/admin/Analytics';
 import Settings from './pages/admin/Settings';
 import ScrollToTop from './components/ScrollToTop';
+import Preloader from './components/Preloader';
 import './App.css';
 
 class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean}> {
@@ -129,6 +130,7 @@ export default function App() {
 
   return (
     <ErrorBoundary>
+      <Preloader />
       <div className="animate-fade-in">
       <Router>
         <ScrollToTop />
