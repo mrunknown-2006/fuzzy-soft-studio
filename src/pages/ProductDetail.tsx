@@ -341,7 +341,7 @@ export default function ProductDetail() {
   }
 
   return (
-    <div className="min-h-screen pt-6 pb-20 px-6 lg:px-10 max-w-7xl mx-auto w-full flex flex-col">
+    <div className="min-h-screen pt-24 sm:pt-28 pb-20 px-6 lg:px-10 max-w-7xl mx-auto w-full flex flex-col">
       {/* Breadcrumbs */}
       <div className="flex items-center gap-1.5 text-[11px] text-brand-body/50 font-sans tracking-wide mb-6 select-none animate-fade-in-up">
         <Link to="/" className="hover:text-brand-accent transition-colors">Home</Link>

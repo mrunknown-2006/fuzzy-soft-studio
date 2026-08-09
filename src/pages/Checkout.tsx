@@ -28,7 +28,6 @@ export default function Checkout() {
   const [loading, setLoading] = useState(false);
 
   // Settings states loaded from database
-  const [whatsappNumber, setWhatsappNumber] = useState('916386422660');
   const [orderIdPrefix, setOrderIdPrefix] = useState('FSS-');
   const [shippingFee, setShippingFee] = useState(99);
   const [freeThreshold, setFreeThreshold] = useState(999);
@@ -52,7 +51,6 @@ export default function Checkout() {
           const generalSetting = data.find(s => s.key === 'general');
           if (generalSetting && generalSetting.value) {
             const val = generalSetting.value;
-            if (val.whatsapp_number) setWhatsappNumber(String(val.whatsapp_number));
             if (val.order_id_prefix) setOrderIdPrefix(String(val.order_id_prefix));
             if (val.shipping_charges !== undefined) setShippingFee(Number(val.shipping_charges));
             if (val.free_delivery_threshold !== undefined) setFreeThreshold(Number(val.free_delivery_threshold));
@@ -214,30 +212,10 @@ export default function Checkout() {
         }
       }
 
-      // 3. Format WhatsApp message
-      const itemsList = cart.map(item => `- ${item.name} (x${item.quantity}) — ₹${(item.price * item.quantity).toLocaleString('en-IN')}`).join('\n');
-      const message = `*New Order — Fuzzy Soft Studio*\n\n` +
-        `*Order ID:* ${orderNumber}\n` +
-        `*Name:* ${name.trim()}\n` +
-        `*Phone:* ${phone.trim()}\n` +
-        `*Address:* ${address.trim()}, ${city.trim()} - ${pincode.trim()}\n` +
-        (giftWrapped ? `*Gifting Add-On:* YES\n*Ribbon:* ${ribbonColor}\n*Message:* ${giftMessage.trim()}\n\n` : '') +
-        `*Items:*\n${itemsList}\n\n` +
-        `*Total Paid:* ₹${total.toLocaleString('en-IN')} (UTR: ${utrNumber.trim()})`;
-
-      const cleanPhone = (num: string) => {
-        const digits = num.replace(/[^0-9]/g, '');
-        return digits.length === 10 ? '91' + digits : digits || '916386422660';
-      };
-      const cleanedHelpline = cleanPhone(whatsappNumber);
-
       // 4. Clear local cart
       clearCart();
 
-      // 5. Open WhatsApp
-      window.open(`https://wa.me/${cleanedHelpline}?text=${encodeURIComponent(message)}`, '_blank');
-
-      // 6. Navigate to receipt confirmation
+      // 5. Navigate directly to genuine Order Success / Confirmation page
       navigate('/order-confirmation', {
         state: {
           orderDetails: {
@@ -259,7 +237,7 @@ export default function Checkout() {
 
   if (cart.length === 0) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-6">
+      <div className="min-h-[70vh] pt-24 flex flex-col items-center justify-center text-center px-6">
         <h2 className="font-serif text-2xl text-brand-heading mb-4">Your Cart is Empty</h2>
         <Link to="/shop" className="text-brand-accent hover:underline text-sm font-semibold uppercase tracking-wider">
           Return to Shop
@@ -269,7 +247,7 @@ export default function Checkout() {
   }
 
   return (
-    <div className="min-h-screen pt-6 pb-20 px-6 lg:px-10 max-w-7xl mx-auto w-full flex flex-col animate-fade-in-up">
+    <div className="min-h-screen pt-24 sm:pt-28 pb-20 px-6 lg:px-10 max-w-7xl mx-auto w-full flex flex-col animate-fade-in-up">
       <div className="mb-10 flex items-center justify-between">
         <div>
           <h1 className="text-3xl sm:text-4xl font-serif text-brand-heading mb-2">Checkout</h1>

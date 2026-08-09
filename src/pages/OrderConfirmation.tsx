@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { CheckCircle2, Package, MapPin, Calendar, CreditCard, ShoppingBag, Printer } from 'lucide-react';
+import { CheckCircle2, Package, MapPin, Calendar, CreditCard, ShoppingBag, Printer, MessageCircle } from 'lucide-react';
 
 export default function OrderConfirmation() {
   const location = useLocation();
@@ -53,7 +53,7 @@ export default function OrderConfirmation() {
   }, [stateDetails]);
 
   return (
-    <div className="min-h-screen pt-6 pb-20 px-6 lg:px-10 max-w-4xl mx-auto w-full flex flex-col items-center justify-center animate-fade-in-up">
+    <div className="min-h-screen pt-24 sm:pt-28 pb-20 px-6 lg:px-10 max-w-4xl mx-auto w-full flex flex-col items-center justify-center animate-fade-in-up">
       
       {/* Header Success Section */}
       <div className="text-center mb-8 max-w-md">
@@ -190,10 +190,10 @@ export default function OrderConfirmation() {
       </div>
 
       {/* Navigation buttons */}
-      <div className="mt-10 select-none flex flex-col items-center gap-4 no-print">
+      <div className="mt-10 select-none flex flex-col sm:flex-row items-center gap-3 no-print">
         <Link
           to="/shop"
-          className="bg-[#DCA29A] hover:bg-[#D4938A] text-white px-8 py-3.5 rounded-full font-sans font-semibold tracking-widest text-xs uppercase transition-all duration-300 shadow-sm hover:shadow-md active:scale-95 flex items-center gap-2"
+          className="bg-[#DCA29A] hover:bg-[#D4938A] text-white px-7 py-3 rounded-full font-sans font-semibold tracking-widest text-xs uppercase transition-all duration-300 shadow-sm hover:shadow-md active:scale-95 flex items-center gap-2"
         >
           <ShoppingBag size={14} />
           <span>Continue Shopping</span>
@@ -201,11 +201,21 @@ export default function OrderConfirmation() {
 
         <button
           onClick={() => window.print()}
-          className="no-print flex items-center gap-2 border border-brand-border bg-white hover:bg-brand-cream text-brand-heading rounded-full px-6 py-2.5 text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer shadow-sm"
+          className="no-print flex items-center gap-2 border border-brand-border bg-white hover:bg-brand-cream text-brand-heading rounded-full px-5 py-3 text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer shadow-sm"
         >
           <Printer size={13} strokeWidth={1.5} />
-          <span>Download / Print Receipt</span>
+          <span>Print Receipt</span>
         </button>
+
+        <a
+          href={`https://wa.me/916386422660?text=${encodeURIComponent(`Hi Fuzzy Soft Studio! I have a question regarding my order ${order.orderId}`)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="no-print flex items-center gap-2 border border-[#8FA088]/40 bg-[#8FA088]/10 hover:bg-[#8FA088]/20 text-[#2C1810] rounded-full px-5 py-3 text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer shadow-sm"
+        >
+          <MessageCircle size={13} strokeWidth={1.5} className="text-[#8FA088]" />
+          <span>Chat on WhatsApp</span>
+        </a>
       </div>
 
     </div>
