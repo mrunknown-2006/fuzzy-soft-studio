@@ -15,8 +15,6 @@ export default function Footer() {
   const [footerNote, setFooterNote] = useState('Made with love in Lucknow 🌸');
 
   const [footerLogoUrl, setFooterLogoUrl] = useState<string | null>(null);
-  const [desktopFooterLogoUrl, setDesktopFooterLogoUrl] = useState<string | null>(null);
-  const [mobileFooterLogoUrl, setMobileFooterLogoUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const loadFooterData = async () => {
@@ -53,12 +51,6 @@ export default function Footer() {
             if (generalSetting.value.contact_email) {
               setFooterEmail(String(generalSetting.value.contact_email));
             }
-            if (generalSetting.value.desktop_footer_logo_url) {
-              setDesktopFooterLogoUrl(String(generalSetting.value.desktop_footer_logo_url));
-            }
-            if (generalSetting.value.mobile_footer_logo_url) {
-              setMobileFooterLogoUrl(String(generalSetting.value.mobile_footer_logo_url));
-            }
             if (generalSetting.value.footer_logo_url) {
               setFooterLogoUrl(String(generalSetting.value.footer_logo_url));
             } else if (generalSetting.value.store_logo_url) {
@@ -74,23 +66,16 @@ export default function Footer() {
   }, []);
 
   return (
-    <footer className="bg-[#EADFD5] text-brand-body py-10 lg:py-12 border-t border-brand-border/30 relative">
+    <footer className="bg-[#EADFD5] text-brand-body py-12 lg:py-16 border-t border-brand-border/30 relative">
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
         
         {/* Top: Logo & Tagline Centered */}
         <div className="flex flex-col items-center justify-center text-center mb-8 select-none">
           <Link to="/" className="inline-flex items-center leading-none transition-transform duration-300 hover:scale-[1.02]">
-            {/* Desktop Footer Logo */}
             <img 
-              src={desktopFooterLogoUrl || footerLogoUrl || "/logo.png?v=2"} 
+              src={footerLogoUrl || "/logo.png?v=2"} 
               alt="Fuzzy Soft Studio" 
-              className="hidden md:block h-16 lg:h-18 w-auto object-contain mix-blend-multiply contrast-125 brightness-90 drop-shadow-[0_1px_1px_rgba(0,0,0,0.15)]" 
-            />
-            {/* Mobile Footer Logo */}
-            <img 
-              src={mobileFooterLogoUrl || footerLogoUrl || "/logo.png?v=2"} 
-              alt="Fuzzy Soft Studio" 
-              className="block md:hidden h-12 sm:h-14 w-auto object-contain mix-blend-multiply contrast-125 brightness-90 drop-shadow-[0_1px_1px_rgba(0,0,0,0.15)]" 
+              className="h-20 sm:h-24 md:h-28 lg:h-36 w-auto object-contain mix-blend-multiply contrast-125 brightness-90 drop-shadow-[0_1px_1px_rgba(0,0,0,0.15)]" 
             />
           </Link>
           <p className="mt-3 text-xs font-serif italic text-brand-body/75 max-w-sm">

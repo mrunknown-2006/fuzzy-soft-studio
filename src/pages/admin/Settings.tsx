@@ -27,15 +27,11 @@ export default function Settings() {
   const [desktopLogoUrl, setDesktopLogoUrl] = useState('');
   const [mobileLogoUrl, setMobileLogoUrl] = useState('');
   const [footerLogoUrl, setFooterLogoUrl] = useState('');
-  const [desktopFooterLogoUrl, setDesktopFooterLogoUrl] = useState('');
-  const [mobileFooterLogoUrl, setMobileFooterLogoUrl] = useState('');
   const [storeLogoUrl, setStoreLogoUrl] = useState('');
   const [faviconUrl, setFaviconUrl] = useState('');
   const [uploadingDesktopLogo, setUploadingDesktopLogo] = useState(false);
   const [uploadingMobileLogo, setUploadingMobileLogo] = useState(false);
   const [uploadingFooterLogo, setUploadingFooterLogo] = useState(false);
-  const [uploadingDesktopFooterLogo, setUploadingDesktopFooterLogo] = useState(false);
-  const [uploadingMobileFooterLogo, setUploadingMobileFooterLogo] = useState(false);
   const [uploadingFavicon, setUploadingFavicon] = useState(false);
   const [whatsappAlerts, setWhatsappAlerts] = useState(true);
   const [emailAlerts, setEmailAlerts] = useState(true);
@@ -96,8 +92,6 @@ export default function Settings() {
             const dLogo = String(val.desktop_logo_url || val.store_logo_url || '');
             const mLogo = String(val.mobile_logo_url || val.store_logo_url || '');
             const fLogo = String(val.footer_logo_url || val.store_logo_url || '');
-            const dFooterLogo = String(val.desktop_footer_logo_url || val.footer_logo_url || val.store_logo_url || '');
-            const mFooterLogo = String(val.mobile_footer_logo_url || val.footer_logo_url || val.store_logo_url || '');
             const logo = String(val.store_logo_url || dLogo || '');
             const fav = String(val.favicon_url || '');
 
@@ -114,8 +108,6 @@ export default function Settings() {
             setDesktopLogoUrl(dLogo);
             setMobileLogoUrl(mLogo);
             setFooterLogoUrl(fLogo);
-            setDesktopFooterLogoUrl(dFooterLogo);
-            setMobileFooterLogoUrl(mFooterLogo);
             setStoreLogoUrl(logo);
             setFaviconUrl(fav);
 
@@ -133,8 +125,6 @@ export default function Settings() {
               desktopLogoUrl: dLogo,
               mobileLogoUrl: mLogo,
               footerLogoUrl: fLogo,
-              desktopFooterLogoUrl: dFooterLogo,
-              mobileFooterLogoUrl: mFooterLogo,
               storeLogoUrl: logo,
               faviconUrl: fav
             });
@@ -164,8 +154,6 @@ export default function Settings() {
       desktopLogoUrl !== initialState.desktopLogoUrl ||
       mobileLogoUrl !== initialState.mobileLogoUrl ||
       footerLogoUrl !== initialState.footerLogoUrl ||
-      desktopFooterLogoUrl !== initialState.desktopFooterLogoUrl ||
-      mobileFooterLogoUrl !== initialState.mobileFooterLogoUrl ||
       storeLogoUrl !== initialState.storeLogoUrl ||
       faviconUrl !== initialState.faviconUrl
     );
@@ -186,8 +174,6 @@ export default function Settings() {
     setDesktopLogoUrl(initialState.desktopLogoUrl);
     setMobileLogoUrl(initialState.mobileLogoUrl);
     setFooterLogoUrl(initialState.footerLogoUrl);
-    setDesktopFooterLogoUrl(initialState.desktopFooterLogoUrl);
-    setMobileFooterLogoUrl(initialState.mobileFooterLogoUrl);
     setStoreLogoUrl(initialState.storeLogoUrl);
     setFaviconUrl(initialState.faviconUrl);
     showToast('Changes discarded.', 'success');
@@ -209,8 +195,6 @@ export default function Settings() {
       desktop_logo_url: desktopLogoUrl,
       mobile_logo_url: mobileLogoUrl,
       footer_logo_url: footerLogoUrl,
-      desktop_footer_logo_url: desktopFooterLogoUrl,
-      mobile_footer_logo_url: mobileFooterLogoUrl,
       store_logo_url: desktopLogoUrl,
       favicon_url: faviconUrl,
       low_stock_threshold: lowStockThreshold || 5,
@@ -369,74 +353,6 @@ export default function Settings() {
   const handleFooterLogoDelete = () => {
     setFooterLogoUrl('');
     showToast('Footer logo removed. Save changes to persist.', 'success');
-  };
-
-  // 4. PC Footer Logo Upload pipeline
-  const handleDesktopFooterLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploadingDesktopFooterLogo(true);
-    try {
-      const { error: uploadErr } = await supabase.storage
-        .from('content')
-        .upload('desktop-footer-logo.webp', file, { upsert: true });
-
-      if (uploadErr) throw uploadErr;
-
-      const { data } = supabase.storage
-        .from('content')
-        .getPublicUrl('desktop-footer-logo.webp');
-      
-      const publicUrl = `${data.publicUrl}?t=${Date.now()}`;
-      setDesktopFooterLogoUrl(publicUrl);
-      showToast('PC Footer logo uploaded successfully!', 'success');
-    } catch (err: any) {
-      console.error('PC Footer logo upload error:', err);
-      showToast('Upload failed: ' + err.message, 'error');
-    } finally {
-      setUploadingDesktopFooterLogo(false);
-      e.target.value = '';
-    }
-  };
-
-  const handleDesktopFooterLogoDelete = () => {
-    setDesktopFooterLogoUrl('');
-    showToast('PC Footer logo removed. Save changes to persist.', 'success');
-  };
-
-  // 5. Mobile Footer Logo Upload pipeline
-  const handleMobileFooterLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploadingMobileFooterLogo(true);
-    try {
-      const { error: uploadErr } = await supabase.storage
-        .from('content')
-        .upload('mobile-footer-logo.webp', file, { upsert: true });
-
-      if (uploadErr) throw uploadErr;
-
-      const { data } = supabase.storage
-        .from('content')
-        .getPublicUrl('mobile-footer-logo.webp');
-      
-      const publicUrl = `${data.publicUrl}?t=${Date.now()}`;
-      setMobileFooterLogoUrl(publicUrl);
-      showToast('Mobile Footer logo uploaded successfully!', 'success');
-    } catch (err: any) {
-      console.error('Mobile Footer logo upload error:', err);
-      showToast('Upload failed: ' + err.message, 'error');
-    } finally {
-      setUploadingMobileFooterLogo(false);
-      e.target.value = '';
-    }
-  };
-
-  const handleMobileFooterLogoDelete = () => {
-    setMobileFooterLogoUrl('');
-    showToast('Mobile Footer logo removed. Save changes to persist.', 'success');
   };
 
   // Favicon Upload pipeline
@@ -659,11 +575,11 @@ export default function Settings() {
               </div>
             </div>
 
-            {/* Card 3: General Footer Logo (Fallback) */}
+            {/* Card 3: Footer Logo */}
             <div className="bg-white/60 border border-brand-border/40 rounded-3xl p-6 shadow-xs backdrop-blur-xs space-y-4">
               <div>
-                <h4 className="text-sm font-semibold text-brand-heading">General Footer Logo (Fallback)</h4>
-                <p className="text-xs text-brand-body/60 font-sans mt-0.5">Fallback brand logo displayed in footer if specific PC/Mobile footer logos are not uploaded.</p>
+                <h4 className="text-sm font-semibold text-brand-heading">Footer Logo</h4>
+                <p className="text-xs text-brand-body/60 font-sans mt-0.5">Dedicated brand logo displayed prominently in the website footer layout (sized 1.5x navbar logo).</p>
               </div>
               <div className="flex items-center gap-6">
                 {(footerLogoUrl || storeLogoUrl) ? (
@@ -682,7 +598,7 @@ export default function Settings() {
                 <div className="flex flex-wrap gap-2">
                   <label className="h-10 px-4 bg-brand-cream/80 hover:bg-brand-cream border border-brand-border text-brand-heading rounded-full flex items-center justify-center gap-1.5 cursor-pointer text-xs font-semibold select-none active:scale-95 transition">
                     <Upload size={14} />
-                    <span>{uploadingFooterLogo ? 'Uploading...' : 'Upload General Footer Logo'}</span>
+                    <span>{uploadingFooterLogo ? 'Uploading...' : 'Upload Footer Logo'}</span>
                     <input 
                       type="file" 
                       accept="image/png, image/jpeg, image/svg+xml, image/webp" 
@@ -695,98 +611,6 @@ export default function Settings() {
                     <button
                       type="button"
                       onClick={handleFooterLogoDelete}
-                      className="h-10 px-4 bg-red-50 hover:bg-red-100 border border-red-200 text-red-650 rounded-full flex items-center justify-center gap-1.5 cursor-pointer text-xs font-semibold select-none active:scale-95 transition"
-                    >
-                      <Trash2 size={14} />
-                      <span>Remove</span>
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Card 4: PC Footer Logo */}
-            <div className="bg-white/60 border border-brand-border/40 rounded-3xl p-6 shadow-xs backdrop-blur-xs space-y-4">
-              <div>
-                <h4 className="text-sm font-semibold text-brand-heading">PC / Desktop Footer Logo</h4>
-                <p className="text-xs text-brand-body/60 font-sans mt-0.5">Dedicated brand logo displayed on PC/Desktop footer (<code className="text-[11px] bg-brand-cream/60 px-1 py-0.5 rounded">hidden md:block</code>).</p>
-              </div>
-              <div className="flex items-center gap-6">
-                {(desktopFooterLogoUrl || footerLogoUrl || storeLogoUrl) ? (
-                  <div className="h-16 w-36 bg-brand-cream/20 border border-brand-border/30 rounded-xl flex items-center justify-center p-2">
-                    <img 
-                      src={desktopFooterLogoUrl || footerLogoUrl || storeLogoUrl} 
-                      alt="PC Footer Logo Preview" 
-                      className="max-h-12 w-auto object-contain mix-blend-multiply" 
-                    />
-                  </div>
-                ) : (
-                  <div className="h-16 w-36 bg-brand-cream/35 border border-brand-border/60 rounded-xl flex items-center justify-center text-[10px] text-brand-body/50 font-sans uppercase tracking-wider">
-                    No Logo
-                  </div>
-                )}
-                <div className="flex flex-wrap gap-2">
-                  <label className="h-10 px-4 bg-brand-cream/80 hover:bg-brand-cream border border-brand-border text-brand-heading rounded-full flex items-center justify-center gap-1.5 cursor-pointer text-xs font-semibold select-none active:scale-95 transition">
-                    <Upload size={14} />
-                    <span>{uploadingDesktopFooterLogo ? 'Uploading...' : 'Upload PC Footer Logo'}</span>
-                    <input 
-                      type="file" 
-                      accept="image/png, image/jpeg, image/svg+xml, image/webp" 
-                      onChange={handleDesktopFooterLogoUpload} 
-                      className="hidden" 
-                      disabled={uploadingDesktopFooterLogo} 
-                    />
-                  </label>
-                  {desktopFooterLogoUrl && (
-                    <button
-                      type="button"
-                      onClick={handleDesktopFooterLogoDelete}
-                      className="h-10 px-4 bg-red-50 hover:bg-red-100 border border-red-200 text-red-650 rounded-full flex items-center justify-center gap-1.5 cursor-pointer text-xs font-semibold select-none active:scale-95 transition"
-                    >
-                      <Trash2 size={14} />
-                      <span>Remove</span>
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Card 4: Mobile Footer Logo */}
-            <div className="bg-white/60 border border-brand-border/40 rounded-3xl p-6 shadow-xs backdrop-blur-xs space-y-4">
-              <div>
-                <h4 className="text-sm font-semibold text-brand-heading">Mobile Footer Logo</h4>
-                <p className="text-xs text-brand-body/60 font-sans mt-0.5">Compact brand logo displayed on Mobile footer (<code className="text-[11px] bg-brand-cream/60 px-1 py-0.5 rounded">block md:hidden</code>).</p>
-              </div>
-              <div className="flex items-center gap-6">
-                {(mobileFooterLogoUrl || footerLogoUrl || storeLogoUrl) ? (
-                  <div className="h-16 w-36 bg-brand-cream/20 border border-brand-border/30 rounded-xl flex items-center justify-center p-2">
-                    <img 
-                      src={mobileFooterLogoUrl || footerLogoUrl || storeLogoUrl} 
-                      alt="Mobile Footer Logo Preview" 
-                      className="max-h-12 w-auto object-contain mix-blend-multiply" 
-                    />
-                  </div>
-                ) : (
-                  <div className="h-16 w-36 bg-brand-cream/35 border border-brand-border/60 rounded-xl flex items-center justify-center text-[10px] text-brand-body/50 font-sans uppercase tracking-wider">
-                    No Logo
-                  </div>
-                )}
-                <div className="flex flex-wrap gap-2">
-                  <label className="h-10 px-4 bg-brand-cream/80 hover:bg-brand-cream border border-brand-border text-brand-heading rounded-full flex items-center justify-center gap-1.5 cursor-pointer text-xs font-semibold select-none active:scale-95 transition">
-                    <Upload size={14} />
-                    <span>{uploadingMobileFooterLogo ? 'Uploading...' : 'Upload Mobile Footer Logo'}</span>
-                    <input 
-                      type="file" 
-                      accept="image/png, image/jpeg, image/svg+xml, image/webp" 
-                      onChange={handleMobileFooterLogoUpload} 
-                      className="hidden" 
-                      disabled={uploadingMobileFooterLogo} 
-                    />
-                  </label>
-                  {mobileFooterLogoUrl && (
-                    <button
-                      type="button"
-                      onClick={handleMobileFooterLogoDelete}
                       className="h-10 px-4 bg-red-50 hover:bg-red-100 border border-red-200 text-red-650 rounded-full flex items-center justify-center gap-1.5 cursor-pointer text-xs font-semibold select-none active:scale-95 transition"
                     >
                       <Trash2 size={14} />
