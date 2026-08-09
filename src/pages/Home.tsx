@@ -451,9 +451,9 @@ export default function Home() {
           </svg>
 
           {/* Centered Hero Content */}
-          <div className="relative z-10 flex flex-col items-center justify-center text-center min-h-screen md:min-h-[90vh] lg:min-h-screen px-4">
+          <div className="relative z-10 flex flex-col items-center justify-center text-center min-h-screen md:min-h-[90vh] lg:min-h-screen px-4 -mt-12 sm:mt-0 pt-16 sm:pt-0">
             <p 
-              className="text-xs tracking-[0.55em] uppercase text-white/95 mb-4 select-none"
+              className="text-[11px] sm:text-xs tracking-[0.4em] sm:tracking-[0.55em] uppercase text-white/95 mb-3 sm:mb-4 select-none"
               style={{ 
                 animation: 'fadeInUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards'
               }}
@@ -462,7 +462,7 @@ export default function Home() {
             </p>
             
             <h1 
-              className="text-5xl md:text-7xl lg:text-[8rem] leading-none tracking-tight text-brand-heading font-serif text-center max-w-5xl"
+              className="text-4xl sm:text-6xl md:text-7xl lg:text-[8rem] leading-tight md:leading-none tracking-tight text-brand-heading font-serif text-center max-w-5xl"
               style={{ 
                 animation: 'fadeInUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards',
                 opacity: 0
@@ -472,13 +472,13 @@ export default function Home() {
                 heroMainTitle
               ) : (
                 <>
-                  <span className="font-script">{heroTitle1}</span> <span className="font-script text-[1.2em] text-brand-accent block md:inline-block md:-ml-3 mt-1 md:mt-0 font-normal">{heroTitle2}</span> <span className="font-script">{heroTitle3}</span>
+                  <span className="font-script">{heroTitle1}</span> <span className="font-script text-[1.15em] sm:text-[1.2em] text-brand-accent inline-block md:-ml-3 mt-1 md:mt-0 font-normal">{heroTitle2}</span> <span className="font-script">{heroTitle3}</span>
                 </>
               )}
             </h1>
             
             <p 
-              className="text-sm md:text-base lg:text-lg italic text-white/90 mt-4 mb-8 px-4 font-serif select-none text-center max-w-2xl"
+              className="text-xs sm:text-sm md:text-base lg:text-lg italic text-white/90 mt-2 sm:mt-4 mb-6 sm:mb-8 px-4 font-serif select-none text-center max-w-2xl"
               style={{ 
                 animation: 'fadeInUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards', 
                 opacity: 0 
