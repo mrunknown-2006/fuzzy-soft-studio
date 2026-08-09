@@ -66,11 +66,11 @@ export default function Footer() {
   }, []);
 
   return (
-    <footer className="bg-[#EADFD5] text-brand-body pt-20 border-t border-brand-border/30 relative">
+    <footer className="bg-[#EADFD5] text-brand-body pt-16 sm:pt-20 lg:pt-28 pb-10 border-t border-brand-border/30 relative">
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
         
         {/* Top: Logo & Tagline Centered */}
-        <div className="flex flex-col items-center justify-center text-center mb-16 select-none">
+        <div className="flex flex-col items-center justify-center text-center mb-12 lg:mb-20 select-none">
           <Link to="/" className="inline-flex items-center leading-none transition-transform duration-300 hover:scale-[1.02]">
             <img 
               src={footerLogoUrl || "/logo.png?v=2"} 
@@ -120,7 +120,7 @@ export default function Footer() {
         </div>
 
         {/* 4 Columns Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12 mb-16 text-left">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-16 mb-16 lg:mb-24 text-left">
           
           {/* Column 1: About */}
           <div className="flex flex-col space-y-4">
