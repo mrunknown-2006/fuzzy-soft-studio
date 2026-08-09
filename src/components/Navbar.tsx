@@ -85,11 +85,11 @@ export default function Navbar() {
       <header
         className={`fixed inset-x-0 top-0 z-40 transition-all duration-500 border-b ${
           isScrolled 
-            ? 'bg-[#FAF7F2]/90 backdrop-blur-md shadow-sm py-2 border-brand-border/40' 
-            : 'bg-transparent backdrop-blur-[2px] py-4 border-transparent'
+            ? 'bg-[#FAF7F2]/95 backdrop-blur-md shadow-sm py-1 border-brand-border/40' 
+            : 'bg-transparent backdrop-blur-[2px] py-1.5 border-transparent'
         }`}
       >
-        <div className="mx-auto max-w-7xl px-4 sm:px-8 lg:px-10 flex items-center justify-between min-h-[6rem] sm:min-h-[6.5rem] py-3">
+        <div className="mx-auto max-w-7xl px-4 sm:px-8 lg:px-10 flex items-center justify-between min-h-[3.5rem] sm:min-h-[4rem] py-1">
           
           {/* Left: Logo */}
           <div className="flex-1 flex justify-start">
@@ -102,13 +102,13 @@ export default function Navbar() {
               <img 
                 src={desktopLogoUrl || logoUrl || "/logo.png?v=2"} 
                 alt="Fuzzy Soft Studio" 
-                className="hidden md:block h-20 lg:h-24 w-auto object-contain mix-blend-multiply contrast-125 brightness-95 drop-shadow-md" 
+                className="hidden md:block h-14 lg:h-16 w-auto object-contain mix-blend-multiply contrast-125 brightness-95 drop-shadow-xs" 
               />
               {/* Mobile Version */}
               <img 
                 src={mobileLogoUrl || logoUrl || "/logo.png?v=2"} 
                 alt="Fuzzy Soft Studio" 
-                className="block md:hidden h-16 sm:h-20 md:h-24 w-auto object-contain mix-blend-multiply contrast-125 brightness-95 drop-shadow-md" 
+                className="block md:hidden h-12 sm:h-14 w-auto object-contain mix-blend-multiply contrast-125 brightness-95 drop-shadow-xs" 
               />
             </Link>
           </div>
