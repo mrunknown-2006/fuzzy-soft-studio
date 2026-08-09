@@ -462,7 +462,7 @@ export default function Home() {
             </p>
             
             <h1 
-              className="text-6xl md:text-8xl lg:text-[8.5rem] leading-[0.92] tracking-tight text-brand-heading font-serif italic text-center max-w-5xl font-semibold drop-shadow-[0_2px_8px_rgba(0,0,0,0.18)] select-none"
+              className="text-5xl md:text-7xl lg:text-[7.5rem] leading-tight tracking-tight text-brand-heading font-serif italic text-center max-w-5xl font-semibold drop-shadow-md select-none mx-auto"
               style={{ 
                 animation: 'fadeInUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards',
                 opacity: 0
@@ -471,13 +471,7 @@ export default function Home() {
               {heroMainTitle ? (
                 heroMainTitle
               ) : (
-                <div className="flex flex-wrap items-center justify-center gap-x-3 sm:gap-x-4 md:gap-x-6 leading-none">
-                  <span className="font-serif italic font-bold tracking-wide text-brand-heading">{heroTitle1}</span>
-                  <span className="font-script font-bold text-[1.3em] text-[#C4899A] px-1 py-0.5 leading-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)]">
-                    {heroTitle2}
-                  </span>
-                  <span className="font-serif italic font-bold tracking-wide text-brand-heading">{heroTitle3}</span>
-                </div>
+                `${heroTitle1} ${heroTitle2} ${heroTitle3}`
               )}
             </h1>
             
