@@ -97,7 +97,7 @@ export default function Navbar() {
               <img 
                 src={logoUrl || "/logo.png?v=2"} 
                 alt="Fuzzy Soft Studio" 
-                className="h-10 sm:h-12 w-auto object-contain mix-blend-multiply opacity-95 contrast-125" 
+                className="h-12 md:h-14 w-auto object-contain mix-blend-multiply opacity-95 contrast-125" 
               />
             </Link>
           </div>

@@ -538,20 +538,20 @@ export default function Admin() {
     <div className="h-screen w-screen bg-[#FDFBF9] flex overflow-hidden font-sans">
       
       {/* A: Desktop Sidebar Navigation - Hidden on mobile (<768px) */}
-      <aside className="hidden md:flex flex-col justify-between w-64 h-full border-r border-brand-border/40 bg-[#F5EDE6]/60 shrink-0 select-none">
+      <aside className="hidden md:flex flex-col justify-between w-64 h-full border-r border-brand-border/40 bg-[#F5EDE6]/60 shrink-0 select-none overflow-x-hidden">
         <div className="p-6 space-y-8 overflow-y-auto max-h-[85vh]">
           {/* Logo Header */}
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col items-start gap-2">
             {settings?.store_logo_url && (
               <img 
                 src={settings.store_logo_url} 
                 alt="Fuzzy Soft Studio Logo" 
-                className="max-h-12 w-auto object-contain border border-brand-border/30 shadow-xs" 
+                className="max-h-12 max-w-full w-auto object-contain border border-brand-border/30 shadow-xs mix-blend-multiply rounded-lg" 
               />
             )}
-            <div>
-              <span className="font-script text-3.5xl text-brand-heading block leading-none">Admin</span>
-              <span className="text-[9px] tracking-[0.25em] font-sans font-bold text-brand-heading/70 uppercase">Fuzzy Soft Studio</span>
+            <div className="w-full overflow-hidden">
+              <span className="font-script text-3.5xl text-brand-heading block leading-none truncate">Admin</span>
+              <span className="text-[9px] tracking-[0.25em] font-sans font-bold text-brand-heading/70 uppercase block whitespace-normal break-words mt-0.5">Fuzzy Soft Studio</span>
             </div>
           </div>
 
