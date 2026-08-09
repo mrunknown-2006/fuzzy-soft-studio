@@ -109,14 +109,14 @@ export default function Navbar() {
                 fetchPriority="high"
                 className="hidden md:block h-full w-auto object-contain mix-blend-multiply contrast-125 brightness-95 drop-shadow-sm [image-rendering:_crisp-edges] [image-rendering:_-webkit-optimize-contrast]" 
               />
-              {/* Mobile Version — Dedicated Admin Mobile Image Only */}
+              {/* Mobile Version — Dedicated Admin Mobile Image Only (Maximized Size & Impact) */}
               <img 
                 src={mobileLogoUrl || logoUrl || "/logo.png?v=2"} 
                 alt="Fuzzy Soft Studio" 
                 decoding="async"
                 loading="eager"
                 fetchPriority="high"
-                className="block md:hidden h-12 sm:h-14 w-auto object-contain mix-blend-multiply contrast-125 brightness-95 drop-shadow-xs [image-rendering:_crisp-edges] [image-rendering:_-webkit-optimize-contrast]" 
+                className="block md:hidden h-16 sm:h-18 max-h-20 w-auto object-contain scale-110 origin-left mix-blend-multiply contrast-125 brightness-95 drop-shadow-sm [image-rendering:_crisp-edges] [image-rendering:_-webkit-optimize-contrast] py-0 my-0" 
               />
             </Link>
           </div>
