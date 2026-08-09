@@ -10,6 +10,8 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [desktopLogoUrl, setDesktopLogoUrl] = useState<string | null>(null);
+  const [mobileLogoUrl, setMobileLogoUrl] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const cart = useStore((state) => state.cart);
@@ -26,8 +28,10 @@ export default function Navbar() {
           .select('value')
           .eq('key', 'general')
           .single();
-        if (data?.value?.store_logo_url) {
-          setLogoUrl(data.value.store_logo_url);
+        if (data?.value) {
+          if (data.value.desktop_logo_url) setDesktopLogoUrl(data.value.desktop_logo_url);
+          if (data.value.mobile_logo_url) setMobileLogoUrl(data.value.mobile_logo_url);
+          if (data.value.store_logo_url) setLogoUrl(data.value.store_logo_url);
         }
       } catch (err) {
         console.warn('Navbar could not load logo from DB:', err);
@@ -81,7 +85,7 @@ export default function Navbar() {
       <header
         className={`fixed inset-x-0 top-0 z-40 transition-all duration-500 border-b ${
           isScrolled 
-            ? 'bg-brand-bg/95 backdrop-blur-md shadow-sm py-2 border-brand-border/40' 
+            ? 'bg-[#FAF7F2]/95 backdrop-blur-md shadow-sm py-2 border-brand-border/40' 
             : 'bg-transparent backdrop-blur-none py-4 border-transparent'
         }`}
       >
@@ -96,13 +100,13 @@ export default function Navbar() {
             >
               {/* Desktop Version */}
               <img 
-                src={logoUrl || "/logo.png?v=2"} 
+                src={desktopLogoUrl || logoUrl || "/logo.png?v=2"} 
                 alt="Fuzzy Soft Studio" 
                 className="hidden md:block h-16 lg:h-20 w-auto object-contain mix-blend-multiply contrast-125 brightness-95" 
               />
               {/* Mobile Version */}
               <img 
-                src={logoUrl || "/logo.png?v=2"} 
+                src={mobileLogoUrl || logoUrl || "/logo.png?v=2"} 
                 alt="Fuzzy Soft Studio" 
                 className="block md:hidden h-10 sm:h-12 w-auto object-contain mix-blend-multiply contrast-125 brightness-95" 
               />

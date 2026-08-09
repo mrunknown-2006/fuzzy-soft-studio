@@ -14,6 +14,8 @@ export default function Footer() {
   const [footerCopyright, setFooterCopyright] = useState('© 2026 Fuzzy Soft Studio. All rights reserved.');
   const [footerNote, setFooterNote] = useState('Made with love in Lucknow 🌸');
 
+  const [footerLogoUrl, setFooterLogoUrl] = useState<string | null>(null);
+
   useEffect(() => {
     const loadFooterData = async () => {
       // Fetch footer site content
@@ -38,24 +40,26 @@ export default function Footer() {
         console.warn('Failed to load footer site content:', err);
       }
 
-      // Fetch contact email from store_settings
+      // Fetch contact email & footer logo from store_settings
       try {
         const { data } = await supabase
           .from('store_settings')
           .select('*');
         if (data) {
           const generalSetting = data.find(s => s.key === 'general');
-          if (generalSetting && generalSetting.value && generalSetting.value.contact_email) {
-            setFooterEmail(String(generalSetting.value.contact_email));
-          } else {
-            const emailSetting = data.find(s => s.key === 'contact_email');
-            if (emailSetting && emailSetting.value) {
-              setFooterEmail(String(emailSetting.value));
+          if (generalSetting && generalSetting.value) {
+            if (generalSetting.value.contact_email) {
+              setFooterEmail(String(generalSetting.value.contact_email));
+            }
+            if (generalSetting.value.footer_logo_url) {
+              setFooterLogoUrl(String(generalSetting.value.footer_logo_url));
+            } else if (generalSetting.value.store_logo_url) {
+              setFooterLogoUrl(String(generalSetting.value.store_logo_url));
             }
           }
         }
       } catch (err) {
-        console.warn('Failed to load store settings for footer email:', err);
+        console.warn('Failed to load store settings for footer email & logo:', err);
       }
     };
     loadFooterData();
@@ -69,7 +73,7 @@ export default function Footer() {
         <div className="flex flex-col items-center justify-center text-center mb-16 select-none">
           <Link to="/" className="inline-flex items-center leading-none transition-transform duration-300 hover:scale-[1.02]">
             <img 
-              src="/logo.png?v=2" 
+              src={footerLogoUrl || "/logo.png?v=2"} 
               alt="Fuzzy Soft Studio" 
               className="h-20 md:h-24 w-auto object-contain mix-blend-multiply contrast-125 brightness-90 drop-shadow-[0_1px_1px_rgba(0,0,0,0.15)]" 
             />

@@ -24,9 +24,14 @@ export default function Settings() {
   const [shippingFee, setShippingFee] = useState(99);
   const [whatsapp, setWhatsapp] = useState('');
   const [email, setEmail] = useState('');
+  const [desktopLogoUrl, setDesktopLogoUrl] = useState('');
+  const [mobileLogoUrl, setMobileLogoUrl] = useState('');
+  const [footerLogoUrl, setFooterLogoUrl] = useState('');
   const [storeLogoUrl, setStoreLogoUrl] = useState('');
   const [faviconUrl, setFaviconUrl] = useState('');
-  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingDesktopLogo, setUploadingDesktopLogo] = useState(false);
+  const [uploadingMobileLogo, setUploadingMobileLogo] = useState(false);
+  const [uploadingFooterLogo, setUploadingFooterLogo] = useState(false);
   const [uploadingFavicon, setUploadingFavicon] = useState(false);
   const [whatsappAlerts, setWhatsappAlerts] = useState(true);
   const [emailAlerts, setEmailAlerts] = useState(true);
@@ -83,7 +88,11 @@ export default function Settings() {
             const waAlert = val.whatsapp_alerts === true || val.whatsapp_alerts === 'true';
             const emAlert = val.email_alerts === true || val.email_alerts === 'true';
             const autoHide = val.auto_hide_out_of_stock === true || val.auto_hide_out_of_stock === 'true';
-            const logo = String(val.store_logo_url || '');
+            
+            const dLogo = String(val.desktop_logo_url || val.store_logo_url || '');
+            const mLogo = String(val.mobile_logo_url || val.store_logo_url || '');
+            const fLogo = String(val.footer_logo_url || val.store_logo_url || '');
+            const logo = String(val.store_logo_url || dLogo || '');
             const fav = String(val.favicon_url || '');
 
             setStoreOpen(openVal);
@@ -96,6 +105,9 @@ export default function Settings() {
             setWhatsappAlerts(waAlert);
             setEmailAlerts(emAlert);
             setAutoHideOutOfStock(autoHide);
+            setDesktopLogoUrl(dLogo);
+            setMobileLogoUrl(mLogo);
+            setFooterLogoUrl(fLogo);
             setStoreLogoUrl(logo);
             setFaviconUrl(fav);
 
@@ -110,6 +122,9 @@ export default function Settings() {
               whatsappAlerts: waAlert,
               emailAlerts: emAlert,
               autoHideOutOfStock: autoHide,
+              desktopLogoUrl: dLogo,
+              mobileLogoUrl: mLogo,
+              footerLogoUrl: fLogo,
               storeLogoUrl: logo,
               faviconUrl: fav
             });
@@ -136,12 +151,15 @@ export default function Settings() {
       whatsappAlerts !== initialState.whatsappAlerts ||
       emailAlerts !== initialState.emailAlerts ||
       autoHideOutOfStock !== initialState.autoHideOutOfStock ||
+      desktopLogoUrl !== initialState.desktopLogoUrl ||
+      mobileLogoUrl !== initialState.mobileLogoUrl ||
+      footerLogoUrl !== initialState.footerLogoUrl ||
       storeLogoUrl !== initialState.storeLogoUrl ||
       faviconUrl !== initialState.faviconUrl
     );
   })();
 
-  const handleDiscard = () => {
+  const handleDiscardChanges = () => {
     if (!initialState) return;
     setStoreOpen(initialState.storeOpen);
     setFreeThreshold(initialState.freeThreshold);
@@ -153,6 +171,9 @@ export default function Settings() {
     setWhatsappAlerts(initialState.whatsappAlerts);
     setEmailAlerts(initialState.emailAlerts);
     setAutoHideOutOfStock(initialState.autoHideOutOfStock);
+    setDesktopLogoUrl(initialState.desktopLogoUrl);
+    setMobileLogoUrl(initialState.mobileLogoUrl);
+    setFooterLogoUrl(initialState.footerLogoUrl);
     setStoreLogoUrl(initialState.storeLogoUrl);
     setFaviconUrl(initialState.faviconUrl);
     showToast('Changes discarded.', 'success');
@@ -160,6 +181,7 @@ export default function Settings() {
 
   const handleSaveAllSettings = async () => {
     setSaving(true);
+    const mainLogo = desktopLogoUrl || storeLogoUrl || null;
     const payloadObject = {
       store_open: storeOpen,
       free_delivery_threshold: freeThreshold,
@@ -171,7 +193,10 @@ export default function Settings() {
       whatsapp_alerts: whatsappAlerts,
       email_alerts: emailAlerts,
       auto_hide_out_of_stock: autoHideOutOfStock,
-      store_logo_url: storeLogoUrl || null,
+      desktop_logo_url: desktopLogoUrl || null,
+      mobile_logo_url: mobileLogoUrl || null,
+      footer_logo_url: footerLogoUrl || null,
+      store_logo_url: mainLogo,
       favicon_url: faviconUrl || null,
       low_stock_threshold: lowStockThreshold || 5,
       order_id_prefix: 'FSS-'
@@ -194,7 +219,10 @@ export default function Settings() {
         contact_email: email.trim(),
         offer_line: settings.offer_line,
         banner_url: settings.banner_url,
-        store_logo_url: storeLogoUrl || '',
+        store_logo_url: mainLogo || '',
+        desktop_logo_url: desktopLogoUrl || '',
+        mobile_logo_url: mobileLogoUrl || '',
+        footer_logo_url: footerLogoUrl || '',
         favicon_url: faviconUrl || ''
       });
 
@@ -209,7 +237,10 @@ export default function Settings() {
         whatsappAlerts,
         emailAlerts,
         autoHideOutOfStock,
-        storeLogoUrl,
+        desktopLogoUrl,
+        mobileLogoUrl,
+        footerLogoUrl,
+        storeLogoUrl: mainLogo || '',
         faviconUrl
       });
 
@@ -222,38 +253,107 @@ export default function Settings() {
     }
   };
 
-  // Logo Upload pipeline
-  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // 1. Desktop Logo Upload pipeline
+  const handleDesktopLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setUploadingLogo(true);
+    setUploadingDesktopLogo(true);
     try {
       const { error: uploadErr } = await supabase.storage
         .from('content')
-        .upload('store-logo.webp', file, { upsert: true });
+        .upload('desktop-logo.webp', file, { upsert: true });
 
       if (uploadErr) throw uploadErr;
 
       const { data } = supabase.storage
         .from('content')
-        .getPublicUrl('store-logo.webp');
+        .getPublicUrl('desktop-logo.webp');
       
       const publicUrl = `${data.publicUrl}?t=${Date.now()}`;
+      setDesktopLogoUrl(publicUrl);
       setStoreLogoUrl(publicUrl);
-      showToast('Logo uploaded successfully!', 'success');
+      showToast('Desktop logo uploaded successfully!', 'success');
     } catch (err: any) {
-      console.error('Logo upload error:', err);
+      console.error('Desktop logo upload error:', err);
       showToast('Upload failed: ' + err.message, 'error');
     } finally {
-      setUploadingLogo(false);
+      setUploadingDesktopLogo(false);
       e.target.value = '';
     }
   };
 
-  const handleLogoDelete = () => {
-    setStoreLogoUrl('');
-    showToast('Logo removed. Save changes to persist.', 'success');
+  const handleDesktopLogoDelete = () => {
+    setDesktopLogoUrl('');
+    showToast('Desktop logo removed. Save changes to persist.', 'success');
+  };
+
+  // 2. Mobile Logo Upload pipeline
+  const handleMobileLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingMobileLogo(true);
+    try {
+      const { error: uploadErr } = await supabase.storage
+        .from('content')
+        .upload('mobile-logo.webp', file, { upsert: true });
+
+      if (uploadErr) throw uploadErr;
+
+      const { data } = supabase.storage
+        .from('content')
+        .getPublicUrl('mobile-logo.webp');
+      
+      const publicUrl = `${data.publicUrl}?t=${Date.now()}`;
+      setMobileLogoUrl(publicUrl);
+      showToast('Mobile logo uploaded successfully!', 'success');
+    } catch (err: any) {
+      console.error('Mobile logo upload error:', err);
+      showToast('Upload failed: ' + err.message, 'error');
+    } finally {
+      setUploadingMobileLogo(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleMobileLogoDelete = () => {
+    setMobileLogoUrl('');
+    showToast('Mobile logo removed. Save changes to persist.', 'success');
+  };
+
+  // 3. Footer Logo Upload pipeline
+  const handleFooterLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingFooterLogo(true);
+    try {
+      const { error: uploadErr } = await supabase.storage
+        .from('content')
+        .upload('footer-logo.webp', file, { upsert: true });
+
+      if (uploadErr) throw uploadErr;
+
+      const { data } = supabase.storage
+        .from('content')
+        .getPublicUrl('footer-logo.webp');
+      
+      const publicUrl = `${data.publicUrl}?t=${Date.now()}`;
+      setFooterLogoUrl(publicUrl);
+      showToast('Footer logo uploaded successfully!', 'success');
+    } catch (err: any) {
+      console.error('Footer logo upload error:', err);
+      showToast('Upload failed: ' + err.message, 'error');
+    } finally {
+      setUploadingFooterLogo(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleFooterLogoDelete = () => {
+    setFooterLogoUrl('');
+    showToast('Footer logo removed. Save changes to persist.', 'success');
   };
 
   // Favicon Upload pipeline
@@ -384,42 +484,42 @@ export default function Settings() {
         {activeTab === 'brand' && (
           <div className="space-y-6">
             
-            {/* Logo Card */}
+            {/* Card 1: Desktop Navbar Logo */}
             <div className="bg-white/60 border border-brand-border/40 rounded-3xl p-6 shadow-xs backdrop-blur-xs space-y-4">
               <div>
-                <h4 className="text-sm font-semibold text-brand-heading">Store Logo</h4>
-                <p className="text-xs text-brand-body/60 font-sans mt-0.5">Upload your main brand logo used in headers, invoices, and website layouts.</p>
+                <h4 className="text-sm font-semibold text-brand-heading">Desktop Navbar Logo</h4>
+                <p className="text-xs text-brand-body/60 font-sans mt-0.5">Primary logo displayed on PC & laptop navigation bars (<code className="text-[11px] bg-brand-cream/60 px-1 py-0.5 rounded">hidden md:block</code>).</p>
               </div>
               <div className="flex items-center gap-6">
-                {storeLogoUrl ? (
-                  <div className="h-16 w-32 bg-brand-cream/20 border border-brand-border/30 rounded-xl flex items-center justify-center p-2">
+                {(desktopLogoUrl || storeLogoUrl) ? (
+                  <div className="h-16 w-36 bg-brand-cream/20 border border-brand-border/30 rounded-xl flex items-center justify-center p-2">
                     <img 
-                      src={storeLogoUrl} 
-                      alt="Logo Preview" 
-                      className="max-h-12 w-auto object-contain" 
+                      src={desktopLogoUrl || storeLogoUrl} 
+                      alt="Desktop Logo Preview" 
+                      className="max-h-12 w-auto object-contain mix-blend-multiply" 
                     />
                   </div>
                 ) : (
-                  <div className="h-16 w-32 bg-brand-cream/35 border border-brand-border/60 rounded-xl flex items-center justify-center text-[10px] text-brand-body/50 font-sans uppercase tracking-wider">
+                  <div className="h-16 w-36 bg-brand-cream/35 border border-brand-border/60 rounded-xl flex items-center justify-center text-[10px] text-brand-body/50 font-sans uppercase tracking-wider">
                     No Logo
                   </div>
                 )}
                 <div className="flex flex-wrap gap-2">
                   <label className="h-10 px-4 bg-brand-cream/80 hover:bg-brand-cream border border-brand-border text-brand-heading rounded-full flex items-center justify-center gap-1.5 cursor-pointer text-xs font-semibold select-none active:scale-95 transition">
                     <Upload size={14} />
-                    <span>{uploadingLogo ? 'Uploading...' : 'Upload Logo'}</span>
+                    <span>{uploadingDesktopLogo ? 'Uploading...' : 'Upload Desktop Logo'}</span>
                     <input 
                       type="file" 
                       accept="image/png, image/jpeg, image/svg+xml, image/webp" 
-                      onChange={handleLogoUpload} 
+                      onChange={handleDesktopLogoUpload} 
                       className="hidden" 
-                      disabled={uploadingLogo} 
+                      disabled={uploadingDesktopLogo} 
                     />
                   </label>
-                  {storeLogoUrl && (
+                  {desktopLogoUrl && (
                     <button
                       type="button"
-                      onClick={handleLogoDelete}
+                      onClick={handleDesktopLogoDelete}
                       className="h-10 px-4 bg-red-50 hover:bg-red-100 border border-red-200 text-red-650 rounded-full flex items-center justify-center gap-1.5 cursor-pointer text-xs font-semibold select-none active:scale-95 transition"
                     >
                       <Trash2 size={14} />
@@ -430,7 +530,99 @@ export default function Settings() {
               </div>
             </div>
 
-            {/* Favicon Card */}
+            {/* Card 2: Mobile Navbar Logo */}
+            <div className="bg-white/60 border border-brand-border/40 rounded-3xl p-6 shadow-xs backdrop-blur-xs space-y-4">
+              <div>
+                <h4 className="text-sm font-semibold text-brand-heading">Mobile Navbar Logo</h4>
+                <p className="text-xs text-brand-body/60 font-sans mt-0.5">Compact logo variant optimized for mobile screens (<code className="text-[11px] bg-brand-cream/60 px-1 py-0.5 rounded">block md:hidden</code>).</p>
+              </div>
+              <div className="flex items-center gap-6">
+                {(mobileLogoUrl || storeLogoUrl) ? (
+                  <div className="h-16 w-36 bg-brand-cream/20 border border-brand-border/30 rounded-xl flex items-center justify-center p-2">
+                    <img 
+                      src={mobileLogoUrl || storeLogoUrl} 
+                      alt="Mobile Logo Preview" 
+                      className="max-h-12 w-auto object-contain mix-blend-multiply" 
+                    />
+                  </div>
+                ) : (
+                  <div className="h-16 w-36 bg-brand-cream/35 border border-brand-border/60 rounded-xl flex items-center justify-center text-[10px] text-brand-body/50 font-sans uppercase tracking-wider">
+                    No Logo
+                  </div>
+                )}
+                <div className="flex flex-wrap gap-2">
+                  <label className="h-10 px-4 bg-brand-cream/80 hover:bg-brand-cream border border-brand-border text-brand-heading rounded-full flex items-center justify-center gap-1.5 cursor-pointer text-xs font-semibold select-none active:scale-95 transition">
+                    <Upload size={14} />
+                    <span>{uploadingMobileLogo ? 'Uploading...' : 'Upload Mobile Logo'}</span>
+                    <input 
+                      type="file" 
+                      accept="image/png, image/jpeg, image/svg+xml, image/webp" 
+                      onChange={handleMobileLogoUpload} 
+                      className="hidden" 
+                      disabled={uploadingMobileLogo} 
+                    />
+                  </label>
+                  {mobileLogoUrl && (
+                    <button
+                      type="button"
+                      onClick={handleMobileLogoDelete}
+                      className="h-10 px-4 bg-red-50 hover:bg-red-100 border border-red-200 text-red-650 rounded-full flex items-center justify-center gap-1.5 cursor-pointer text-xs font-semibold select-none active:scale-95 transition"
+                    >
+                      <Trash2 size={14} />
+                      <span>Remove</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Card 3: Footer Logo */}
+            <div className="bg-white/60 border border-brand-border/40 rounded-3xl p-6 shadow-xs backdrop-blur-xs space-y-4">
+              <div>
+                <h4 className="text-sm font-semibold text-brand-heading">Footer Logo</h4>
+                <p className="text-xs text-brand-body/60 font-sans mt-0.5">Dedicated brand logo displayed prominently in the website footer layout.</p>
+              </div>
+              <div className="flex items-center gap-6">
+                {(footerLogoUrl || storeLogoUrl) ? (
+                  <div className="h-16 w-36 bg-brand-cream/20 border border-brand-border/30 rounded-xl flex items-center justify-center p-2">
+                    <img 
+                      src={footerLogoUrl || storeLogoUrl} 
+                      alt="Footer Logo Preview" 
+                      className="max-h-12 w-auto object-contain mix-blend-multiply" 
+                    />
+                  </div>
+                ) : (
+                  <div className="h-16 w-36 bg-brand-cream/35 border border-brand-border/60 rounded-xl flex items-center justify-center text-[10px] text-brand-body/50 font-sans uppercase tracking-wider">
+                    No Logo
+                  </div>
+                )}
+                <div className="flex flex-wrap gap-2">
+                  <label className="h-10 px-4 bg-brand-cream/80 hover:bg-brand-cream border border-brand-border text-brand-heading rounded-full flex items-center justify-center gap-1.5 cursor-pointer text-xs font-semibold select-none active:scale-95 transition">
+                    <Upload size={14} />
+                    <span>{uploadingFooterLogo ? 'Uploading...' : 'Upload Footer Logo'}</span>
+                    <input 
+                      type="file" 
+                      accept="image/png, image/jpeg, image/svg+xml, image/webp" 
+                      onChange={handleFooterLogoUpload} 
+                      className="hidden" 
+                      disabled={uploadingFooterLogo} 
+                    />
+                  </label>
+                  {footerLogoUrl && (
+                    <button
+                      type="button"
+                      onClick={handleFooterLogoDelete}
+                      className="h-10 px-4 bg-red-50 hover:bg-red-100 border border-red-200 text-red-650 rounded-full flex items-center justify-center gap-1.5 cursor-pointer text-xs font-semibold select-none active:scale-95 transition"
+                    >
+                      <Trash2 size={14} />
+                      <span>Remove</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Card 4: Browser Favicon */}
             <div className="bg-white/60 border border-brand-border/40 rounded-3xl p-6 shadow-xs backdrop-blur-xs space-y-4">
               <div>
                 <h4 className="text-sm font-semibold text-brand-heading">Browser Favicon</h4>
@@ -706,7 +898,7 @@ export default function Settings() {
           <span className="text-xs font-medium tracking-wide font-sans">You have unsaved changes</span>
           <div className="flex items-center gap-3">
             <button
-              onClick={handleDiscard}
+              onClick={handleDiscardChanges}
               className="text-xs font-semibold hover:text-gray-300 transition-colors uppercase px-3 py-1.5 cursor-pointer"
             >
               Discard

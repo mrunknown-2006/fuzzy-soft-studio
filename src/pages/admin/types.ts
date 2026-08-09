@@ -8,6 +8,9 @@ export interface SiteSettings {
   offer_line: string;
   banner_url?: string;
   store_logo_url?: string;
+  desktop_logo_url?: string;
+  mobile_logo_url?: string;
+  footer_logo_url?: string;
   favicon_url?: string;
 }
 
