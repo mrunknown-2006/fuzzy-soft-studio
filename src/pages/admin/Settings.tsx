@@ -181,11 +181,6 @@ export default function Settings() {
 
   const handleSaveAllSettings = async () => {
     setSaving(true);
-    const dLogo = desktopLogoUrl.trim() || null;
-    const mLogo = mobileLogoUrl.trim() || null;
-    const fLogo = footerLogoUrl.trim() || null;
-    const fav = faviconUrl.trim() || null;
-
     const payloadObject = {
       store_open: storeOpen,
       free_delivery_threshold: freeThreshold,
@@ -197,11 +192,11 @@ export default function Settings() {
       whatsapp_alerts: whatsappAlerts,
       email_alerts: emailAlerts,
       auto_hide_out_of_stock: autoHideOutOfStock,
-      desktop_logo_url: dLogo,
-      mobile_logo_url: mLogo,
-      footer_logo_url: fLogo,
-      store_logo_url: dLogo,
-      favicon_url: fav,
+      desktop_logo_url: desktopLogoUrl,
+      mobile_logo_url: mobileLogoUrl,
+      footer_logo_url: footerLogoUrl,
+      store_logo_url: desktopLogoUrl,
+      favicon_url: faviconUrl,
       low_stock_threshold: lowStockThreshold || 5,
       order_id_prefix: 'FSS-'
     };
@@ -223,11 +218,11 @@ export default function Settings() {
         contact_email: email.trim(),
         offer_line: settings.offer_line,
         banner_url: settings.banner_url,
-        store_logo_url: dLogo || '',
-        desktop_logo_url: dLogo || '',
-        mobile_logo_url: mLogo || '',
-        footer_logo_url: fLogo || '',
-        favicon_url: fav || ''
+        store_logo_url: desktopLogoUrl,
+        desktop_logo_url: desktopLogoUrl,
+        mobile_logo_url: mobileLogoUrl,
+        footer_logo_url: footerLogoUrl,
+        favicon_url: faviconUrl
       });
 
       setInitialState({
@@ -241,11 +236,11 @@ export default function Settings() {
         whatsappAlerts,
         emailAlerts,
         autoHideOutOfStock,
-        desktopLogoUrl: dLogo || '',
-        mobileLogoUrl: mLogo || '',
-        footerLogoUrl: fLogo || '',
-        storeLogoUrl: dLogo || '',
-        faviconUrl: fav || ''
+        desktopLogoUrl,
+        mobileLogoUrl,
+        footerLogoUrl,
+        storeLogoUrl: desktopLogoUrl,
+        faviconUrl
       });
 
       showToast('Settings saved successfully!', 'success');
