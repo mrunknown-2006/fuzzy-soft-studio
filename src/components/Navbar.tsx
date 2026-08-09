@@ -85,7 +85,7 @@ export default function Navbar() {
             : 'bg-transparent backdrop-blur-none py-4 border-transparent'
         }`}
       >
-        <div className="mx-auto max-w-7xl px-6 lg:px-10 flex items-center justify-between h-20">
+        <div className="mx-auto max-w-7xl px-6 lg:px-10 flex items-center justify-between min-h-[5rem] py-2">
           
           {/* Left: Logo */}
           <div className="flex-1 flex justify-start">
@@ -97,7 +97,7 @@ export default function Navbar() {
               <img 
                 src={logoUrl || "/logo.png?v=2"} 
                 alt="Fuzzy Soft Studio" 
-                className="h-12 md:h-14 w-auto object-contain mix-blend-multiply opacity-95 contrast-125" 
+                className="h-14 sm:h-16 md:h-20 w-auto object-contain contrast-150 brightness-90 drop-shadow-sm" 
               />
             </Link>
           </div>
