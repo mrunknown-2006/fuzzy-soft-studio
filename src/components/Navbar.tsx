@@ -9,9 +9,10 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const [desktopLogoUrl, setDesktopLogoUrl] = useState<string | null>(null);
-  const [mobileLogoUrl, setMobileLogoUrl] = useState<string | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string>('/logo.png?v=2');
+  const [desktopLogoUrl, setDesktopLogoUrl] = useState<string>('/logo.png?v=2');
+  const [mobileLogoUrl, setMobileLogoUrl] = useState<string>('/logo.png?v=2');
+  const [logoError, setLogoError] = useState(false);
   const navigate = useNavigate();
 
   const cart = useStore((state) => state.cart);
@@ -96,20 +97,36 @@ export default function Navbar() {
             <Link 
               to="/" 
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className="flex items-center gap-2 py-0.5 select-none pl-0 ml-0"
+              className="flex items-center gap-2 py-0.5 select-none pl-0 ml-0 min-w-[140px] sm:min-w-[180px] h-14 sm:h-20 justify-start"
             >
-              {/* Desktop Version */}
-              <img 
-                src={desktopLogoUrl || logoUrl || "/logo.png?v=2"} 
-                alt="Fuzzy Soft Studio" 
-                className="hidden md:block h-20 lg:h-24 w-auto object-contain mix-blend-multiply contrast-125 brightness-95 drop-shadow-sm" 
-              />
-              {/* Mobile Version */}
-              <img 
-                src={mobileLogoUrl || logoUrl || "/logo.png?v=2"} 
-                alt="Fuzzy Soft Studio" 
-                className="block md:hidden h-14 sm:h-16 w-auto object-contain mix-blend-multiply contrast-125 brightness-95 drop-shadow-xs" 
-              />
+              {!logoError ? (
+                <>
+                  {/* Desktop Version */}
+                  <img 
+                    src={desktopLogoUrl || logoUrl} 
+                    alt="Fuzzy Soft Studio" 
+                    decoding="async"
+                    loading="eager"
+                    fetchPriority="high"
+                    onError={() => setLogoError(true)}
+                    className="hidden md:block h-20 lg:h-24 w-auto object-contain mix-blend-multiply contrast-125 brightness-95 drop-shadow-sm [image-rendering:_crisp-edges] [image-rendering:_-webkit-optimize-contrast]" 
+                  />
+                  {/* Mobile Version */}
+                  <img 
+                    src={mobileLogoUrl || logoUrl} 
+                    alt="Fuzzy Soft Studio" 
+                    decoding="async"
+                    loading="eager"
+                    fetchPriority="high"
+                    onError={() => setLogoError(true)}
+                    className="block md:hidden h-14 sm:h-16 w-auto object-contain mix-blend-multiply contrast-125 brightness-95 drop-shadow-xs [image-rendering:_crisp-edges] [image-rendering:_-webkit-optimize-contrast]" 
+                  />
+                </>
+              ) : (
+                <span className="font-serif text-xl sm:text-2xl font-bold tracking-wide text-brand-heading">
+                  Fuzzy Soft Studio
+                </span>
+              )}
             </Link>
           </div>
 
