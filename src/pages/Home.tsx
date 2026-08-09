@@ -472,7 +472,7 @@ export default function Home() {
                 heroMainTitle
               ) : (
                 <>
-                  {heroTitle1} <span className="font-script text-[1.2em] text-brand-accent block md:inline-block md:-ml-3 mt-1 md:mt-0 font-normal">{heroTitle2}</span> {heroTitle3}
+                  <span className="font-script">{heroTitle1}</span> <span className="font-script text-[1.2em] text-brand-accent block md:inline-block md:-ml-3 mt-1 md:mt-0 font-normal">{heroTitle2}</span> <span className="font-script">{heroTitle3}</span>
                 </>
               )}
             </h1>
