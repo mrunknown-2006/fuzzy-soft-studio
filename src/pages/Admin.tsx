@@ -191,7 +191,7 @@ export default function Admin() {
 
   // Synchronize browser tab icon
   useEffect(() => {
-    const newFaviconUrl = settings.favicon_url || settings.store_logo_url;
+    const newFaviconUrl = settings.favicon_url;
     if (newFaviconUrl) {
       const link = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
       if (link) {
@@ -203,7 +203,7 @@ export default function Admin() {
         document.head.appendChild(newLink);
       }
     }
-  }, [settings.favicon_url, settings.store_logo_url]);
+  }, [settings.favicon_url]);
 
   const loadAllData = async () => {
     await Promise.all([
@@ -539,7 +539,7 @@ export default function Admin() {
       
       {/* A: Desktop Sidebar Navigation - Hidden on mobile (<768px) */}
       <aside className="hidden md:flex flex-col justify-between w-64 h-full border-r border-brand-border/40 bg-[#F5EDE6]/60 shrink-0 select-none overflow-x-hidden">
-        <div className="p-6 space-y-8 overflow-y-auto max-h-[85vh]">
+        <div className="p-6 space-y-6 flex-1 overflow-y-auto min-h-0">
           {/* Logo Header */}
           <div className="flex flex-col items-start gap-2">
             {settings?.store_logo_url && (

@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Heart, ShoppingBag, Menu, X, Search, User } from 'lucide-react';
 import { useStore } from '../store/useStore';
+import { supabase } from '../lib/supabaseClient';
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const cart = useStore((state) => state.cart);
@@ -15,6 +17,24 @@ export default function Navbar() {
 
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
   const wishlistCount = wishlist.length;
+
+  useEffect(() => {
+    const fetchLogo = async () => {
+      try {
+        const { data } = await supabase
+          .from('store_settings')
+          .select('value')
+          .eq('key', 'general')
+          .single();
+        if (data?.value?.store_logo_url) {
+          setLogoUrl(data.value.store_logo_url);
+        }
+      } catch (err) {
+        console.warn('Navbar could not load logo from DB:', err);
+      }
+    };
+    fetchLogo();
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -75,9 +95,9 @@ export default function Navbar() {
               className="flex items-center gap-2 py-0.5 select-none"
             >
               <img 
-                src="/logo.png?v=2" 
+                src={logoUrl || "/logo.png?v=2"} 
                 alt="Fuzzy Soft Studio" 
-                className="h-14 sm:h-16 md:h-20 w-auto object-contain mix-blend-multiply contrast-125 brightness-90 drop-shadow-[0_1px_1px_rgba(0,0,0,0.15)]" 
+                className="h-12 sm:h-14 md:h-16 w-auto object-contain mix-blend-multiply contrast-125 brightness-95" 
               />
             </Link>
           </div>
