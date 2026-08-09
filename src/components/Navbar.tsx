@@ -72,12 +72,12 @@ export default function Navbar() {
             <Link 
               to="/" 
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className="flex items-center select-none"
+              className="flex items-center gap-2 py-1 select-none"
             >
               <img 
                 src="/logo.png" 
                 alt="Fuzzy Soft Studio" 
-                className="h-9 md:h-11 w-auto object-contain" 
+                className="h-10 sm:h-12 w-auto object-contain mix-blend-multiply" 
               />
             </Link>
           </div>
