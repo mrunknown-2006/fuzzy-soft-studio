@@ -11,6 +11,8 @@ export interface SiteSettings {
   desktop_logo_url?: string;
   mobile_logo_url?: string;
   footer_logo_url?: string;
+  desktop_footer_logo_url?: string;
+  mobile_footer_logo_url?: string;
   favicon_url?: string;
 }
 
