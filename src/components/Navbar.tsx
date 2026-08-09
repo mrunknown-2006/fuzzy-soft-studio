@@ -10,6 +10,7 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [logoUrl, setLogoUrl] = useState<string>('/logo.png?v=2');
+  const [mobileLogoUrl, setMobileLogoUrl] = useState<string>('');
   const navigate = useNavigate();
 
   const cart = useStore((state) => state.cart);
@@ -27,8 +28,11 @@ export default function Navbar() {
           .eq('key', 'general')
           .single();
         if (data?.value) {
-          if (data.value.footer_logo_url || data.value.store_logo_url) {
-            setLogoUrl(data.value.footer_logo_url || data.value.store_logo_url);
+          if (data.value.mobile_logo_url || data.value.mobile_logo) {
+            setMobileLogoUrl(data.value.mobile_logo_url || data.value.mobile_logo);
+          }
+          if (data.value.store_logo_url || data.value.footer_logo_url) {
+            setLogoUrl(data.value.store_logo_url || data.value.footer_logo_url);
           }
         }
       } catch (err) {
@@ -96,13 +100,23 @@ export default function Navbar() {
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
               className="flex items-center select-none shrink-0 justify-start h-16 sm:h-20 lg:h-24 w-auto max-w-[280px] sm:max-w-[360px] py-1"
             >
+              {/* Desktop Version */}
               <img 
                 src={logoUrl || "/logo.png?v=2"} 
                 alt="Fuzzy Soft Studio" 
                 decoding="async"
                 loading="eager"
                 fetchPriority="high"
-                className="h-full w-auto object-contain mix-blend-multiply contrast-125 brightness-95 drop-shadow-sm [image-rendering:_crisp-edges] [image-rendering:_-webkit-optimize-contrast]" 
+                className="hidden md:block h-full w-auto object-contain mix-blend-multiply contrast-125 brightness-95 drop-shadow-sm [image-rendering:_crisp-edges] [image-rendering:_-webkit-optimize-contrast]" 
+              />
+              {/* Mobile Version — Dedicated Admin Mobile Image Only */}
+              <img 
+                src={mobileLogoUrl || logoUrl || "/logo.png?v=2"} 
+                alt="Fuzzy Soft Studio" 
+                decoding="async"
+                loading="eager"
+                fetchPriority="high"
+                className="block md:hidden h-12 sm:h-14 w-auto object-contain mix-blend-multiply contrast-125 brightness-95 drop-shadow-xs [image-rendering:_crisp-edges] [image-rendering:_-webkit-optimize-contrast]" 
               />
             </Link>
           </div>
@@ -239,9 +253,11 @@ export default function Navbar() {
         <div>
           {/* Header */}
           <div className="flex items-center justify-between border-b border-[#EAE3DA] pb-4 mb-6">
-            <span className="font-script text-3xl text-brand-heading leading-none">
-              Fuzzy Soft Studio
-            </span>
+            <img 
+              src={mobileLogoUrl || logoUrl || "/logo.png?v=2"} 
+              alt="Fuzzy Soft Studio" 
+              className="h-10 sm:h-12 w-auto object-contain mix-blend-multiply contrast-125 brightness-95" 
+            />
             <button
               onClick={() => setIsMobileMenuOpen(false)}
               className="w-8 h-8 rounded-full bg-[#EFE8DD] flex items-center justify-center text-brand-heading hover:text-brand-accent transition-all duration-300 cursor-pointer"
