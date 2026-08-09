@@ -67,13 +67,12 @@ export default function Footer() {
         
         {/* Top: Logo & Tagline Centered */}
         <div className="flex flex-col items-center justify-center text-center mb-16 select-none">
-          <Link to="/" className="inline-flex flex-col items-center leading-none transition-transform duration-300 hover:scale-[1.02]">
-            <span className="font-script text-4.5xl text-brand-heading leading-none">
-              Fuzzy
-            </span>
-            <span className="text-[10px] tracking-[0.35em] text-brand-heading/90 mt-1 font-sans">
-              SOFT STUDIO
-            </span>
+          <Link to="/" className="inline-flex items-center leading-none transition-transform duration-300 hover:scale-[1.02]">
+            <img 
+              src="/logo.png" 
+              alt="Fuzzy Soft Studio" 
+              className="h-12 md:h-14 w-auto object-contain" 
+            />
           </Link>
           <p className="mt-4 text-xs font-serif italic text-brand-body/75 max-w-sm">
             {footerTagline}

@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Heart, ShoppingBag, Menu, X, Search, User } from 'lucide-react';
 import { useStore } from '../store/useStore';
-import { supabase } from '../lib/supabaseClient';
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -16,25 +15,6 @@ export default function Navbar() {
 
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
   const wishlistCount = wishlist.length;
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchLogo = async () => {
-      try {
-        const { data } = await supabase
-          .from('store_settings')
-          .select('value')
-          .eq('key', 'general')
-          .single();
-        if (data?.value?.store_logo_url) {
-          setLogoUrl(data.value.store_logo_url);
-        }
-      } catch (err) {
-        console.warn('Navbar could not load logo:', err);
-      }
-    };
-    fetchLogo();
-  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -92,24 +72,13 @@ export default function Navbar() {
             <Link 
               to="/" 
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className="inline-flex flex-col items-center leading-none select-none"
+              className="flex items-center select-none"
             >
-              {logoUrl ? (
-                <img 
-                  src={logoUrl} 
-                  alt="Fuzzy Soft Studio" 
-                  className="h-14 md:h-16 w-auto object-contain" 
-                />
-              ) : (
-                <>
-                  <span className="font-script text-3xl text-brand-heading leading-none">
-                    Fuzzy
-                  </span>
-                  <span className="text-[10px] tracking-[0.35em] text-brand-heading/80 mt-0.5 font-sans">
-                    SOFT STUDIO
-                  </span>
-                </>
-              )}
+              <img 
+                src="/logo.png" 
+                alt="Fuzzy Soft Studio" 
+                className="h-9 md:h-11 w-auto object-contain" 
+              />
             </Link>
           </div>
 
