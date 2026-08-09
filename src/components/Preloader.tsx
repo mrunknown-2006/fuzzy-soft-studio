@@ -1,23 +1,12 @@
 import { useState, useEffect } from 'react';
 
 export default function Preloader() {
-  const [loadingProgress, setLoadingProgress] = useState(0);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(false);
 
   useEffect(() => {
-    let progressTimer: any;
-    let isFinished = false;
-
-    // Simulate smooth progress ticker while waiting for assets
-    progressTimer = setInterval(() => {
-      setLoadingProgress((prev) => {
-        if (prev >= 90) return prev;
-        return prev + Math.floor(Math.random() * 15) + 5;
-      });
-    }, 80);
-
     const verifyAssets = async () => {
-      // 1. Wait for document fonts if supported
+      // 1. Wait for fonts
       if (document.fonts) {
         try {
           await document.fonts.ready;
@@ -26,7 +15,7 @@ export default function Preloader() {
         }
       }
 
-      // 2. Wait for document images to be fully loaded and decoded
+      // 2. Wait for images to load
       const images = Array.from(document.images);
       const imagePromises = images.map((img) => {
         if (img.complete && img.naturalHeight !== 0) {
@@ -40,14 +29,12 @@ export default function Preloader() {
 
       await Promise.all(imagePromises);
 
-      // 3. Ensure minimum curtain display time for smooth luxury transition
+      // 3. Smooth organic display time (500ms) for cinematic curtain transition
       setTimeout(() => {
-        setLoadingProgress(100);
-        isFinished = true;
-        clearInterval(progressTimer);
+        setIsReady(true);
         setTimeout(() => {
-          setIsLoaded(true);
-        }, 400);
+          setIsDismissed(true);
+        }, 700);
       }, 500);
     };
 
@@ -57,63 +44,52 @@ export default function Preloader() {
       window.addEventListener('load', verifyAssets, { once: true });
     }
 
-    // Safety timeout fallback
     const fallbackTimer = setTimeout(() => {
-      if (!isFinished) {
-        setLoadingProgress(100);
-        setIsLoaded(true);
-        clearInterval(progressTimer);
-      }
-    }, 2500);
+      setIsReady(true);
+      setTimeout(() => setIsDismissed(true), 700);
+    }, 2000);
 
     return () => {
-      clearInterval(progressTimer);
       clearTimeout(fallbackTimer);
       window.removeEventListener('load', verifyAssets);
     };
   }, []);
 
-  if (isLoaded) return null;
+  if (isDismissed) return null;
 
   return (
     <div
-      className={`fixed inset-0 z-[99999] bg-[#FAF7F2] flex flex-col items-center justify-center px-6 transition-opacity duration-700 ease-out select-none ${
-        loadingProgress === 100 ? 'opacity-0 pointer-events-none' : 'opacity-100'
+      className={`fixed inset-0 z-[99999] bg-[#FAF7F2] flex flex-col items-center justify-center px-6 transition-opacity duration-700 ease-in-out select-none ${
+        isReady ? 'opacity-0 pointer-events-none' : 'opacity-100'
       }`}
     >
-      <div className="flex flex-col items-center max-w-sm text-center space-y-6">
-        {/* Brand Logo with Pulsing Glow */}
-        <div className="relative flex items-center justify-center">
-          <div className="absolute w-32 h-32 bg-[#C9A84C]/15 rounded-full blur-xl animate-pulse" />
-          <img
-            src="/logo.png?v=2"
-            alt="Fuzzy Soft Studio"
-            className="h-24 sm:h-28 w-auto object-contain relative z-10 mix-blend-multiply contrast-125 brightness-95 animate-pulse"
-          />
-        </div>
-
-        {/* Brand Tagline */}
-        <div className="space-y-1">
-          <span className="text-[10px] font-sans font-bold uppercase tracking-[0.3em] text-[#C9A84C]">
-            Handcrafted Luxury
-          </span>
-          <p className="text-xs font-serif italic text-[#5C4F45]/75">
-            Pipe Cleaner Floral Art & Studio
-          </p>
-        </div>
-
-        {/* Progress Bar & Counter */}
-        <div className="w-44 space-y-2 pt-2">
-          <div className="w-full h-[2px] bg-[#EAE3DA] rounded-full overflow-hidden relative">
-            <div
-              className="h-full bg-gradient-to-r from-[#C9A84C] to-[#DCA29A] transition-all duration-300 ease-out rounded-full"
-              style={{ width: `${loadingProgress}%` }}
-            />
+      <div className="flex flex-col items-center text-center space-y-4 animate-fade-in">
+        {/* Pure SVG Vector Floral Emblem */}
+        <div className="relative flex items-center justify-center mb-1">
+          <div className="absolute w-28 h-28 bg-[#C9A84C]/15 rounded-full blur-2xl animate-pulse" />
+          <div className="w-16 h-16 rounded-full bg-white/80 border border-[#EAE3DA] shadow-xs flex items-center justify-center relative z-10">
+            <svg className="w-8 h-8 text-[#C9A84C] animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2a5 5 0 0 0-5 5c0 3 5 9 5 9s5-6 5-9a5 5 0 0 0-5-5z" />
+              <path d="M12 7a2 2 0 1 0 0 4 2 2 0 0 0 0-4z" />
+              <path d="M12 16v6" />
+              <path d="M9 19c2 0 3-1 3-1" />
+              <path d="M15 19c-2 0-3-1-3-1" />
+            </svg>
           </div>
-          <span className="text-[10px] font-mono font-semibold tracking-widest text-[#5C4F45]/50 block">
-            {loadingProgress}%
+        </div>
+
+        {/* Cursive Brand Title */}
+        <div className="space-y-1">
+          <h2 className="font-serif text-2xl sm:text-3xl font-bold tracking-wide text-[#4A3F35]">
+            Fuzzy Soft Studio
+          </h2>
+          <span className="text-[10px] font-sans font-bold uppercase tracking-[0.3em] text-[#C9A84C] block">
+            Handcrafted Luxury • Pipe Cleaner Art
           </span>
         </div>
+
+        {/* Minimal Subtle Gold Line */}
+        <div className="w-12 h-[1.5px] bg-gradient-to-r from-transparent via-[#C9A84C] to-transparent animate-pulse mt-2" />
       </div>
     </div>
   );
