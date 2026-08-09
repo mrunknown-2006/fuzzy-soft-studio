@@ -94,15 +94,23 @@ export default function Navbar() {
             <Link 
               to="/" 
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className="flex items-center select-none shrink-0 justify-start h-16 sm:h-20 lg:h-24 w-auto max-w-[280px] sm:max-w-[360px] py-1"
+              className="relative flex items-center justify-start select-none shrink-0 overflow-hidden w-[200px] sm:w-[260px] h-[52px] sm:h-[64px] bg-[#FAF7F2] rounded-lg"
+              style={{ width: '220px', height: '56px' }}
             >
+              {/* Clean Background Brand Placeholder (renders instantly behind image) */}
+              <span className="absolute inset-0 flex items-center justify-start text-xs sm:text-sm font-serif font-bold text-[#4A3F35]/25 tracking-wider pointer-events-none select-none px-1">
+                Fuzzy Soft Studio
+              </span>
+
+              {/* High Priority Eager Decoded Floral Logo */}
               <img 
                 src={logoUrl || "/logo.png?v=2"} 
                 alt="Fuzzy Soft Studio" 
                 decoding="async"
                 loading="eager"
                 fetchPriority="high"
-                className="h-full w-auto object-contain mix-blend-multiply contrast-125 brightness-95 drop-shadow-sm [image-rendering:_crisp-edges] [image-rendering:_-webkit-optimize-contrast]" 
+                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                className="relative z-10 w-full h-full object-contain mix-blend-multiply contrast-125 brightness-95 drop-shadow-sm [image-rendering:_crisp-edges] [image-rendering:_-webkit-optimize-contrast]" 
               />
             </Link>
           </div>
