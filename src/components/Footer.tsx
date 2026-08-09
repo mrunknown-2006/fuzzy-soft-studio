@@ -67,29 +67,12 @@ export default function Footer() {
         
         {/* Top: Logo & Tagline Centered */}
         <div className="flex flex-col items-center justify-center text-center mb-16 select-none">
-          <Link to="/" className="inline-flex items-center gap-3 leading-none transition-transform duration-300 hover:scale-[1.02] group">
-            <svg 
-              className="h-9 md:h-11 w-auto text-[#8C7A6B] group-hover:text-brand-accent transition-colors duration-300 shrink-0" 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              stroke="currentColor" 
-              strokeWidth="1.5" 
-              strokeLinecap="round" 
-              strokeLinejoin="round"
-            >
-              <path d="M12 22V8" />
-              <path d="M12 18C10 16.5 7 16.5 5 18C5 15.5 7 13.5 9 13.5" />
-              <path d="M12 14C14 12.5 17 12.5 19 14C19 11.5 17 9.5 15 9.5" />
-              <circle cx="12" cy="5" r="3" fill="#EFE8DD" stroke="currentColor" strokeWidth="1.5" />
-            </svg>
-            <div className="flex flex-col text-left leading-none">
-              <span className="font-script text-3.5xl md:text-4.5xl text-[#2C221E] font-medium leading-none tracking-tight">
-                Fuzzy Soft Studio
-              </span>
-              <span className="text-[10px] md:text-[11px] tracking-[0.35em] font-sans font-bold text-[#8C7A6B] uppercase mt-1">
-                HANDCRAFTED BLOOMS
-              </span>
-            </div>
+          <Link to="/" className="inline-flex items-center leading-none transition-transform duration-300 hover:scale-[1.02]">
+            <img 
+              src="/logo.png?v=2" 
+              alt="Fuzzy Soft Studio" 
+              className="h-16 md:h-20 w-auto object-contain mix-blend-multiply contrast-125 brightness-95" 
+            />
           </Link>
           <p className="mt-4 text-xs font-serif italic text-brand-body/75 max-w-sm">
             {footerTagline}

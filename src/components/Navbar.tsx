@@ -72,33 +72,13 @@ export default function Navbar() {
             <Link 
               to="/" 
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className="flex items-center gap-2.5 sm:gap-3 group py-1 select-none"
+              className="flex items-center gap-2 py-1 select-none"
             >
-              {/* Inline SVG Floral Stem Icon */}
-              <svg 
-                className="h-7 sm:h-9 w-auto text-[#8C7A6B] group-hover:text-brand-accent transition-colors duration-300 shrink-0" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
-                strokeWidth="1.5" 
-                strokeLinecap="round" 
-                strokeLinejoin="round"
-              >
-                <path d="M12 22V8" />
-                <path d="M12 18C10 16.5 7 16.5 5 18C5 15.5 7 13.5 9 13.5" />
-                <path d="M12 14C14 12.5 17 12.5 19 14C19 11.5 17 9.5 15 9.5" />
-                <circle cx="12" cy="5" r="3" fill="#EFE8DD" stroke="currentColor" strokeWidth="1.5" />
-              </svg>
-
-              {/* Bold Typographic Brand Text */}
-              <div className="flex flex-col leading-none">
-                <span className="font-script text-2.5xl sm:text-3xl md:text-3.5xl text-[#2C221E] font-medium leading-none tracking-tight">
-                  Fuzzy Soft Studio
-                </span>
-                <span className="text-[9px] sm:text-[10px] tracking-[0.35em] font-sans font-bold text-[#8C7A6B] uppercase mt-0.5">
-                  HANDCRAFTED BLOOMS
-                </span>
-              </div>
+              <img 
+                src="/logo.png?v=2" 
+                alt="Fuzzy Soft Studio" 
+                className="h-12 sm:h-14 md:h-16 w-auto object-contain mix-blend-multiply contrast-125 brightness-95" 
+              />
             </Link>
           </div>
 
