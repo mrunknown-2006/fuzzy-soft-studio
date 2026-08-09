@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabaseClient';
 export default function Footer() {
   const [footerTagline, setFooterTagline] = useState('"Where Every Petal Tells a Story"');
   const [footerAbout, setFooterAbout] = useState('A handmade crochet & floral studio crafting soft, romantic blooms for life\'s quiet and grand moments.');
+  const [footerLogoUrl, setFooterLogoUrl] = useState<string | null>(null);
   const [footerInstagram, setFooterInstagram] = useState('');
   const [footerFacebook, setFooterFacebook] = useState('');
   const [footerPinterest, setFooterPinterest] = useState('');
@@ -38,15 +39,20 @@ export default function Footer() {
         console.warn('Failed to load footer site content:', err);
       }
 
-      // Fetch contact email from store_settings
+      // Fetch contact email & logo from store_settings
       try {
         const { data } = await supabase
           .from('store_settings')
           .select('*');
         if (data) {
           const generalSetting = data.find(s => s.key === 'general');
-          if (generalSetting && generalSetting.value && generalSetting.value.contact_email) {
-            setFooterEmail(String(generalSetting.value.contact_email));
+          if (generalSetting && generalSetting.value) {
+            if (generalSetting.value.contact_email) {
+              setFooterEmail(String(generalSetting.value.contact_email));
+            }
+            if (generalSetting.value.store_logo_url) {
+              setFooterLogoUrl(String(generalSetting.value.store_logo_url));
+            }
           } else {
             const emailSetting = data.find(s => s.key === 'contact_email');
             if (emailSetting && emailSetting.value) {
@@ -69,7 +75,7 @@ export default function Footer() {
         <div className="flex flex-col items-center justify-center text-center mb-16 select-none">
           <Link to="/" className="inline-flex items-center leading-none transition-transform duration-300 hover:scale-[1.02]">
             <img 
-              src="/logo.png?v=2" 
+              src={footerLogoUrl || "/logo.png?v=2"} 
               alt="Fuzzy Soft Studio" 
               className="h-12 md:h-14 w-auto object-contain mix-blend-multiply opacity-95 contrast-125" 
             />
