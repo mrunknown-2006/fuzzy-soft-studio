@@ -94,10 +94,17 @@ export default function Navbar() {
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
               className="flex items-center gap-2 py-0.5 select-none"
             >
+              {/* Desktop Version */}
               <img 
                 src={logoUrl || "/logo.png?v=2"} 
                 alt="Fuzzy Soft Studio" 
-                className="h-12 sm:h-14 md:h-16 w-auto object-contain mix-blend-multiply contrast-125 brightness-95" 
+                className="hidden md:block h-16 lg:h-20 w-auto object-contain mix-blend-multiply contrast-125 brightness-95" 
+              />
+              {/* Mobile Version */}
+              <img 
+                src={logoUrl || "/logo.png?v=2"} 
+                alt="Fuzzy Soft Studio" 
+                className="block md:hidden h-10 sm:h-12 w-auto object-contain mix-blend-multiply contrast-125 brightness-95" 
               />
             </Link>
           </div>
