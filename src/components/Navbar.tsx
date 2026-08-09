@@ -75,7 +75,7 @@ export default function Navbar() {
               className="flex items-center gap-2 py-1 select-none"
             >
               <img 
-                src="/logo.png" 
+                src="/logo.png?v=2" 
                 alt="Fuzzy Soft Studio" 
                 className="h-10 sm:h-12 w-auto object-contain mix-blend-multiply" 
               />

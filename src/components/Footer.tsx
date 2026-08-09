@@ -69,7 +69,7 @@ export default function Footer() {
         <div className="flex flex-col items-center justify-center text-center mb-16 select-none">
           <Link to="/" className="inline-flex items-center leading-none transition-transform duration-300 hover:scale-[1.02]">
             <img 
-              src="/logo.png" 
+              src="/logo.png?v=2" 
               alt="Fuzzy Soft Studio" 
               className="h-12 md:h-14 w-auto object-contain mix-blend-multiply" 
             />
