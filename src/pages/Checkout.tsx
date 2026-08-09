@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { MessageCircle, ArrowLeft, ShieldCheck, Tag, QrCode, Smartphone, Copy, Check } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { useStore } from '../store/useStore';
 import { supabase } from '../lib/supabaseClient';
 
@@ -537,15 +538,32 @@ export default function Checkout() {
               {/* View 1: Scan QR Code */}
               {paymentTab === 'qr' && (
                 <div className="animate-fade-in flex flex-col items-center justify-center py-2">
-                  <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-md flex flex-col items-center">
-                    <img 
-                      src="/assets/payment-qr.jpeg" 
-                      alt="UPI Payment QR Code" 
-                      className="w-48 h-48 object-contain rounded-xl"
-                    />
-                    <span className="text-[9px] font-mono tracking-widest text-brand-body/50 uppercase mt-3 text-center">
-                      Scan with GPay / PhonePe / Paytm / Any UPI App
-                    </span>
+                  <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-md flex flex-col items-center w-full max-w-[280px]">
+                    <div className="text-center mb-3">
+                      <span className="text-[11px] font-bold text-brand-heading block">Fuzzy Soft Studio</span>
+                      <span className="text-[10px] text-brand-body/60 font-mono">UPI ID: 9506228972@axl</span>
+                    </div>
+
+                    {/* NPCI Standard Dynamic High-Contrast UPI QR Code */}
+                    <div className="bg-white p-3 rounded-xl border border-stone-200/80 shadow-2xs flex items-center justify-center">
+                      <QRCodeSVG
+                        value={`upi://pay?pa=9506228972@axl&pn=${encodeURIComponent('Fuzzy Soft Studio')}&am=${total}&cu=INR&tn=${encodeURIComponent('Fuzzy Soft Studio Order')}`}
+                        size={192}
+                        level="H"
+                        bgColor="#FFFFFF"
+                        fgColor="#000000"
+                        includeMargin={true}
+                      />
+                    </div>
+
+                    {/* Dynamic Amount Badge */}
+                    <div className="mt-3 bg-brand-cream/80 border border-brand-border/40 px-3 py-1 rounded-full text-center">
+                      <span className="text-[11px] font-bold text-brand-heading">Pay Amount: ₹{total.toLocaleString('en-IN')}</span>
+                    </div>
+
+                    <p className="text-[10px] font-medium text-brand-body/70 mt-3 text-center flex items-center justify-center gap-1">
+                      <span>⚡</span> Scan with GPay, PhonePe, Paytm, BHIM or Any UPI App
+                    </p>
                   </div>
                 </div>
               )}
