@@ -2,14 +2,12 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Heart, ShoppingBag, Menu, X, Search, User } from 'lucide-react';
 import { useStore } from '../store/useStore';
-import { supabase } from '../lib/supabaseClient';
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const cart = useStore((state) => state.cart);
@@ -17,24 +15,6 @@ export default function Navbar() {
 
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
   const wishlistCount = wishlist.length;
-
-  useEffect(() => {
-    const fetchLogo = async () => {
-      try {
-        const { data } = await supabase
-          .from('store_settings')
-          .select('value')
-          .eq('key', 'general')
-          .single();
-        if (data?.value?.store_logo_url) {
-          setLogoUrl(data.value.store_logo_url);
-        }
-      } catch (err) {
-        console.warn('Navbar could not load logo from DB:', err);
-      }
-    };
-    fetchLogo();
-  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -92,13 +72,33 @@ export default function Navbar() {
             <Link 
               to="/" 
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className="flex items-center gap-2 py-1 select-none"
+              className="flex items-center gap-2.5 sm:gap-3 group py-1 select-none"
             >
-              <img 
-                src={logoUrl || "/logo.png?v=2"} 
-                alt="Fuzzy Soft Studio" 
-                className="h-14 sm:h-16 md:h-20 w-auto object-contain contrast-150 brightness-90 drop-shadow-sm" 
-              />
+              {/* Inline SVG Floral Stem Icon */}
+              <svg 
+                className="h-7 sm:h-9 w-auto text-[#8C7A6B] group-hover:text-brand-accent transition-colors duration-300 shrink-0" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="1.5" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              >
+                <path d="M12 22V8" />
+                <path d="M12 18C10 16.5 7 16.5 5 18C5 15.5 7 13.5 9 13.5" />
+                <path d="M12 14C14 12.5 17 12.5 19 14C19 11.5 17 9.5 15 9.5" />
+                <circle cx="12" cy="5" r="3" fill="#EFE8DD" stroke="currentColor" strokeWidth="1.5" />
+              </svg>
+
+              {/* Bold Typographic Brand Text */}
+              <div className="flex flex-col leading-none">
+                <span className="font-script text-2.5xl sm:text-3xl md:text-3.5xl text-[#2C221E] font-medium leading-none tracking-tight">
+                  Fuzzy Soft Studio
+                </span>
+                <span className="text-[9px] sm:text-[10px] tracking-[0.35em] font-sans font-bold text-[#8C7A6B] uppercase mt-0.5">
+                  HANDCRAFTED BLOOMS
+                </span>
+              </div>
             </Link>
           </div>
 
