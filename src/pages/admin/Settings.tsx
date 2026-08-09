@@ -181,7 +181,7 @@ export default function Settings() {
 
   const handleSaveAllSettings = async () => {
     setSaving(true);
-    const mainLogo = desktopLogoUrl || storeLogoUrl || null;
+    const mainLogo = desktopLogoUrl.trim() ? desktopLogoUrl.trim() : (storeLogoUrl.trim() ? storeLogoUrl.trim() : null);
     const payloadObject = {
       store_open: storeOpen,
       free_delivery_threshold: freeThreshold,
@@ -193,11 +193,11 @@ export default function Settings() {
       whatsapp_alerts: whatsappAlerts,
       email_alerts: emailAlerts,
       auto_hide_out_of_stock: autoHideOutOfStock,
-      desktop_logo_url: desktopLogoUrl || null,
-      mobile_logo_url: mobileLogoUrl || null,
-      footer_logo_url: footerLogoUrl || null,
+      desktop_logo_url: desktopLogoUrl.trim() ? desktopLogoUrl.trim() : null,
+      mobile_logo_url: mobileLogoUrl.trim() ? mobileLogoUrl.trim() : null,
+      footer_logo_url: footerLogoUrl.trim() ? footerLogoUrl.trim() : null,
       store_logo_url: mainLogo,
-      favicon_url: faviconUrl || null,
+      favicon_url: faviconUrl.trim() ? faviconUrl.trim() : null,
       low_stock_threshold: lowStockThreshold || 5,
       order_id_prefix: 'FSS-'
     };
@@ -220,10 +220,10 @@ export default function Settings() {
         offer_line: settings.offer_line,
         banner_url: settings.banner_url,
         store_logo_url: mainLogo || '',
-        desktop_logo_url: desktopLogoUrl || '',
-        mobile_logo_url: mobileLogoUrl || '',
-        footer_logo_url: footerLogoUrl || '',
-        favicon_url: faviconUrl || ''
+        desktop_logo_url: desktopLogoUrl.trim() || '',
+        mobile_logo_url: mobileLogoUrl.trim() || '',
+        footer_logo_url: footerLogoUrl.trim() || '',
+        favicon_url: faviconUrl.trim() || ''
       });
 
       setInitialState({
