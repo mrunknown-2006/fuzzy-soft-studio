@@ -66,8 +66,8 @@ export default function Footer() {
   }, []);
 
   return (
-    <footer className="bg-[#EADFD5] text-brand-body py-12 lg:py-16 border-t border-brand-border/30 relative">
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
+    <footer className="bg-[#EADFD5] text-brand-body pt-10 pb-0 border-t border-brand-border/30 relative">
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
         
         {/* Top: Logo & Tagline Centered */}
         <div className="flex flex-col items-center justify-center text-center mb-8 select-none">
@@ -249,7 +249,7 @@ export default function Footer() {
         </div>
 
         {/* Bottom copyright info block */}
-        <div className="bg-[#DFD1C7] -mx-6 sm:-mx-8 lg:-mx-10 px-6 sm:px-8 lg:px-10 py-6 mt-12 flex flex-col sm:flex-row items-center justify-between text-[11px] tracking-wide text-brand-body/85 font-sans space-y-3 sm:space-y-0 select-none">
+        <div className="bg-[#DFD1C7] -mx-6 sm:-mx-8 lg:-mx-12 px-6 sm:px-8 lg:px-12 py-3.5 mt-8 flex flex-col sm:flex-row items-center justify-between text-[11px] tracking-wide text-brand-body/85 font-sans space-y-2 sm:space-y-0 select-none">
           <p>{footerCopyright}</p>
           {footerNote && <span className="text-brand-body/60">· {footerNote}</span>}
           <div className="flex space-x-5 font-medium">
