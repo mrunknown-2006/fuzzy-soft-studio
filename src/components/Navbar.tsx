@@ -10,8 +10,6 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [logoUrl, setLogoUrl] = useState<string>('/logo.png?v=2');
-  const [desktopLogoUrl, setDesktopLogoUrl] = useState<string>('/logo.png?v=2');
-  const [mobileLogoUrl, setMobileLogoUrl] = useState<string>('/logo.png?v=2');
   const navigate = useNavigate();
 
   const cart = useStore((state) => state.cart);
@@ -29,9 +27,9 @@ export default function Navbar() {
           .eq('key', 'general')
           .single();
         if (data?.value) {
-          if (data.value.desktop_logo_url) setDesktopLogoUrl(data.value.desktop_logo_url);
-          if (data.value.mobile_logo_url) setMobileLogoUrl(data.value.mobile_logo_url);
-          if (data.value.store_logo_url) setLogoUrl(data.value.store_logo_url);
+          if (data.value.footer_logo_url || data.value.store_logo_url) {
+            setLogoUrl(data.value.footer_logo_url || data.value.store_logo_url);
+          }
         }
       } catch (err) {
         console.warn('Navbar could not load logo from DB:', err);
@@ -92,29 +90,20 @@ export default function Navbar() {
         <div className="mx-auto max-w-[90rem] px-3 sm:px-6 lg:px-8 flex items-center justify-between min-h-[5.5rem] lg:min-h-[6rem] py-2">
           
           {/* Left: Logo */}
-          <div className="flex-1 flex justify-start items-center pl-0 ml-0">
+          <div className="flex-1 flex justify-start items-center pl-0 ml-0 shrink-0">
             <Link 
               to="/" 
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className="flex items-center select-none w-[160px] sm:w-[220px] h-[50px] sm:h-[65px] shrink-0 justify-start overflow-hidden"
+              className="flex items-center select-none shrink-0 justify-start overflow-hidden w-[150px] sm:w-[190px] h-[42px] sm:h-[50px]"
             >
-              {/* Desktop Version */}
               <img 
-                src={desktopLogoUrl || logoUrl || "/logo.png?v=2"} 
+                src={logoUrl || "/logo.png?v=2"} 
                 alt="Fuzzy Soft Studio" 
                 decoding="async"
                 loading="eager"
                 fetchPriority="high"
-                className="hidden md:block h-20 lg:h-24 w-auto object-contain mix-blend-multiply contrast-125 brightness-95 drop-shadow-sm [image-rendering:_crisp-edges] [image-rendering:_-webkit-optimize-contrast]" 
-              />
-              {/* Mobile Version */}
-              <img 
-                src={mobileLogoUrl || logoUrl || "/logo.png?v=2"} 
-                alt="Fuzzy Soft Studio" 
-                decoding="async"
-                loading="eager"
-                fetchPriority="high"
-                className="block md:hidden h-14 sm:h-16 w-auto object-contain mix-blend-multiply contrast-125 brightness-95 drop-shadow-xs [image-rendering:_crisp-edges] [image-rendering:_-webkit-optimize-contrast]" 
+                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                className="w-full h-full object-contain mix-blend-multiply contrast-125 brightness-95 drop-shadow-sm [image-rendering:_crisp-edges] [image-rendering:_-webkit-optimize-contrast]" 
               />
             </Link>
           </div>
