@@ -94,7 +94,7 @@ export default function Navbar() {
             <Link 
               to="/" 
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className="flex items-center select-none shrink-0 justify-start overflow-hidden w-[150px] sm:w-[190px] h-[42px] sm:h-[50px]"
+              className="flex items-center select-none shrink-0 justify-start h-16 sm:h-20 lg:h-24 w-auto max-w-[280px] sm:max-w-[360px] py-1"
             >
               <img 
                 src={logoUrl || "/logo.png?v=2"} 
@@ -102,8 +102,7 @@ export default function Navbar() {
                 decoding="async"
                 loading="eager"
                 fetchPriority="high"
-                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                className="w-full h-full object-contain mix-blend-multiply contrast-125 brightness-95 drop-shadow-sm [image-rendering:_crisp-edges] [image-rendering:_-webkit-optimize-contrast]" 
+                className="h-full w-auto object-contain mix-blend-multiply contrast-125 brightness-95 drop-shadow-sm [image-rendering:_crisp-edges] [image-rendering:_-webkit-optimize-contrast]" 
               />
             </Link>
           </div>
