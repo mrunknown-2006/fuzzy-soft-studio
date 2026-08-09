@@ -462,7 +462,7 @@ export default function Home() {
             </p>
             
             <h1 
-              className="text-5xl md:text-7xl lg:text-[8rem] leading-none tracking-tight text-brand-heading font-serif text-center max-w-5xl"
+              className="text-5xl md:text-7.5xl lg:text-[7.5rem] leading-[0.95] tracking-tight text-brand-heading font-serif text-center max-w-5xl font-normal drop-shadow-sm select-none"
               style={{ 
                 animation: 'fadeInUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards',
                 opacity: 0
@@ -471,9 +471,13 @@ export default function Home() {
               {heroMainTitle ? (
                 heroMainTitle
               ) : (
-                <>
-                  {heroTitle1} <span className="font-script text-[1.2em] text-brand-accent block md:inline-block md:-ml-3 mt-1 md:mt-0 font-normal">{heroTitle2}</span> {heroTitle3}
-                </>
+                <div className="flex flex-wrap items-center justify-center gap-x-3 sm:gap-x-4 md:gap-x-6 leading-none">
+                  <span className="font-serif tracking-tight">{heroTitle1}</span>
+                  <span className="font-script text-[1.25em] text-brand-accent font-normal px-1 py-0.5 leading-none">
+                    {heroTitle2}
+                  </span>
+                  <span className="font-serif tracking-tight">{heroTitle3}</span>
+                </div>
               )}
             </h1>
             
