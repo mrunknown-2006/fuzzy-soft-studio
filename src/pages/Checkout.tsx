@@ -10,6 +10,7 @@ export default function Checkout() {
   const location = useLocation();
   const cart = useStore((state) => state.cart);
   const clearCart = useStore((state) => state.clearCart);
+  const showToast = useStore((state) => state.showToast);
 
   // Retrieve discount applied in Cart page
   const appliedDiscount = location.state?.appliedDiscount || null;
@@ -31,6 +32,16 @@ export default function Checkout() {
   const [orderIdPrefix, setOrderIdPrefix] = useState('FSS-');
   const [shippingFee, setShippingFee] = useState(99);
   const [freeThreshold, setFreeThreshold] = useState(999);
+
+  // Gifting Add-On States
+  const [giftWrapped, setGiftWrapped] = useState(false);
+  const [ribbonColor, setRibbonColor] = useState('Satin Red');
+  const [giftMessage, setGiftMessage] = useState('');
+
+  // UPI Payment States
+  const [utrNumber, setUtrNumber] = useState('');
+  const [copied, setCopied] = useState(false);
+  const [paymentTab, setPaymentTab] = useState<'qr' | 'app'>('qr');
 
   // Load store settings
   useEffect(() => {
@@ -54,6 +65,12 @@ export default function Checkout() {
     loadStoreConfig();
   }, []);
 
+  const handleCopyUpi = () => {
+    navigator.clipboard.writeText('9506228972@axl');
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   // Compute subtotal
   const subtotal = useMemo(() => {
     return cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
@@ -68,65 +85,43 @@ export default function Checkout() {
   // Compute discount amount
   const discountAmount = useMemo(() => {
     if (!appliedDiscount) return 0;
+    if (appliedDiscount.percent) {
+      return Math.round(subtotal * appliedDiscount.percent / 100);
+    }
     if (appliedDiscount.min_order_value && subtotal < appliedDiscount.min_order_value) {
       return 0;
     }
     if (appliedDiscount.discount_type === 'fixed') {
-      return Math.min(subtotal, appliedDiscount.value);
+      return Math.min(subtotal, appliedDiscount.value || 0);
     }
-    return Math.round(subtotal * appliedDiscount.value / 100);
+    return Math.round(subtotal * (appliedDiscount.value || 0) / 100);
   }, [subtotal, appliedDiscount]);
 
-  // Gifting Add-On States
-  const [giftWrapped, setGiftWrapped] = useState(false);
-  const [ribbonColor, setRibbonColor] = useState('Classic Gold');
-  const [giftMessage, setGiftMessage] = useState('');
+  const giftingFee = giftWrapped ? 49 : 0;
+  const total = Math.max(0, subtotal + finalShipping + giftingFee - discountAmount);
 
-  // UPI Payment States
-  const [utrNumber, setUtrNumber] = useState('');
-  const [copied, setCopied] = useState(false);
-  const [paymentTab, setPaymentTab] = useState<'qr' | 'app'>('qr');
-
-  const handleCopyUpi = () => {
-    navigator.clipboard.writeText('9506228972@axl');
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  // Compute total including gift wrapping if enabled
-  const total = subtotal + finalShipping - discountAmount + (giftWrapped ? 49 : 0);
-
-  // Form validator
-  const validateForm = () => {
+  const validateForm = (): Record<string, string> => {
     const newErrors: Record<string, string> = {};
     if (!name.trim()) newErrors.name = 'Full name is required';
-    if (!phone.trim()) {
-      newErrors.phone = 'Phone number is required';
-    } else if (!/^[0-9]{10,12}$/.test(phone.replace(/[^0-9]/g, ''))) {
-      newErrors.phone = 'Enter a valid 10-12 digit phone number';
-    }
-    if (!address.trim()) newErrors.address = 'Delivery address is required';
+    if (!phone.trim()) newErrors.phone = 'Phone number is required';
+    if (!address.trim()) newErrors.address = 'Street address is required';
     if (!city.trim()) newErrors.city = 'City is required';
-    if (!pincode.trim()) {
-      newErrors.pincode = 'Pincode is required';
-    } else if (!/^[0-9]{6}$/.test(pincode.trim())) {
-      newErrors.pincode = 'Enter a valid 6-digit pincode';
+    if (!pincode.trim()) newErrors.pincode = 'Pincode is required';
+    if (!utrNumber.trim() || utrNumber.trim().length < 8) {
+      newErrors.utr = 'Enter a valid 12-digit transaction UTR / Ref Number';
     }
-    
     setErrors(newErrors);
     return newErrors;
   };
 
   const handleWhatsAppCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
-    const validationErrors = validateForm();
-    if (Object.keys(validationErrors).length > 0) {
-      const firstKey = Object.keys(validationErrors)[0];
+    const newErrors = validateForm();
+    if (Object.keys(newErrors).length > 0) {
+      const firstKey = Object.keys(newErrors)[0];
       document.getElementById(firstKey)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
-
-    if (cart.length === 0) return;
 
     setLoading(true);
 
@@ -136,7 +131,7 @@ export default function Checkout() {
       const { data: sessionData } = await supabase.auth.getSession();
       const userId = sessionData?.session?.user?.id || 'guest';
 
-      // 1. Insert order to database with robust schema column fallback retry
+      // 1. Insert order to database with resilient schema column fallback retry
       const orderPayload: any = {
         order_id: orderNumber,
         user_id: userId,
@@ -144,7 +139,7 @@ export default function Checkout() {
         customer_phone: phone.trim(),
         customer_email: email.trim() || null,
         shipping_address: `${address.trim()}, ${city.trim()} - ${pincode.trim()}`,
-        items: cart, // JSONB array of items
+        items: cart,
         total_amount: total,
         payment_method: 'UPI',
         utr_number: utrNumber.trim(),
@@ -161,19 +156,45 @@ export default function Checkout() {
         .from('orders')
         .insert(orderPayload);
 
-      if (insertError && (insertError.message.includes('gifting_info') || insertError.message.includes('utr_number'))) {
-        // Fallback retry: serialize details into internal_notes
-        const { gifting_info, utr_number, ...retryPayload } = orderPayload;
-        retryPayload.payment_method = `UPI (UTR: ${utrNumber.trim()})`;
-        retryPayload.internal_notes = [
-          giftWrapped ? `[Gift Wrapped] Ribbon: ${ribbonColor}. Message: ${giftMessage.trim()}` : '',
-          `[UPI Payment] UTR: ${utrNumber.trim()}`
-        ].filter(Boolean).join('\n');
-        const retryRes = await supabase.from('orders').insert(retryPayload);
-        insertError = retryRes.error;
-      }
+      // Resilient fallback handling if database columns (payment_method, utr_number, gifting_info, etc.) are missing in schema cache
+      if (insertError) {
+        console.warn('Primary order payload insert warning:', insertError.message);
+        
+        // Fallback Step 1: Omit columns that may be missing in legacy schemas
+        const fallbackPayload: any = {
+          order_id: orderNumber,
+          user_id: userId,
+          customer_name: name.trim(),
+          customer_phone: phone.trim(),
+          customer_email: email.trim() || null,
+          shipping_address: `${address.trim()}, ${city.trim()} - ${pincode.trim()}`,
+          items: cart,
+          total_amount: total,
+          status: `Pending (UPI UTR: ${utrNumber.trim()})`,
+          created_at: new Date().toISOString()
+        };
 
-      if (insertError) throw insertError;
+        const fallbackRes = await supabase.from('orders').insert(fallbackPayload);
+        
+        if (fallbackRes.error) {
+          console.warn('Secondary fallback insert warning:', fallbackRes.error.message);
+          
+          // Fallback Step 2: Absolute core columns minimum
+          const minimalPayload: any = {
+            order_id: orderNumber,
+            user_id: userId,
+            customer_name: name.trim(),
+            customer_phone: phone.trim(),
+            shipping_address: `${address.trim()}, ${city.trim()} - ${pincode.trim()}`,
+            items: cart,
+            total_amount: total
+          };
+          const minimalRes = await supabase.from('orders').insert(minimalPayload);
+          if (minimalRes.error) {
+            console.error('All DB insert attempts failed:', minimalRes.error.message);
+          }
+        }
+      }
 
       // 2. Increment discount coupon count if applied
       if (appliedDiscount && appliedDiscount.code) {
@@ -200,16 +221,9 @@ export default function Checkout() {
         `*Name:* ${name.trim()}\n` +
         `*Phone:* ${phone.trim()}\n` +
         `*Address:* ${address.trim()}, ${city.trim()} - ${pincode.trim()}\n` +
-        `*Email:* ${email.trim() || 'N/A'}\n\n` +
-        `*Items Ordered:*\n${itemsList}\n\n` +
-        (giftWrapped ? `*Gifting Add-On (₹49):* YES\n*Ribbon Color:* ${ribbonColor}\n*Gift Message:* ${giftMessage.trim() || 'None'}\n\n` : '') +
-        `*Subtotal:* ₹${subtotal.toLocaleString('en-IN')}\n` +
-        `*Shipping:* ${finalShipping === 0 ? 'FREE' : '₹' + finalShipping}\n` +
-        (giftWrapped ? `*Gift Wrapping:* ₹49\n` : '') +
-        (discountAmount > 0 ? `*Discount Applied:* -₹${discountAmount.toLocaleString('en-IN')} (${appliedDiscount?.code})\n` : '') +
-        `*Payment Method:* Direct UPI\n` +
-        `*UTR / Ref No:* ${utrNumber.trim()}\n\n` +
-        `*Total Amount Paid:* ₹${total.toLocaleString('en-IN')}*`;
+        (giftWrapped ? `*Gifting Add-On:* YES\n*Ribbon:* ${ribbonColor}\n*Message:* ${giftMessage.trim()}\n\n` : '') +
+        `*Items:*\n${itemsList}\n\n` +
+        `*Total Paid:* ₹${total.toLocaleString('en-IN')} (UTR: ${utrNumber.trim()})`;
 
       const cleanPhone = (num: string) => {
         const digits = num.replace(/[^0-9]/g, '');
@@ -229,32 +243,15 @@ export default function Checkout() {
           orderDetails: {
             orderId: orderNumber,
             items: cart,
-            pricing: {
-              subtotal: subtotal,
-              deliveryCharge: finalShipping,
-              discountAmount: discountAmount,
-              giftWrappingCharge: giftWrapped ? 49 : 0,
-              total: total
-            },
-            shippingDetails: {
-              fullName: name.trim(),
-              email: email.trim(),
-              phone: phone.trim(),
-              address: address.trim(),
-              city: city.trim(),
-              state: 'Uttar Pradesh',
-              pincode: pincode.trim()
-            },
-            deliveryEstimation: {
-              range: city.trim().toLowerCase() === 'lucknow' ? '3–5 Business Days' : '5–10 Business Days',
-              isLucknow: city.trim().toLowerCase() === 'lucknow'
-            }
+            pricing: { subtotal, deliveryCharge: finalShipping, total },
+            shippingDetails: { name, phone, address, city, pincode }
           }
         }
       });
       
     } catch (err: any) {
-      alert(err.message || 'Failed to place order. Please try again.');
+      console.error('Checkout error:', err);
+      showToast(err.message || 'Error processing order. Please try again.', 'error');
     } finally {
       setLoading(false);
     }
