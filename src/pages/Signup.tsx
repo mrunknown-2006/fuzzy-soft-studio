@@ -54,6 +54,20 @@ export default function Signup() {
       if (error) {
         showToast(error.message, 'error');
       } else {
+        // Upsert customer record to database for admin registry sync
+        if (data.user) {
+          try {
+            await supabase.from('customers').upsert({
+              id: data.user.id,
+              email: email.trim(),
+              name: fullName.trim(),
+              created_at: new Date().toISOString()
+            }, { onConflict: 'email' });
+          } catch (cErr) {
+            console.warn('Customers table sync note:', cErr);
+          }
+        }
+
         // Check if session exists (verification disabled) or check email verification
         if (data.session) {
           showToast('Account created and signed in successfully!', 'success');

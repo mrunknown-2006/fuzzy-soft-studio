@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
-import { FileText, Search, X } from 'lucide-react';
+import { FileText, Search, X, UserCheck } from 'lucide-react';
+import { supabase } from '../../lib/supabaseClient';
 import type { AdminContext } from './types';
 
 export default function Customers() {
@@ -10,38 +11,92 @@ export default function Customers() {
   // State
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+  const [registeredProfiles, setRegisteredProfiles] = useState<any[]>([]);
 
-  // Group orders into a customers list
-  const customersList = useMemo(() => {
-    const registry: { [key: string]: { name: string; email: string; phone: string; ordersCount: number; spentTotal: number; ordersList: any[] } } = {};
-    
-    orders.forEach(o => {
-      // Look for email in shipping address or mock one
-      let email = 'N/A';
-      const emailMatch = o.shipping_address.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-      if (emailMatch) {
-        email = emailMatch[0];
+  // Fetch registered user profiles from database
+  useEffect(() => {
+    const fetchRegisteredProfiles = async () => {
+      try {
+        const { data: custData } = await supabase.from('customers').select('*');
+        if (custData && custData.length > 0) {
+          setRegisteredProfiles(custData);
+          return;
+        }
+      } catch (err) {
+        console.warn('Customers fetch note:', err);
       }
 
-      // Group by phone (standard index) or name
-      const key = o.customer_phone || o.customer_name;
+      try {
+        const { data: profData } = await supabase.from('profiles').select('*');
+        if (profData && profData.length > 0) {
+          setRegisteredProfiles(profData);
+          return;
+        }
+      } catch (err) {
+        console.warn('Profiles fetch note:', err);
+      }
+    };
+    fetchRegisteredProfiles();
+  }, []);
+
+  // Merge registered user profiles & checkout orders into a complete customer registry list
+  const customersList = useMemo(() => {
+    const registry: { [key: string]: { name: string; email: string; phone: string; ordersCount: number; spentTotal: number; ordersList: any[]; isRegistered?: boolean } } = {};
+    
+    // 1. Seed with registered profiles from database
+    registeredProfiles.forEach(p => {
+      const email = p.email || 'N/A';
+      const name = p.name || p.full_name || p.customer_name || 'Registered Customer';
+      const phone = p.phone || p.customer_phone || 'N/A';
+      const key = (phone !== 'N/A' ? phone : '') || (email !== 'N/A' ? email : '') || name;
+
       if (!registry[key]) {
         registry[key] = {
-          name: o.customer_name,
+          name,
           email,
-          phone: o.customer_phone || 'N/A',
+          phone,
+          ordersCount: 0,
+          spentTotal: 0,
+          ordersList: [],
+          isRegistered: true
+        };
+      }
+    });
+
+    // 2. Populate and merge with order records
+    orders.forEach(o => {
+      let email = 'N/A';
+      const emailMatch = o.shipping_address?.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/) || o.customer_email?.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+      if (emailMatch) {
+        email = emailMatch[0];
+      } else if (o.customer_email) {
+        email = o.customer_email;
+      }
+
+      const phone = o.customer_phone || 'N/A';
+      const name = o.customer_name || 'Guest Customer';
+      const key = (phone !== 'N/A' ? phone : '') || (email !== 'N/A' ? email : '') || name;
+
+      if (!registry[key]) {
+        registry[key] = {
+          name,
+          email,
+          phone,
           ordersCount: 0,
           spentTotal: 0,
           ordersList: []
         };
       }
       registry[key].ordersCount += 1;
-      registry[key].spentTotal += o.total_amount;
+      registry[key].spentTotal += (o.total_amount || 0);
       registry[key].ordersList.push(o);
+      if (email !== 'N/A' && registry[key].email === 'N/A') {
+        registry[key].email = email;
+      }
     });
 
     return Object.values(registry);
-  }, [orders]);
+  }, [orders, registeredProfiles]);
 
   // Filter list by search query
   const filteredCustomers = useMemo(() => {
@@ -133,7 +188,15 @@ export default function Customers() {
                         }`}
                         onClick={() => setSelectedCustomer(cust)}
                       >
-                        <td className="py-4 pr-2 font-semibold text-brand-heading">{cust.name}</td>
+                        <td className="py-4 pr-2 font-semibold text-brand-heading flex items-center gap-1.5 flex-wrap">
+                          <span>{cust.name}</span>
+                          {cust.isRegistered && (
+                            <span className="inline-flex items-center gap-0.5 text-[9px] bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full border border-green-200 font-sans font-bold" title="Registered Account">
+                              <UserCheck size={10} />
+                              <span>Registered</span>
+                            </span>
+                          )}
+                        </td>
                         <td className="py-4 px-2 text-brand-body/60 font-mono">{cust.email}</td>
                         <td className="py-4 px-2 text-brand-body/70 font-mono">{cust.phone}</td>
                         <td className="py-4 px-2 text-center font-semibold text-brand-heading">{cust.ordersCount}</td>
