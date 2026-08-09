@@ -71,7 +71,7 @@ export default function Footer() {
             <img 
               src="/logo.png?v=2" 
               alt="Fuzzy Soft Studio" 
-              className="h-16 md:h-20 w-auto object-contain mix-blend-multiply contrast-125 brightness-95" 
+              className="h-20 md:h-24 w-auto object-contain mix-blend-multiply contrast-125 brightness-90 drop-shadow-[0_1px_1px_rgba(0,0,0,0.15)]" 
             />
           </Link>
           <p className="mt-4 text-xs font-serif italic text-brand-body/75 max-w-sm">

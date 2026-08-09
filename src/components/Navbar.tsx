@@ -65,19 +65,19 @@ export default function Navbar() {
             : 'bg-transparent backdrop-blur-none py-4 border-transparent'
         }`}
       >
-        <div className="mx-auto max-w-7xl px-6 lg:px-10 flex items-center justify-between min-h-[5rem] py-2">
+        <div className="mx-auto max-w-7xl px-6 lg:px-10 flex items-center justify-between min-h-[5.5rem] py-2">
           
           {/* Left: Logo */}
           <div className="flex-1 flex justify-start">
             <Link 
               to="/" 
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className="flex items-center gap-2 py-1 select-none"
+              className="flex items-center gap-2 py-0.5 select-none"
             >
               <img 
                 src="/logo.png?v=2" 
                 alt="Fuzzy Soft Studio" 
-                className="h-12 sm:h-14 md:h-16 w-auto object-contain mix-blend-multiply contrast-125 brightness-95" 
+                className="h-14 sm:h-16 md:h-20 w-auto object-contain mix-blend-multiply contrast-125 brightness-90 drop-shadow-[0_1px_1px_rgba(0,0,0,0.15)]" 
               />
             </Link>
           </div>
