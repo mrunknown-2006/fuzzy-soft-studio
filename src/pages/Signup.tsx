@@ -54,17 +54,29 @@ export default function Signup() {
       if (error) {
         showToast(error.message, 'error');
       } else {
-        // Upsert customer record to database for admin registry sync
+        // Upsert customer record to database for admin registry sync with resilient RLS fallback
         if (data.user) {
-          try {
-            await supabase.from('customers').upsert({
+          const customerData = {
+            id: data.user.id,
+            email: email.trim(),
+            name: fullName.trim(),
+            created_at: new Date().toISOString()
+          };
+
+          const { error: custErr } = await supabase.from('customers').upsert(customerData, { onConflict: 'id' });
+          if (custErr) {
+            console.warn('Customers table sync note:', custErr.message);
+            // Fallback to profiles table sync if customers table is unavailable or restricted by RLS
+            const profileData = {
               id: data.user.id,
               email: email.trim(),
-              name: fullName.trim(),
-              created_at: new Date().toISOString()
-            }, { onConflict: 'email' });
-          } catch (cErr) {
-            console.warn('Customers table sync note:', cErr);
+              full_name: fullName.trim(),
+              updated_at: new Date().toISOString()
+            };
+            const { error: profErr } = await supabase.from('profiles').upsert(profileData, { onConflict: 'id' });
+            if (profErr) {
+              console.warn('Profiles table sync note:', profErr.message);
+            }
           }
         }
 

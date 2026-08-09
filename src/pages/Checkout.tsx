@@ -127,7 +127,9 @@ export default function Checkout() {
     
     try {
       const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData?.session?.user?.id || 'guest';
+      const rawUserId = sessionData?.session?.user?.id;
+      // Ensure user_id is a valid UUID or null for guests (to avoid postgres invalid UUID type errors)
+      const userId = rawUserId && rawUserId !== 'guest' ? rawUserId : null;
 
       // 1. Insert order to database with resilient schema column fallback retry
       const orderPayload: any = {
@@ -188,10 +190,34 @@ export default function Checkout() {
             total_amount: total
           };
           const minimalRes = await supabase.from('orders').insert(minimalPayload);
+
           if (minimalRes.error) {
-            console.error('All DB insert attempts failed:', minimalRes.error.message);
+            console.warn('Minimal fallback insert warning:', minimalRes.error.message);
+            // Fallback Step 3: If user_id FK constraint failed for guest, try with null user_id
+            if (userId) {
+              const guestPayload = { ...minimalPayload, user_id: null };
+              const guestRes = await supabase.from('orders').insert(guestPayload);
+              if (guestRes.error) {
+                console.error('All DB insert attempts failed:', guestRes.error.message);
+              }
+            }
           }
         }
+      }
+
+      // Backup order in local storage so customer order details are preserved
+      try {
+        const existingLocal = JSON.parse(localStorage.getItem('fuzzy-soft-studio-local-orders') || '[]');
+        existingLocal.unshift({
+          orderId: orderNumber,
+          date: new Date().toISOString(),
+          items: cart,
+          pricing: { subtotal, deliveryCharge: finalShipping, total },
+          shippingDetails: { name, phone, address, city, pincode, email }
+        });
+        localStorage.setItem('fuzzy-soft-studio-local-orders', JSON.stringify(existingLocal));
+      } catch (lErr) {
+        console.warn('Local storage backup note:', lErr);
       }
 
       // 2. Increment discount coupon count if applied

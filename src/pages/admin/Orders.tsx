@@ -335,67 +335,88 @@ export default function Orders() {
                         <th className="pb-3 pr-2">Order ID</th>
                         <th className="pb-3 px-2">Date</th>
                         <th className="pb-3 px-2">Customer</th>
+                        <th className="pb-3 px-2">Payment &amp; UTR</th>
                         <th className="pb-3 px-2 text-right">Amount</th>
                         <th className="pb-3 px-2 text-center">Status</th>
                         <th className="pb-3 pl-2 text-right">Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-brand-border/20 text-brand-body/85">
-                      {filteredOrders.map((o) => (
-                        <tr 
-                          key={o.id} 
-                          className={`hover:bg-brand-cream/35 transition-colors cursor-pointer ${
-                            viewingOrder?.order_id === o.order_id ? 'bg-[#DCA29A]/10 font-medium' : ''
-                          }`}
-                          onClick={() => setViewingOrder(o)}
-                        >
-                          <td className="py-4 pr-2 font-semibold text-brand-heading font-mono">{o.order_id}</td>
-                          <td className="py-4 px-2 text-brand-body/60">
-                            {new Date(o.created_at).toLocaleDateString('en-IN', {
-                              day: 'numeric',
-                              month: 'short'
-                            })}
-                          </td>
-                          <td className="py-4 px-2">
-                            <div className="font-semibold text-brand-heading">{o.customer_name}</div>
-                            <div className="text-[9px] text-brand-body/50 mt-0.5">{o.customer_phone}</div>
-                          </td>
-                          <td className="py-4 px-2 text-right font-semibold text-brand-heading">
-                            ₹{o.total_amount.toLocaleString('en-IN')}
-                          </td>
-                          <td className="py-4 px-2 text-center" onClick={e => e.stopPropagation()}>
-                            <select
-                              value={o.status}
-                              onChange={(e) => handleUpdateOrderStatus(o.order_id, e.target.value as any)}
-                              className={`px-2.5 h-6 rounded-full font-bold uppercase tracking-wider text-[8px] border text-center cursor-pointer focus:outline-none ${
-                                o.status === 'Delivered' 
-                                  ? 'bg-green-100 text-green-700 border-green-200'
-                                  : o.status === 'Shipped'
-                                    ? 'bg-blue-100 text-blue-700 border-blue-200'
-                                    : o.status === 'Processing'
-                                      ? 'bg-amber-100 text-amber-700 border-amber-200'
-                                      : 'bg-gray-100 text-gray-700 border-gray-200'
-                              }`}
-                            >
-                              <option value="Pending">Pending</option>
-                              <option value="Processing">Processing</option>
-                              <option value="Shipped">Shipped</option>
-                              <option value="Delivered">Delivered</option>
-                            </select>
-                          </td>
-                          <td className="py-4 pl-2 text-right select-none">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setViewingOrder(o);
-                              }}
-                              className="text-brand-accent hover:text-brand-accent-hover font-bold uppercase text-[9px] tracking-wider transition"
-                            >
-                              Manage
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                      {filteredOrders.map((o) => {
+                        const payMethod = (o as any).payment_method || (o.internal_notes?.includes('COD') ? 'COD' : 'Direct UPI');
+                        const utrVal = (o as any).utr_number || (() => {
+                          const match = o.internal_notes?.match(/UTR:\s*([0-9a-zA-Z]+)/) || o.status?.match(/UTR:\s*([0-9a-zA-Z]+)/);
+                          return match ? match[1].trim() : 'N/A';
+                        })();
+
+                        return (
+                          <tr 
+                            key={o.id} 
+                            className={`hover:bg-brand-cream/35 transition-colors cursor-pointer ${
+                              viewingOrder?.order_id === o.order_id ? 'bg-[#DCA29A]/10 font-medium' : ''
+                            }`}
+                            onClick={() => setViewingOrder(o)}
+                          >
+                            <td className="py-4 pr-2 font-semibold text-brand-heading font-mono">{o.order_id}</td>
+                            <td className="py-4 px-2 text-brand-body/60">
+                              {new Date(o.created_at).toLocaleDateString('en-IN', {
+                                day: 'numeric',
+                                month: 'short'
+                              })}
+                            </td>
+                            <td className="py-4 px-2">
+                              <div className="font-semibold text-brand-heading">{o.customer_name}</div>
+                              <div className="text-[9px] text-brand-body/50 mt-0.5">{o.customer_phone}</div>
+                            </td>
+                            <td className="py-4 px-2 font-sans">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                  {payMethod}
+                                </span>
+                                {utrVal !== 'N/A' && (
+                                  <span className="font-mono text-[10px] text-brand-heading bg-stone-100 px-1.5 py-0.5 rounded border border-stone-200" title={`UTR: ${utrVal}`}>
+                                    UTR: {utrVal}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-4 px-2 text-right font-semibold text-brand-heading">
+                              ₹{o.total_amount.toLocaleString('en-IN')}
+                            </td>
+                            <td className="py-4 px-2 text-center" onClick={e => e.stopPropagation()}>
+                              <select
+                                value={o.status}
+                                onChange={(e) => handleUpdateOrderStatus(o.order_id, e.target.value as any)}
+                                className={`px-2.5 h-6 rounded-full font-bold uppercase tracking-wider text-[8px] border text-center cursor-pointer focus:outline-none ${
+                                  o.status === 'Delivered' 
+                                    ? 'bg-green-100 text-green-700 border-green-200'
+                                    : o.status === 'Shipped'
+                                      ? 'bg-blue-100 text-blue-700 border-blue-200'
+                                      : o.status === 'Processing'
+                                        ? 'bg-amber-100 text-amber-700 border-amber-200'
+                                        : 'bg-gray-100 text-gray-700 border-gray-200'
+                                }`}
+                              >
+                                <option value="Pending">Pending</option>
+                                <option value="Processing">Processing</option>
+                                <option value="Shipped">Shipped</option>
+                                <option value="Delivered">Delivered</option>
+                              </select>
+                            </td>
+                            <td className="py-4 pl-2 text-right select-none">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setViewingOrder(o);
+                                }}
+                                className="text-brand-accent hover:text-brand-accent-hover font-bold uppercase text-[9px] tracking-wider transition"
+                              >
+                                Manage
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -403,43 +424,54 @@ export default function Orders() {
 
               {/* Mobile Card-layout list */}
               <div className="block md:hidden space-y-3">
-                {filteredOrders.map((o) => (
-                  <div 
-                    key={o.id}
-                    onClick={() => setViewingOrder(o)}
-                    className={`bg-white border rounded-2xl p-4 shadow-sm space-y-2 cursor-pointer transition active:scale-98 ${
-                      viewingOrder?.order_id === o.order_id ? 'border-brand-accent bg-[#DCA29A]/5' : 'border-brand-border/40'
-                    }`}
-                  >
-                    <div className="flex justify-between items-center">
-                      <span className="font-mono font-bold text-brand-heading text-xs">#{o.order_id}</span>
-                      <span className="text-[10px] text-brand-body/55">
-                        {new Date(o.created_at).toLocaleDateString('en-IN')}
-                      </span>
-                    </div>
+                {filteredOrders.map((o) => {
+                  const payMethod = (o as any).payment_method || (o.internal_notes?.includes('COD') ? 'COD' : 'Direct UPI');
+                  const utrVal = (o as any).utr_number || (() => {
+                    const match = o.internal_notes?.match(/UTR:\s*([0-9a-zA-Z]+)/) || o.status?.match(/UTR:\s*([0-9a-zA-Z]+)/);
+                    return match ? match[1].trim() : 'N/A';
+                  })();
 
-                    <div className="flex justify-between items-end">
-                      <div>
-                        <p className="font-bold text-sm text-brand-heading">{o.customer_name}</p>
-                        <p className="text-[10px] text-brand-body/50 font-mono mt-0.5">{o.customer_phone}</p>
-                      </div>
-                      <div className="text-right">
-                        <span className="block text-xs font-bold text-brand-heading">₹{o.total_amount}</span>
-                        <span className={`inline-block px-2 py-0.5 rounded-full font-bold uppercase tracking-wider text-[7px] border mt-1 ${
-                          o.status === 'Delivered' 
-                            ? 'bg-green-50 text-green-700 border-green-200'
-                            : o.status === 'Shipped'
-                              ? 'bg-blue-50 text-blue-700 border-blue-200'
-                              : o.status === 'Processing'
-                                ? 'bg-amber-50 text-amber-700 border-amber-200'
-                                : 'bg-gray-50 text-gray-700 border-gray-200'
-                        }`}>
-                          {o.status}
+                  return (
+                    <div 
+                      key={o.id}
+                      onClick={() => setViewingOrder(o)}
+                      className={`bg-white border rounded-2xl p-4 shadow-sm space-y-2 cursor-pointer transition active:scale-98 ${
+                        viewingOrder?.order_id === o.order_id ? 'border-brand-accent bg-[#DCA29A]/5' : 'border-brand-border/40'
+                      }`}
+                    >
+                      <div className="flex justify-between items-center">
+                        <span className="font-mono font-bold text-brand-heading text-xs">#{o.order_id}</span>
+                        <span className="text-[10px] text-brand-body/55">
+                          {new Date(o.created_at).toLocaleDateString('en-IN')}
                         </span>
                       </div>
+
+                      <div className="flex justify-between items-end">
+                        <div>
+                          <p className="font-bold text-sm text-brand-heading">{o.customer_name}</p>
+                          <p className="text-[10px] text-brand-body/50 font-mono mt-0.5">{o.customer_phone}</p>
+                          <p className="text-[9px] text-brand-body/70 mt-1 font-sans">
+                            <span className="font-semibold">{payMethod}</span> {utrVal !== 'N/A' && `· UTR: ${utrVal}`}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <span className="block text-xs font-bold text-brand-heading">₹{o.total_amount}</span>
+                          <span className={`inline-block px-2 py-0.5 rounded-full font-bold uppercase tracking-wider text-[7px] border mt-1 ${
+                            o.status === 'Delivered' 
+                              ? 'bg-green-50 text-green-700 border-green-200'
+                              : o.status === 'Shipped'
+                                ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                : o.status === 'Processing'
+                                  ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                  : 'bg-gray-50 text-gray-700 border-gray-200'
+                          }`}>
+                            {o.status}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -542,32 +574,33 @@ export default function Orders() {
                   </div>
                 )}
 
-                {/* Payment & UTR details */}
-                {((viewingOrder as any).utr_number || (viewingOrder.internal_notes && viewingOrder.internal_notes.includes('UTR:'))) && (
-                  <div className="space-y-3">
-                    <h4 className="font-serif text-sm font-bold text-brand-heading flex items-center gap-1.5 select-none">
-                      <span className="text-[#8FA088]">🛡️</span>
-                      <span>Payment Verification (UPI)</span>
-                    </h4>
-                    <div className="bg-green-50/25 border border-green-200/50 p-3.5 rounded-xl text-xs space-y-2 text-brand-body/80 font-sans shadow-3xs">
-                      <p>
-                        <strong className="text-brand-heading font-medium">Payment Mode:</strong> Direct UPI
-                      </p>
-                      <p className="flex items-center gap-1.5">
-                        <strong className="text-brand-heading font-medium">Transaction UTR:</strong> 
-                        <span className="font-mono font-bold text-[#2C1810] bg-white border border-brand-border/40 px-2 py-0.5 rounded text-[11px] select-all">
-                          {(viewingOrder as any).utr_number || (() => {
-                            const match = viewingOrder.internal_notes?.match(/UTR:\s*([0-9a-zA-Z]+)/);
-                            return match ? match[1].trim() : 'N/A';
-                          })()}
-                        </span>
-                      </p>
-                      <p className="text-[9px] text-[#8FA088] font-semibold italic">
-                        * Please verify this UTR in your bank account statement before approving.
-                      </p>
-                    </div>
+                {/* Payment & UTR verification details */}
+                <div className="space-y-3">
+                  <h4 className="font-serif text-sm font-bold text-brand-heading flex items-center gap-1.5 select-none">
+                    <span className="text-[#8FA088]">🛡️</span>
+                    <span>Payment Verification (UPI &amp; Methods)</span>
+                  </h4>
+                  <div className="bg-green-50/25 border border-green-200/50 p-3.5 rounded-xl text-xs space-y-2 text-brand-body/80 font-sans shadow-3xs">
+                    <p>
+                      <strong className="text-brand-heading font-medium">Payment Mode:</strong>{' '}
+                      <span className="font-semibold text-brand-heading">
+                        {(viewingOrder as any).payment_method || (viewingOrder.internal_notes?.includes('COD') ? 'Cash on Delivery (COD)' : 'Direct UPI')}
+                      </span>
+                    </p>
+                    <p className="flex items-center gap-1.5 flex-wrap">
+                      <strong className="text-brand-heading font-medium">Transaction UTR:</strong> 
+                      <span className="font-mono font-bold text-[#2C1810] bg-white border border-brand-border/40 px-2 py-0.5 rounded text-[11px] select-all">
+                        {(viewingOrder as any).utr_number || (() => {
+                          const match = viewingOrder.internal_notes?.match(/UTR:\s*([0-9a-zA-Z]+)/) || viewingOrder.status?.match(/UTR:\s*([0-9a-zA-Z]+)/);
+                          return match ? match[1].trim() : 'N/A (Pending)';
+                        })()}
+                      </span>
+                    </p>
+                    <p className="text-[9px] text-[#8FA088] font-semibold italic">
+                      * Please verify this UTR in your bank account statement before approving order.
+                    </p>
                   </div>
-                )}
+                </div>
 
                 {/* Items Summary */}
                 <div className="space-y-3">

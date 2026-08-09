@@ -43,12 +43,28 @@ export default function Customers() {
   const customersList = useMemo(() => {
     const registry: { [key: string]: { name: string; email: string; phone: string; ordersCount: number; spentTotal: number; ordersList: any[]; isRegistered?: boolean } } = {};
     
+    // Helper to locate existing registry key by matching phone or email
+    const findExistingKey = (phone: string, email: string, name: string) => {
+      const keys = Object.keys(registry);
+      if (phone && phone !== 'N/A') {
+        const match = keys.find(k => registry[k].phone === phone);
+        if (match) return match;
+      }
+      if (email && email !== 'N/A') {
+        const match = keys.find(k => registry[k].email.toLowerCase() === email.toLowerCase());
+        if (match) return match;
+      }
+      return keys.find(k => registry[k].name.toLowerCase() === name.toLowerCase());
+    };
+
     // 1. Seed with registered profiles from database
     registeredProfiles.forEach(p => {
       const email = p.email || 'N/A';
       const name = p.name || p.full_name || p.customer_name || 'Registered Customer';
       const phone = p.phone || p.customer_phone || 'N/A';
-      const key = (phone !== 'N/A' ? phone : '') || (email !== 'N/A' ? email : '') || name;
+      
+      const existingKey = findExistingKey(phone, email, name);
+      const key = existingKey || (phone !== 'N/A' ? phone : (email !== 'N/A' ? email : name));
 
       if (!registry[key]) {
         registry[key] = {
@@ -60,6 +76,11 @@ export default function Customers() {
           ordersList: [],
           isRegistered: true
         };
+      } else {
+        registry[key].isRegistered = true;
+        if (name !== 'Registered Customer' && registry[key].name === 'Registered Customer') registry[key].name = name;
+        if (email !== 'N/A' && registry[key].email === 'N/A') registry[key].email = email;
+        if (phone !== 'N/A' && registry[key].phone === 'N/A') registry[key].phone = phone;
       }
     });
 
@@ -75,7 +96,9 @@ export default function Customers() {
 
       const phone = o.customer_phone || 'N/A';
       const name = o.customer_name || 'Guest Customer';
-      const key = (phone !== 'N/A' ? phone : '') || (email !== 'N/A' ? email : '') || name;
+
+      const existingKey = findExistingKey(phone, email, name);
+      const key = existingKey || (phone !== 'N/A' ? phone : (email !== 'N/A' ? email : name));
 
       if (!registry[key]) {
         registry[key] = {
@@ -86,13 +109,21 @@ export default function Customers() {
           spentTotal: 0,
           ordersList: []
         };
+      } else {
+        if (name !== 'Guest Customer' && (registry[key].name === 'Guest Customer' || registry[key].name === 'Registered Customer')) {
+          registry[key].name = name;
+        }
+        if (email !== 'N/A' && registry[key].email === 'N/A') {
+          registry[key].email = email;
+        }
+        if (phone !== 'N/A' && registry[key].phone === 'N/A') {
+          registry[key].phone = phone;
+        }
       }
+
       registry[key].ordersCount += 1;
       registry[key].spentTotal += (o.total_amount || 0);
       registry[key].ordersList.push(o);
-      if (email !== 'N/A' && registry[key].email === 'N/A') {
-        registry[key].email = email;
-      }
     });
 
     return Object.values(registry);
