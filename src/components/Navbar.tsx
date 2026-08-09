@@ -89,20 +89,20 @@ export default function Navbar() {
             : 'bg-transparent backdrop-blur-[2px] py-2 border-transparent'
         }`}
       >
-        <div className="mx-auto max-w-7xl px-4 sm:px-8 lg:px-12 flex items-center justify-between min-h-[5rem] lg:min-h-[5.5rem] py-2">
+        <div className="mx-auto max-w-[90rem] px-3 sm:px-6 lg:px-8 flex items-center justify-between min-h-[5.5rem] lg:min-h-[6rem] py-2">
           
           {/* Left: Logo */}
-          <div className="flex-1 flex justify-start">
+          <div className="flex-1 flex justify-start items-center pl-0 ml-0">
             <Link 
               to="/" 
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className="flex items-center gap-2 py-0.5 select-none"
+              className="flex items-center gap-2 py-0.5 select-none pl-0 ml-0"
             >
               {/* Desktop Version */}
               <img 
                 src={desktopLogoUrl || logoUrl || "/logo.png?v=2"} 
                 alt="Fuzzy Soft Studio" 
-                className="hidden md:block h-16 lg:h-20 w-auto object-contain mix-blend-multiply contrast-125 brightness-95 drop-shadow-sm" 
+                className="hidden md:block h-20 lg:h-24 w-auto object-contain mix-blend-multiply contrast-125 brightness-95 drop-shadow-sm" 
               />
               {/* Mobile Version */}
               <img 
