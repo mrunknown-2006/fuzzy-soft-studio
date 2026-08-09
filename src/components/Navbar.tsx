@@ -83,10 +83,10 @@ export default function Navbar() {
   return (
     <>
       <header
-        className={`fixed inset-x-0 top-0 z-40 transition-all duration-500 border-b ${
+        className={`fixed inset-x-0 top-0 z-40 transition-all duration-500 border-b bg-[#FAF7F2] ${
           isScrolled 
-            ? 'bg-[#FAF7F2]/95 backdrop-blur-md shadow-sm py-2 border-brand-border/40' 
-            : 'bg-transparent backdrop-blur-none py-4 border-transparent'
+            ? 'shadow-sm py-2 border-brand-border/40' 
+            : 'shadow-xs py-3 border-brand-border/20'
         }`}
       >
         <div className="mx-auto max-w-7xl px-6 lg:px-10 flex items-center justify-between min-h-[5.5rem] py-2">
@@ -108,7 +108,7 @@ export default function Navbar() {
               <img 
                 src={mobileLogoUrl || logoUrl || "/logo.png?v=2"} 
                 alt="Fuzzy Soft Studio" 
-                className="block md:hidden h-10 sm:h-12 w-auto object-contain mix-blend-multiply contrast-125 brightness-95" 
+                className="block md:hidden h-12 sm:h-14 w-auto object-contain mix-blend-multiply contrast-150 brightness-95 drop-shadow-[0_1px_2px_rgba(0,0,0,0.25)]" 
               />
             </Link>
           </div>
