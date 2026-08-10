@@ -548,8 +548,8 @@ export default function Home() {
       </div>
 
       {/* 3. OUR COLLECTIONS */}
-      <section id="collections" className="pt-16 pb-20 px-6 lg:px-10 max-w-7xl mx-auto w-full">
-        <div className="text-center mb-14">
+      <section id="collections" className="py-10 sm:py-16 md:py-20 px-4 sm:px-6 lg:px-10 max-w-7xl mx-auto w-full">
+        <div className="text-center mb-6 sm:mb-10 md:mb-14">
           <h2 className="text-3xl sm:text-[42px] font-serif text-brand-heading text-center">
             {collectionsTitle}
           </h2>
@@ -614,8 +614,8 @@ export default function Home() {
 
       {/* 4. MOST LOVED ARRANGEMENTS */}
       {featuredVisible && (
-        <section className="py-20 px-6 lg:px-10 max-w-7xl mx-auto w-full">
-          <div className="text-center mb-12">
+        <section className="py-10 sm:py-16 md:py-20 px-4 sm:px-6 lg:px-10 max-w-7xl mx-auto w-full">
+          <div className="text-center mb-6 sm:mb-8 md:mb-12">
             <h2 className="text-3xl sm:text-4xl font-serif text-brand-heading text-center">
               {featuredSectionTitle}
             </h2>
@@ -656,7 +656,7 @@ export default function Home() {
       )}
 
       {/* 5. TRUST BADGES */}
-      <section className="py-12 md:py-16 bg-[#F3ECE3] relative overflow-hidden w-full flex items-center justify-center">
+      <section className="py-8 sm:py-12 md:py-16 bg-[#F3ECE3] relative overflow-hidden w-full flex items-center justify-center">
         {/* Floating background SVGs rotated on left and right */}
         <div className="absolute left-8 top-1/2 -translate-y-1/2 opacity-70 pointer-events-none hidden md:block -rotate-12">
           <svg width="35" height="45" viewBox="0 0 32 32" fill="none">
@@ -689,8 +689,8 @@ export default function Home() {
       </section>
 
       {/* 6. STUDIO SHOWCASE & INSTAGRAM GRID */}
-      <section className="py-20 px-6 lg:px-10 max-w-7xl mx-auto w-full">
-        <div className="text-center mb-12">
+      <section className="py-10 sm:py-16 md:py-20 px-4 sm:px-6 lg:px-10 max-w-7xl mx-auto w-full">
+        <div className="text-center mb-6 sm:mb-8 md:mb-12">
           <p className="text-4xl text-brand-heading font-script">
             Studio Showcase & Instagram Grid
           </p>
@@ -753,7 +753,7 @@ export default function Home() {
       </section>
 
       {/* 7. OUR PROMISE (TRUST BANNER) */}
-      <section className="py-16 px-6 text-center bg-brand-bg">
+      <section className="py-10 sm:py-14 md:py-16 px-6 text-center bg-brand-bg">
         <div className="max-w-3xl mx-auto space-y-6">
           <p className="text-xs uppercase tracking-[0.3em] text-brand-accent font-semibold">Our Promise</p>
           <h2 className="font-serif text-3xl md:text-4xl text-brand-heading">
@@ -781,7 +781,7 @@ export default function Home() {
       </section>
 
       {/* 8. NEWSLETTER (Full-width custom sage green section) */}
-      <section className="py-20 bg-[#4E5E47] relative overflow-hidden w-full text-center">
+      <section className="py-10 sm:py-16 md:py-20 bg-[#4E5E47] relative overflow-hidden w-full text-center">
         {/* Floating background leaves */}
         <svg className="absolute top-10 left-12 opacity-10 pointer-events-none fill-white" width="50" height="50" viewBox="0 0 32 32">
           <path d="M16 2 C 22 8, 28 14, 16 30 C 4 14, 10 8, 16 2 Z"></path>
