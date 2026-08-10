@@ -451,7 +451,7 @@ export default function Home() {
           </svg>
 
           {/* Centered Hero Content */}
-          <div className="relative z-10 flex flex-col items-center justify-center text-center min-h-screen md:min-h-[90vh] lg:min-h-screen px-4">
+          <div className="relative z-10 flex flex-col items-center justify-center text-center min-h-screen md:min-h-[90vh] lg:min-h-screen px-4 -mt-16 md:mt-0">
             <p 
               className="text-xs tracking-[0.55em] uppercase text-white/95 mb-4 select-none"
               style={{ 
