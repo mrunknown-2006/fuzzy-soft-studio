@@ -443,20 +443,23 @@ export default function Checkout() {
 
             {/* Global Gift Add-on Card */}
             <div className="bg-[#FAF7F5] border border-brand-border/40 rounded-2xl p-4.5 space-y-3.5 select-none shadow-3xs transition duration-200 hover:border-[#B76E79]/40">
-              <label className="flex items-start gap-3 cursor-pointer">
+              <label className="flex items-start gap-3 cursor-pointer w-full">
                 <input 
                   type="checkbox"
                   checked={giftWrapped}
                   onChange={(e) => setGiftWrapped(e.target.checked)}
-                  className="w-4 h-4 mt-0.5 accent-[#B76E79] cursor-pointer rounded border-brand-border/50"
+                  className="w-4 h-4 mt-0.5 accent-[#B76E79] cursor-pointer rounded border-brand-border/50 shrink-0"
                 />
-                <div className="flex-1">
-                  <div className="flex items-center gap-1.5">
-                    <Gift className="text-[#B76E79]" size={16} strokeWidth={1.5} />
-                    <span className="font-serif text-xs font-bold text-brand-heading">Luxury Gift Wrapping (+₹49)</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-center w-full">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <Gift className="text-[#B76E79] shrink-0" size={16} strokeWidth={1.5} />
+                      <span className="font-serif text-xs font-bold text-brand-heading truncate">Luxury Gift Wrapping</span>
+                    </div>
+                    <span className="font-sans text-xs font-bold text-brand-heading shrink-0 ml-2">₹49</span>
                   </div>
                   <span className="block text-[10px] text-brand-body/60 mt-1 font-sans">
-                    Handwritten note and lovely packaging.
+                    Make it special for a special one.
                   </span>
                 </div>
               </label>
@@ -486,7 +489,7 @@ export default function Checkout() {
                     }}
                     placeholder="Write your heartfelt message for the recipient..."
                     rows={3}
-                    maxLength={200}
+                    maxLength={500}
                     className="w-full p-3 bg-white/95 border border-brand-border/60 rounded-xl text-xs font-sans focus:outline-none focus:ring-1 focus:ring-[#B76E79] transition resize-none shadow-2xs"
                   />
                 </div>

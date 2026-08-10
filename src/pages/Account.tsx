@@ -513,13 +513,24 @@ export default function Account() {
                       </div>
 
                       {order.tracking_number ? (
-                        <div className="bg-blue-50/70 border border-blue-200/80 rounded-xl p-4 space-y-2">
-                          <div className="flex items-center gap-2 text-xs font-bold text-blue-900">
+                        <div className="bg-blue-50/70 border border-blue-200/80 rounded-xl p-4 space-y-2.5">
+                          <p className="text-xs text-brand-body/70 font-sans leading-relaxed">
+                            Please visit the official website of the courier partner below and enter your AWB Tracking Number for live updates.
+                          </p>
+                          <div className="flex items-center gap-2 text-xs font-bold text-blue-900 pt-1 border-t border-blue-200/60">
                             <Truck size={14} className="text-blue-600" />
                             <span>Courier Partner: {order.carrier || 'Express Logistics'}</span>
                           </div>
                           <div className="flex flex-wrap justify-between items-center text-xs font-sans text-blue-950 pt-1">
                             <span>AWB Tracking No: <strong className="font-mono text-sm">{order.tracking_number}</strong></span>
+                            <a
+                              href={`https://t.17track.net/en#nums=${order.tracking_number}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[10px] font-bold text-blue-700 hover:text-blue-900 bg-white border border-blue-200 px-3 py-1 rounded-full uppercase tracking-wider transition hover:bg-blue-100/50 shadow-2xs mt-1 sm:mt-0"
+                            >
+                              Track Live →
+                            </a>
                           </div>
                         </div>
                       ) : (
