@@ -84,8 +84,14 @@ export default function Signup() {
         if (data.session) {
           showToast('Account created and signed in successfully!', 'success');
           const ADMIN_EMAIL = 'angrybird@fuzzysoftstudio.com';
+          const searchParams = new URLSearchParams(location.search);
+          const locState = (location as any).state;
+          const redirectTo = searchParams.get('redirectTo') || locState?.redirectTo;
+
           if (data.session.user.email === ADMIN_EMAIL) {
             navigate('/admin', { replace: true });
+          } else if (redirectTo) {
+            navigate(redirectTo, { replace: true, state: locState });
           } else {
             navigate('/account', { replace: true });
           }

@@ -10,6 +10,7 @@ export default function Cart() {
   const cart = useStore((state) => state.cart);
   const updateCartQuantity = useStore((state) => state.updateCartQuantity);
   const removeFromCart = useStore((state) => state.removeFromCart);
+  const showToast = useStore((state) => state.showToast);
 
   const [dbProducts, setDbProducts] = useState<any[]>([]);
   useEffect(() => {
@@ -403,7 +404,15 @@ export default function Cart() {
             </div>
 
             <button
-              onClick={() => navigate('/checkout', { state: { appliedDiscount } })}
+              onClick={async () => {
+                const { data } = await supabase.auth.getSession();
+                if (!data.session?.user) {
+                  showToast('Please log in to complete your checkout', 'error');
+                  navigate('/login?redirectTo=/checkout', { state: { appliedDiscount } });
+                } else {
+                  navigate('/checkout', { state: { appliedDiscount } });
+                }
+              }}
               className="w-full h-12 bg-[#DCA29A] hover:bg-[#D4938A] text-white rounded-full uppercase text-xs tracking-widest font-semibold transition duration-300 cursor-pointer shadow-sm hover:shadow-md active:scale-[0.98] flex items-center justify-center gap-2 select-none"
             >
               <span>Proceed to Checkout</span>

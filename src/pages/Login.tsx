@@ -50,8 +50,14 @@ export default function Login() {
       } else {
         showToast('Signed in successfully!', 'success');
         const { data: { session } } = await supabase.auth.getSession();
+        const searchParams = new URLSearchParams(location.search);
+        const locState = (location as any).state;
+        const redirectTo = searchParams.get('redirectTo') || locState?.redirectTo;
+
         if (session?.user.email === ADMIN_EMAIL) {
           navigate('/admin', { replace: true });
+        } else if (redirectTo) {
+          navigate(redirectTo, { replace: true, state: locState });
         } else {
           navigate('/account', { replace: true });
         }

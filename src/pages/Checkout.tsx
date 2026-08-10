@@ -41,6 +41,18 @@ export default function Checkout() {
   const [utrNumber, setUtrNumber] = useState('');
   const [copied, setCopied] = useState(false);
 
+  // Mandatory Auth Check on mount
+  useEffect(() => {
+    const verifyAuthSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session?.user) {
+        showToast('Please log in to access checkout', 'error');
+        navigate('/login?redirectTo=/checkout', { replace: true });
+      }
+    };
+    verifyAuthSession();
+  }, [navigate, showToast]);
+
   // Load store settings
   useEffect(() => {
     const loadStoreConfig = async () => {
@@ -127,8 +139,13 @@ export default function Checkout() {
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const rawUserId = sessionData?.session?.user?.id;
-      // Ensure user_id is a valid UUID or null for guests (to avoid postgres invalid UUID type errors)
-      const userId = rawUserId && rawUserId !== 'guest' ? rawUserId : null;
+      if (!rawUserId) {
+        showToast('Session expired. Please log in again to complete your order.', 'error');
+        navigate('/login?redirectTo=/checkout');
+        return;
+      }
+
+      const userId = rawUserId;
 
       // Pre-checkout safeguard: Upsert customer record to guarantee foreign key integrity
       if (userId) {
@@ -146,7 +163,9 @@ export default function Checkout() {
         }
       }
 
-      // 1. Insert order to database with resilient schema column fallback retry
+      const cleanUtr = utrNumber.trim();
+
+      // 1. Insert order to database with UTR mapped to all potential column aliases
       const orderPayload: any = {
         order_id: orderNumber,
         user_id: userId,
@@ -156,7 +175,9 @@ export default function Checkout() {
         shipping_address: `${address.trim()}, ${city.trim()} - ${pincode.trim()}`,
         items: cart,
         total_amount: total,
-        utr_number: utrNumber.trim(),
+        utr_number: cleanUtr,
+        transaction_id: cleanUtr,
+        transaction_utr: cleanUtr,
         status: 'Pending',
         created_at: new Date().toISOString(),
         gifting_info: giftWrapped ? {
@@ -174,7 +195,7 @@ export default function Checkout() {
       if (insertError) {
         console.warn('Primary order payload insert warning:', insertError.message);
         
-        // Fallback Step 1: Omit custom columns (like gifting_info) if missing in schema cache
+        // Fallback Step 1: Standard columns without custom gifting_info
         const fallbackPayload: any = {
           order_id: orderNumber,
           user_id: userId,
@@ -184,7 +205,7 @@ export default function Checkout() {
           shipping_address: `${address.trim()}, ${city.trim()} - ${pincode.trim()}`,
           items: cart,
           total_amount: total,
-          utr_number: utrNumber.trim(),
+          utr_number: cleanUtr,
           status: 'Pending',
           created_at: new Date().toISOString()
         };
@@ -194,7 +215,7 @@ export default function Checkout() {
         if (fallbackRes.error) {
           console.warn('Secondary fallback insert warning:', fallbackRes.error.message);
           
-          // Fallback Step 2: Absolute core columns (order_id, user_id, name, phone, address, items, total, status, created_at)
+          // Fallback Step 2: Include UTR in status string if custom UTR column does not exist
           const minimalPayload: any = {
             order_id: orderNumber,
             user_id: userId,
@@ -204,20 +225,14 @@ export default function Checkout() {
             shipping_address: `${address.trim()}, ${city.trim()} - ${pincode.trim()}`,
             items: cart,
             total_amount: total,
-            status: 'Pending',
+            status: `Pending (UTR: ${cleanUtr})`,
             created_at: new Date().toISOString()
           };
           const minimalRes = await supabase.from('orders').insert(minimalPayload);
 
           if (minimalRes.error) {
             console.warn('Minimal fallback insert warning:', minimalRes.error.message);
-            // Fallback Step 3: If user_id FK constraint failed for guest, try with null user_id and status: Pending
-            const guestPayload = { ...minimalPayload, user_id: null, status: 'Pending' };
-            const guestRes = await supabase.from('orders').insert(guestPayload);
-            if (guestRes.error) {
-              console.error('All DB insert attempts failed:', guestRes.error.message);
-              throw new Error(guestRes.error.message || minimalRes.error.message || insertError.message);
-            }
+            throw new Error(minimalRes.error.message || insertError.message);
           }
         }
       }
