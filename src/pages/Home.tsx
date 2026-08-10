@@ -462,7 +462,7 @@ export default function Home() {
             </p>
             
             <h1 
-              className="text-5xl md:text-7xl lg:text-[8rem] leading-none tracking-tight text-brand-heading font-serif text-center max-w-5xl"
+              className="text-5xl md:text-7xl lg:text-[8rem] leading-none tracking-tight text-brand-heading font-serif text-center max-w-5xl drop-shadow-[0_0_15px_rgba(255,255,255,0.25)]"
               style={{ 
                 animation: 'fadeInUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards',
                 opacity: 0
