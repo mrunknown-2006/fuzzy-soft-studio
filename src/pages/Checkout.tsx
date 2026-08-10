@@ -175,7 +175,7 @@ export default function Checkout() {
       if (insertError) {
         console.warn('Primary order payload insert warning:', insertError.message);
         
-        // Fallback Step 1: Omit columns that may be missing in legacy schemas
+        // Fallback Step 1: Omit custom columns (like gifting_info) if missing in schema cache
         const fallbackPayload: any = {
           order_id: orderNumber,
           user_id: userId,
@@ -185,7 +185,9 @@ export default function Checkout() {
           shipping_address: `${address.trim()}, ${city.trim()} - ${pincode.trim()}`,
           items: cart,
           total_amount: total,
-          status: `Pending (UPI UTR: ${utrNumber.trim()})`,
+          payment_method: 'UPI',
+          utr_number: utrNumber.trim(),
+          status: 'Pending',
           created_at: new Date().toISOString()
         };
 
@@ -194,22 +196,27 @@ export default function Checkout() {
         if (fallbackRes.error) {
           console.warn('Secondary fallback insert warning:', fallbackRes.error.message);
           
-          // Fallback Step 2: Absolute core columns minimum
+          // Fallback Step 2: Core columns with explicit status: Pending
           const minimalPayload: any = {
             order_id: orderNumber,
             user_id: userId,
             customer_name: name.trim(),
             customer_phone: phone.trim(),
+            customer_email: email.trim() || null,
             shipping_address: `${address.trim()}, ${city.trim()} - ${pincode.trim()}`,
             items: cart,
-            total_amount: total
+            total_amount: total,
+            payment_method: 'UPI',
+            utr_number: utrNumber.trim(),
+            status: 'Pending',
+            created_at: new Date().toISOString()
           };
           const minimalRes = await supabase.from('orders').insert(minimalPayload);
 
           if (minimalRes.error) {
             console.warn('Minimal fallback insert warning:', minimalRes.error.message);
-            // Fallback Step 3: If user_id FK constraint failed for guest, try with null user_id
-            const guestPayload = { ...minimalPayload, user_id: null };
+            // Fallback Step 3: If user_id FK constraint failed for guest, try with null user_id and status: Pending
+            const guestPayload = { ...minimalPayload, user_id: null, status: 'Pending' };
             const guestRes = await supabase.from('orders').insert(guestPayload);
             if (guestRes.error) {
               console.error('All DB insert attempts failed:', guestRes.error.message);
