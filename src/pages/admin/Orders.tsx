@@ -660,44 +660,26 @@ export default function Orders() {
                   </div>
                 </div>
 
-                {/* Gifting details */}
-                {((viewingOrder as any).gifting_info || (viewingOrder.internal_notes && viewingOrder.internal_notes.includes('[Gift Wrapped]'))) && (
+                {/* 🎁 Gift Details Section */}
+                {((viewingOrder as any).is_gift_wrapped || (viewingOrder as any).gifting_info?.gift_wrapped || (viewingOrder as any).gifting_info || (viewingOrder.internal_notes && viewingOrder.internal_notes.includes('[Gift Wrapped]'))) && (
                   <div className="space-y-3">
                     <h4 className="font-serif text-sm font-bold text-brand-heading flex items-center gap-1.5 select-none">
-                      <span className="text-brand-accent">🎁</span>
-                      <span>Gifting Information</span>
+                      <span>🎁</span>
+                      <span>Gift Details</span>
                     </h4>
                     <div className="bg-[#FAF7F2] border border-[#EBE3D5] p-3.5 rounded-xl text-xs space-y-2 text-brand-body/80 font-sans shadow-3xs">
-                      {(() => {
-                        const gift = (viewingOrder as any).gifting_info;
-                        if (gift && gift.gift_wrapped) {
-                          return (
-                            <>
-                              <p><strong className="text-brand-heading font-medium">Ribbon Color:</strong> {gift.ribbon_color || 'N/A'}</p>
-                              {gift.gift_message && (
-                                <div className="mt-1 p-2.5 bg-white border border-[#EBE3D5]/60 rounded-lg italic font-serif text-brand-heading/90 select-all relative">
-                                  {gift.gift_message}
-                                </div>
-                              )}
-                            </>
-                          );
-                        } else if (viewingOrder.internal_notes && viewingOrder.internal_notes.includes('[Gift Wrapped]')) {
-                          const notes = viewingOrder.internal_notes;
-                          const ribbonMatch = notes.match(/Ribbon:\s*([^.]+)/);
-                          const messageMatch = notes.match(/Message:\s*(.+)/);
-                          return (
-                            <>
-                              <p><strong className="text-brand-heading font-medium">Ribbon Color:</strong> {ribbonMatch ? ribbonMatch[1].trim() : 'N/A'}</p>
-                              {messageMatch && (
-                                <div className="mt-1 p-2.5 bg-white border border-[#EBE3D5]/60 rounded-lg italic font-serif text-brand-heading/90 select-all relative">
-                                  {messageMatch[1].trim()}
-                                </div>
-                              )}
-                            </>
-                          );
-                        }
-                        return null;
-                      })()}
+                      <div className="inline-block px-2.5 py-0.5 rounded-full bg-pink-100 text-pink-800 border border-pink-200 font-bold uppercase tracking-wider text-[9px]">
+                        Luxury Wrapping Requested
+                      </div>
+                      {((viewingOrder as any).gift_message || (viewingOrder as any).gifting_info?.gift_message) ? (
+                        <blockquote className="mt-1.5 p-3 bg-white border border-[#EBE3D5]/80 rounded-xl italic font-serif text-brand-heading text-xs leading-relaxed select-all relative shadow-2xs">
+                          "{(viewingOrder as any).gift_message || (viewingOrder as any).gifting_info?.gift_message}"
+                        </blockquote>
+                      ) : (
+                        <div className="mt-1.5 p-2.5 bg-white/70 border border-[#EBE3D5]/50 rounded-lg text-brand-body/55 italic text-[11px]">
+                          No custom message provided.
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}

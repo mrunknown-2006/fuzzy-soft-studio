@@ -456,7 +456,7 @@ export default function Checkout() {
                     <span className="font-serif text-xs font-bold text-brand-heading">Luxury Gift Wrapping (+₹49)</span>
                   </div>
                   <span className="block text-[10px] text-brand-body/60 mt-1 font-sans">
-                    Signature satin ribbon finish, eco-friendly luxury wrap, and a bespoke handwritten note card.
+                    Handwritten note and lovely packaging.
                   </span>
                 </div>
               </label>
