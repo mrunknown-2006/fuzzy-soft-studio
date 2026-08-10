@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useStore } from '../store/useStore';
-import { ShieldCheck, Mail, Lock, User } from 'lucide-react';
+import { ShieldCheck, Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
 
 export default function Signup() {
   const navigate = useNavigate();
+  const location = useLocation();
   const showToast = useStore((state) => state.showToast);
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // If user is already authenticated, redirect based on role
@@ -172,13 +174,20 @@ export default function Signup() {
                 <Lock size={16} strokeWidth={1.5} />
               </span>
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Min. 6 characters"
-                className="w-full h-11 pl-10 pr-4 bg-white/95 rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition-all"
+                className="w-full h-11 pl-10 pr-10 bg-white/95 rounded-xl border border-brand-border/70 text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition-all"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-brand-body/40 hover:text-brand-heading transition-colors cursor-pointer"
+              >
+                {showPassword ? <EyeOff size={16} strokeWidth={1.5} /> : <Eye size={16} strokeWidth={1.5} />}
+              </button>
             </div>
           </div>
 

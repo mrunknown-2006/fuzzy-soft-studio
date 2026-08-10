@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useOutletContext, useLocation } from 'react-router-dom';
-import { FileText, Search, X, Truck, User, DollarSign, Edit2, Printer } from 'lucide-react';
+import { FileText, Search, X, Truck, User, DollarSign, Edit2, Printer, Trash2 } from 'lucide-react';
 import type { AdminContext } from './types';
 import type { SupabaseOrder } from '../../types/database';
 import { supabase } from '../../lib/supabaseClient';
@@ -20,6 +20,34 @@ export default function Orders() {
   const [internalNotes, setInternalNotes] = useState('');
   const [updatingNotes, setUpdatingNotes] = useState(false);
   const [updatingTracking, setUpdatingTracking] = useState(false);
+
+  // Secure Delete Order handler
+  const handleDeleteOrder = async (orderId: string) => {
+    if (!window.confirm(`Are you sure you want to delete order #${orderId}? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      // Execute delete by order_id, with fallback to id
+      const { error: err1 } = await supabase.from('orders').delete().eq('order_id', orderId);
+      if (err1) {
+        await supabase.from('orders').delete().eq('id', orderId);
+      }
+
+      // Remove locally
+      const updated = orders.filter(o => o.order_id !== orderId && o.id !== orderId);
+      setOrders(updated);
+
+      if (viewingOrder && (viewingOrder.order_id === orderId || viewingOrder.id === orderId)) {
+        setViewingOrder(null);
+      }
+
+      showToast(`Order #${orderId} permanently deleted`, 'success');
+    } catch (err: any) {
+      console.error('Delete order error:', err);
+      showToast(err.message || 'Failed to delete order', 'error');
+    }
+  };
 
   // Handle route state redirection (from Dashboard "Manage" link)
   useEffect(() => {
@@ -404,15 +432,28 @@ export default function Orders() {
                               </select>
                             </td>
                             <td className="py-4 pl-2 text-right select-none">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setViewingOrder(o);
-                                }}
-                                className="text-brand-accent hover:text-brand-accent-hover font-bold uppercase text-[9px] tracking-wider transition"
-                              >
-                                Manage
-                              </button>
+                              <div className="flex items-center justify-end gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setViewingOrder(o);
+                                  }}
+                                  className="text-brand-accent hover:text-brand-accent-hover font-bold uppercase text-[9px] tracking-wider transition"
+                                >
+                                  Manage
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteOrder(o.order_id);
+                                  }}
+                                  title="Delete Order"
+                                  className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition cursor-pointer"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         );
@@ -441,9 +482,22 @@ export default function Orders() {
                     >
                       <div className="flex justify-between items-center">
                         <span className="font-mono font-bold text-brand-heading text-xs">#{o.order_id}</span>
-                        <span className="text-[10px] text-brand-body/55">
-                          {new Date(o.created_at).toLocaleDateString('en-IN')}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-brand-body/55">
+                            {new Date(o.created_at).toLocaleDateString('en-IN')}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteOrder(o.order_id);
+                            }}
+                            title="Delete Order"
+                            className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition cursor-pointer"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
                       </div>
 
                       <div className="flex justify-between items-end">
@@ -485,12 +539,23 @@ export default function Orders() {
                     <span className="text-[9px] uppercase tracking-widest text-brand-body/55 font-bold block">Transaction Details</span>
                     <h3 className="font-mono font-bold text-brand-heading text-lg mt-0.5">#{viewingOrder.order_id}</h3>
                   </div>
-                  <button 
-                    onClick={() => setViewingOrder(null)} 
-                    className="p-2 hover:bg-brand-cream rounded-full transition text-brand-body/50 hover:text-brand-heading cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
-                  >
-                    <X size={18} />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteOrder(viewingOrder.order_id)}
+                      title="Delete Order"
+                      className="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
+                    >
+                      <Trash2 size={13} />
+                      <span>Delete</span>
+                    </button>
+                    <button 
+                      onClick={() => setViewingOrder(null)} 
+                      className="p-2 hover:bg-brand-cream rounded-full transition text-brand-body/50 hover:text-brand-heading cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Status Switcher & Print Button */}
