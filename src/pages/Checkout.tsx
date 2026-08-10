@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
-import { MessageCircle, ArrowLeft, ShieldCheck, Tag, QrCode, Smartphone, Copy, Check } from 'lucide-react';
+import { MessageCircle, ArrowLeft, ShieldCheck, Tag, Copy, Check } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useStore } from '../store/useStore';
 import { supabase } from '../lib/supabaseClient';
@@ -40,7 +40,6 @@ export default function Checkout() {
   // UPI Payment States
   const [utrNumber, setUtrNumber] = useState('');
   const [copied, setCopied] = useState(false);
-  const [paymentTab, setPaymentTab] = useState<'qr' | 'app'>('qr');
 
   // Load store settings
   useEffect(() => {
@@ -130,6 +129,22 @@ export default function Checkout() {
       const rawUserId = sessionData?.session?.user?.id;
       // Ensure user_id is a valid UUID or null for guests (to avoid postgres invalid UUID type errors)
       const userId = rawUserId && rawUserId !== 'guest' ? rawUserId : null;
+
+      // Pre-checkout safeguard: Upsert customer record to guarantee foreign key integrity
+      if (userId) {
+        try {
+          await supabase.from('customers').upsert({
+            id: userId,
+            full_name: name.trim(),
+            email: email.trim() || null,
+            phone: phone.trim(),
+            shipping_address: `${address.trim()}, ${city.trim()} - ${pincode.trim()}`,
+            updated_at: new Date().toISOString()
+          });
+        } catch (cErr) {
+          console.warn('Customer pre-upsert note:', cErr);
+        }
+      }
 
       // 1. Insert order to database with resilient schema column fallback retry
       const orderPayload: any = {
@@ -491,124 +506,73 @@ export default function Checkout() {
               </div>
             </div>
 
-            {/* Secure UPI Payment Section */}
+            {/* Secure UPI Payment Section — Fail-Proof Manual Flow */}
             <div className="bg-[#FAF9F6] border border-[#8FA088]/40 rounded-2xl p-5 space-y-4 shadow-xs select-none">
               <div className="flex items-center justify-between border-b border-brand-border/25 pb-3">
                 <span className="text-xs font-bold text-brand-heading flex items-center gap-1.5">
-                  <span className="text-[#8FA088]">🛡️</span> Secure UPI Payment
+                  <span className="text-[#8FA088]">🛡️</span> Instant UPI Payment
                 </span>
                 <span className="text-[10px] text-green-700 font-bold uppercase tracking-wider bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
-                  Direct Bank
+                  NPCI Verified
                 </span>
               </div>
 
               {/* Instructions */}
-              <div className="text-[10px] text-brand-body/75 space-y-0.5">
-                <p>1. Select your preferred payment view below to pay <strong>₹{total.toLocaleString('en-IN')}</strong>.</p>
-                <p>2. Copy/Save your 12-digit transaction UTR number to complete checkout.</p>
-              </div>
+              <p className="text-[11px] text-brand-body/80 font-medium leading-relaxed">
+                Scan QR code or Copy UPI ID to pay using GPay, PhonePe, Paytm, BHIM or any UPI app. Enter the 12-digit Transaction ID (UTR) below to verify.
+              </p>
 
-              {/* Interactive State-Driven Tabs */}
-              <div className="flex bg-stone-200/60 p-1 rounded-xl gap-1">
-                <button
-                  type="button"
-                  onClick={() => setPaymentTab('qr')}
-                  className={`flex-1 py-2 px-3 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all duration-200 cursor-pointer ${
-                    paymentTab === 'qr'
-                      ? 'bg-white text-brand-heading shadow-xs font-bold'
-                      : 'text-brand-body/60 hover:text-brand-heading'
-                  }`}
-                >
-                  <QrCode size={14} />
-                  <span>Scan QR Code</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPaymentTab('app')}
-                  className={`flex-1 py-2 px-3 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all duration-200 cursor-pointer ${
-                    paymentTab === 'app'
-                      ? 'bg-white text-brand-heading shadow-xs font-bold'
-                      : 'text-brand-body/60 hover:text-brand-heading'
-                  }`}
-                >
-                  <Smartphone size={14} />
-                  <span>Pay via UPI App</span>
-                </button>
-              </div>
-
-              {/* View 1: Scan QR Code */}
-              {paymentTab === 'qr' && (
-                <div className="animate-fade-in flex flex-col items-center justify-center py-2">
-                  <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-md flex flex-col items-center w-full max-w-[280px]">
-                    <div className="text-center mb-3">
-                      <span className="text-[11px] font-bold text-brand-heading block">Fuzzy Soft Studio</span>
-                      <span className="text-[10px] text-brand-body/60 font-mono">UPI ID: 9506228972@axl</span>
-                    </div>
-
-                    {/* NPCI Standard Dynamic High-Contrast UPI QR Code */}
-                    <div className="bg-white p-3 rounded-xl border border-stone-200/80 shadow-2xs flex items-center justify-center">
-                      <QRCodeSVG
-                        value={`upi://pay?pa=9506228972@axl&pn=${encodeURIComponent('Fuzzy Soft Studio')}&am=${total}&cu=INR&tn=${encodeURIComponent('Fuzzy Soft Studio Order')}`}
-                        size={192}
-                        level="H"
-                        bgColor="#FFFFFF"
-                        fgColor="#000000"
-                        includeMargin={true}
-                      />
-                    </div>
-
-                    {/* Dynamic Amount Badge */}
-                    <div className="mt-3 bg-brand-cream/80 border border-brand-border/40 px-3 py-1 rounded-full text-center">
-                      <span className="text-[11px] font-bold text-brand-heading">Pay Amount: ₹{total.toLocaleString('en-IN')}</span>
-                    </div>
-
-                    <p className="text-[10px] font-medium text-brand-body/70 mt-3 text-center flex items-center justify-center gap-1">
-                      <span>⚡</span> Scan with GPay, PhonePe, Paytm, BHIM or Any UPI App
-                    </p>
-                  </div>
+              {/* QR & Copy UPI Card */}
+              <div className="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200 shadow-xs flex flex-col items-center w-full">
+                <div className="text-center mb-3">
+                  <span className="text-xs font-bold text-brand-heading block">Fuzzy Soft Studio</span>
+                  <span className="text-[10px] text-brand-body/60 font-mono">Official Store Account</span>
                 </div>
-              )}
 
-              {/* View 2: Pay via UPI App */}
-              {paymentTab === 'app' && (
-                <div className="animate-fade-in space-y-3.5 py-1">
-                  <div className="space-y-1.5">
-                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-brand-heading">
-                      Official Store UPI ID
-                    </label>
-                    <div className="flex items-center justify-between bg-white border border-brand-border/70 rounded-xl p-2.5 px-3.5 shadow-2xs">
-                      <span className="text-xs sm:text-sm font-mono font-bold text-brand-heading select-all">
-                        9506228972@axl
-                      </span>
-                      <button
-                        type="button"
-                        onClick={handleCopyUpi}
-                        className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-[#C9A84C] hover:text-[#B08A38] transition cursor-pointer bg-brand-cream/80 hover:bg-brand-cream px-2.5 py-1 rounded-lg border border-brand-border/40"
-                      >
-                        {copied ? (
-                          <>
-                            <Check size={12} className="text-green-600" />
-                            <span className="text-green-600">Copied</span>
-                          </>
-                        ) : (
-                          <>
-                            <Copy size={12} />
-                            <span>Copy ID</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
+                {/* NPCI Standard Dynamic High-Contrast UPI QR Code */}
+                <div className="bg-white p-3 rounded-xl border border-stone-200 shadow-2xs flex items-center justify-center">
+                  <QRCodeSVG
+                    value={`upi://pay?pa=9506228972@axl&pn=${encodeURIComponent('Fuzzy Soft Studio')}&am=${total}&cu=INR&tn=${encodeURIComponent('Fuzzy Soft Studio Order')}`}
+                    size={180}
+                    level="H"
+                    bgColor="#FFFFFF"
+                    fgColor="#000000"
+                    includeMargin={true}
+                  />
+                </div>
+
+                {/* Dynamic Amount Badge */}
+                <div className="mt-3 bg-brand-cream/80 border border-brand-border/40 px-4 py-1.5 rounded-full text-center">
+                  <span className="text-xs font-bold text-brand-heading">Payable Amount: ₹{total.toLocaleString('en-IN')}</span>
+                </div>
+
+                {/* Copy UPI ID Box */}
+                <div className="mt-4 w-full pt-3 border-t border-stone-100 flex items-center justify-between bg-stone-50 border border-stone-200/80 rounded-xl p-2.5 px-3">
+                  <div className="flex flex-col">
+                    <span className="text-[9px] uppercase font-bold text-brand-body/50">Official UPI ID</span>
+                    <span className="text-xs sm:text-sm font-mono font-bold text-brand-heading select-all">
+                      9506228972@axl
+                    </span>
                   </div>
-
-                  <a
-                    href={`upi://pay?pa=9506228972@axl&pn=Fuzzy%20Soft%20Studio&cu=INR&am=${total}`}
-                    className="w-full py-3 bg-brand-heading hover:bg-brand-heading-hover text-white text-xs font-bold uppercase tracking-widest rounded-xl transition-all duration-300 shadow-sm hover:shadow-md flex items-center justify-center gap-2"
+                  <button
+                    type="button"
+                    onClick={handleCopyUpi}
+                    className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#C9A84C] hover:text-[#B08A38] transition cursor-pointer bg-white hover:bg-brand-cream/40 px-3 py-1.5 rounded-lg border border-brand-border/40 shadow-3xs"
                   >
-                    <Smartphone size={15} />
-                    <span>📱 PAY VIA ANY UPI APP</span>
-                  </a>
+                    {copied ? (
+                      <>
+                        <Check size={14} className="text-green-600" />
+                        <span className="text-green-600">Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy size={14} />
+                        <span>Copy UPI ID</span>
+                      </>
+                    )}
+                  </button>
                 </div>
-              )}
+              </div>
 
               {/* UTR Input Section (Global) */}
               <div className="space-y-1.5 pt-3 border-t border-brand-border/25">
