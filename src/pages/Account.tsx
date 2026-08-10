@@ -129,6 +129,7 @@ export default function Account() {
           created_at: o.created_at,
           total_amount: typeof o.total_amount === 'number' ? o.total_amount : Number(o.total_amount) || 0,
           status: o.status || 'Processing',
+          cancellation_reason: o.cancellation_reason || null,
           items: typeof o.items === 'string' ? JSON.parse(o.items) : o.items || []
         }));
         setOrders(mappedOrders);
@@ -470,19 +471,26 @@ export default function Account() {
                             ₹{(order.total_amount ?? 0).toLocaleString('en-IN')}
                           </td>
                           <td className="py-4 pl-2 text-right select-none">
-                            <span className={`inline-block px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider text-[9px] ${
-                              String(order.status).toUpperCase() === 'CANCELLED' || String(order.status).toUpperCase() === 'CANCELED'
-                                ? 'bg-red-100 text-red-700 border border-red-200 font-extrabold'
-                                : String(order.status).toUpperCase() === 'DELIVERED' 
-                                  ? 'bg-green-100 text-green-700 border border-green-200'
-                                  : String(order.status).toUpperCase() === 'SHIPPED'
-                                    ? 'bg-blue-100 text-blue-700 border border-blue-200'
-                                    : String(order.status).toUpperCase() === 'PROCESSING' || String(order.status).toUpperCase() === 'VERIFIED'
-                                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                                      : 'bg-amber-100 text-amber-800 border border-amber-200'
-                            }`}>
-                              {order.status}
-                            </span>
+                            <div className="flex flex-col items-end">
+                              <span className={`inline-block px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider text-[9px] ${
+                                String(order.status).toUpperCase() === 'CANCELLED' || String(order.status).toUpperCase() === 'CANCELED'
+                                  ? 'bg-red-100 text-red-700 border border-red-200 font-extrabold'
+                                  : String(order.status).toUpperCase() === 'DELIVERED' 
+                                    ? 'bg-green-100 text-green-700 border border-green-200'
+                                    : String(order.status).toUpperCase() === 'SHIPPED'
+                                      ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                                      : String(order.status).toUpperCase() === 'PROCESSING' || String(order.status).toUpperCase() === 'VERIFIED'
+                                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                        : 'bg-amber-100 text-amber-800 border border-amber-200'
+                              }`}>
+                                {order.status}
+                              </span>
+                              {(String(order.status).toUpperCase() === 'CANCELLED' || String(order.status).toUpperCase() === 'CANCELED') && (order as any).cancellation_reason && (
+                                <div className="text-[10px] text-red-600 font-sans mt-1 text-right max-w-[180px] leading-tight font-medium">
+                                  <span className="font-semibold">Reason:</span> {(order as any).cancellation_reason}
+                                </div>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       ))}

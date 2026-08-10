@@ -34,7 +34,6 @@ export default function Checkout() {
 
   // Gifting Add-On States
   const [giftWrapped, setGiftWrapped] = useState(false);
-  const [ribbonColor, setRibbonColor] = useState('Satin Red');
   const [giftMessage, setGiftMessage] = useState('');
 
   // UPI Payment States
@@ -179,10 +178,11 @@ export default function Checkout() {
         transaction_id: cleanUtr,
         transaction_utr: cleanUtr,
         status: 'PENDING',
+        is_gift_wrapped: giftWrapped,
+        gift_message: giftWrapped ? giftMessage.trim() : null,
         created_at: new Date().toISOString(),
         gifting_info: giftWrapped ? {
           gift_wrapped: true,
-          ribbon_color: ribbonColor,
           gift_message: giftMessage.trim()
         } : null
       };
@@ -207,6 +207,8 @@ export default function Checkout() {
           total_amount: total,
           utr_number: cleanUtr,
           status: 'PENDING',
+          is_gift_wrapped: giftWrapped,
+          gift_message: giftWrapped ? giftMessage.trim() : null,
           created_at: new Date().toISOString()
         };
 
@@ -454,28 +456,7 @@ export default function Checkout() {
               </label>
 
               {giftWrapped && (
-                <div className="space-y-3 pt-3 border-t border-brand-border/25 animate-fade-in">
-                  {/* Ribbon Color Select */}
-                  <div className="space-y-1.5">
-                    <span className="block text-[9px] font-semibold uppercase tracking-wider text-brand-heading">Ribbon Color Choice</span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {['Satin Red', 'Blush Pink', 'Classic Gold', 'Cream White', 'Surprise Me'].map((color) => (
-                        <button
-                          key={color}
-                          type="button"
-                          onClick={() => setRibbonColor(color)}
-                          className={`px-2.5 py-1 rounded-full text-[10px] font-semibold border transition cursor-pointer select-none ${
-                            ribbonColor === color 
-                              ? 'bg-brand-heading text-white border-brand-heading'
-                              : 'bg-white text-brand-body/75 border-brand-border/60 hover:bg-brand-cream/35'
-                          }`}
-                        >
-                          {color}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
+                <div className="space-y-2 pt-3 border-t border-brand-border/25 animate-fade-in">
                   {/* Gift Message Textarea */}
                   <div className="space-y-1">
                     <span className="block text-[9px] font-semibold uppercase tracking-wider text-brand-heading">Custom Gift Message</span>

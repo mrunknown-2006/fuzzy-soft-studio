@@ -98,11 +98,24 @@ export default function Orders() {
     return result;
   }, [orders, orderFilter, orderSearch]);
 
-  // Status updates mapping confirmed/shipped/delivered timestamps
+  // Status updates mapping confirmed/shipped/delivered timestamps and cancellation reasons
   const handleUpdateOrderStatus = async (orderId: string, status: SupabaseOrder['status']) => {
     try {
       const nowString = new Date().toISOString();
-      const updatePayload: Partial<SupabaseOrder> = { status };
+      let cancelReason: string | null = null;
+
+      if (String(status).toUpperCase() === 'CANCELLED') {
+        cancelReason = window.prompt('Enter cancellation reason for the customer:', 'Out of stock / Customer request');
+        if (cancelReason === null) {
+          // Admin pressed cancel on prompt, abort status update
+          return;
+        }
+      }
+
+      const updatePayload: any = { 
+        status,
+        ...(cancelReason ? { cancellation_reason: cancelReason.trim() } : {})
+      };
 
       if (status === 'Processing') {
         updatePayload.confirmed_at = nowString;
@@ -118,7 +131,7 @@ export default function Orders() {
         .update(updatePayload)
         .eq('order_id', orderId);
       
-      // Fallback 1: Uppercase status (e.g. 'CANCELLED', 'PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED')
+      // Fallback 1: If cancellation_reason column does not exist or upper status is needed
       if (error) {
         const upperStatus = String(status).toUpperCase();
         const upperRes = await supabase
@@ -126,16 +139,16 @@ export default function Orders() {
           .update({ ...updatePayload, status: upperStatus as any })
           .eq('order_id', orderId);
         
-        // Fallback 2: Titlecase status (e.g. 'Cancelled', 'Pending', 'Processing', 'Shipped', 'Delivered')
+        // Fallback 2: Try without custom cancellation_reason column if schema cache rejects it
         if (upperRes.error) {
-          const titleStatus = String(status).charAt(0).toUpperCase() + String(status).slice(1).toLowerCase();
-          const titleRes = await supabase
+          const minimalPayload: any = { status: upperStatus };
+          const minimalRes = await supabase
             .from('orders')
-            .update({ ...updatePayload, status: titleStatus as any })
+            .update(minimalPayload)
             .eq('order_id', orderId);
 
-          if (titleRes.error) {
-            throw new Error(titleRes.error.message || upperRes.error.message || error.message);
+          if (minimalRes.error) {
+            throw new Error(minimalRes.error.message || upperRes.error.message || error.message);
           }
         }
       }
