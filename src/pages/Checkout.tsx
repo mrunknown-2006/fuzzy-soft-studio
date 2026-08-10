@@ -209,12 +209,11 @@ export default function Checkout() {
           if (minimalRes.error) {
             console.warn('Minimal fallback insert warning:', minimalRes.error.message);
             // Fallback Step 3: If user_id FK constraint failed for guest, try with null user_id
-            if (userId) {
-              const guestPayload = { ...minimalPayload, user_id: null };
-              const guestRes = await supabase.from('orders').insert(guestPayload);
-              if (guestRes.error) {
-                console.error('All DB insert attempts failed:', guestRes.error.message);
-              }
+            const guestPayload = { ...minimalPayload, user_id: null };
+            const guestRes = await supabase.from('orders').insert(guestPayload);
+            if (guestRes.error) {
+              console.error('All DB insert attempts failed:', guestRes.error.message);
+              throw new Error(guestRes.error.message || minimalRes.error.message || insertError.message);
             }
           }
         }
@@ -269,8 +268,9 @@ export default function Checkout() {
       });
       
     } catch (err: any) {
-      console.error('Checkout error:', err);
-      showToast(err.message || 'Error processing order. Please try again.', 'error');
+      console.error('Checkout submit exception caught:', err);
+      const userMsg = typeof err === 'string' ? err : err?.message || 'Database error processing order. Please try again.';
+      showToast(`Order submission error: ${userMsg}`, 'error');
     } finally {
       setLoading(false);
     }
