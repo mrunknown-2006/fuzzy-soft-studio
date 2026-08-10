@@ -407,8 +407,8 @@ export default function Cart() {
               onClick={async () => {
                 const { data } = await supabase.auth.getSession();
                 if (!data.session?.user) {
-                  showToast('Please log in to complete your checkout', 'error');
-                  navigate('/login?redirectTo=/checkout', { state: { appliedDiscount } });
+                  showToast('Please create an account or sign in to complete your checkout', 'error');
+                  navigate('/signup?redirectTo=/checkout', { state: { appliedDiscount } });
                 } else {
                   navigate('/checkout', { state: { appliedDiscount } });
                 }

@@ -46,8 +46,8 @@ export default function Checkout() {
     const verifyAuthSession = async () => {
       const { data } = await supabase.auth.getSession();
       if (!data.session?.user) {
-        showToast('Please log in to access checkout', 'error');
-        navigate('/login?redirectTo=/checkout', { replace: true });
+        showToast('Please create an account or sign in to complete your order', 'error');
+        navigate('/signup?redirectTo=/checkout', { replace: true });
       }
     };
     verifyAuthSession();
@@ -140,8 +140,8 @@ export default function Checkout() {
       const { data: sessionData } = await supabase.auth.getSession();
       const rawUserId = sessionData?.session?.user?.id;
       if (!rawUserId) {
-        showToast('Session expired. Please log in again to complete your order.', 'error');
-        navigate('/login?redirectTo=/checkout');
+        showToast('Session expired. Please sign in or create an account to complete your order.', 'error');
+        navigate('/signup?redirectTo=/checkout');
         return;
       }
 
