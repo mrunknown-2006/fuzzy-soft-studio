@@ -6,11 +6,30 @@ export default function OrderConfirmation() {
   const location = useLocation();
   const stateDetails = location.state?.orderDetails;
 
-  // Use state details if present, otherwise load mock data for testing/fallback
+  // Safe order data resolution with try/catch and localStorage fallback
   const order = useMemo(() => {
-    if (stateDetails) return stateDetails;
+    try {
+      if (stateDetails) return stateDetails;
 
-    // Fallback mock data for developer preview or direct url visits
+      const localData = localStorage.getItem('fuzzy-soft-studio-local-orders');
+      if (localData) {
+        const parsed = JSON.parse(localData);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const latest = parsed[0];
+          return {
+            orderId: latest.orderId || 'FSS-ORDER',
+            items: latest.items || [],
+            pricing: latest.pricing || { subtotal: 0, deliveryCharge: 0, total: 0 },
+            shippingDetails: latest.shippingDetails || { fullName: 'Valued Customer', address: '', city: 'Lucknow', state: 'UP', pincode: '', phone: '' },
+            deliveryEstimation: { range: '3–5 Business Days', isLucknow: true }
+          };
+        }
+      }
+    } catch (err) {
+      console.warn('OrderConfirmation fallback data error:', err);
+    }
+
+    // Default safe preview object
     return {
       orderId: 'FSS-293847',
       items: [
@@ -21,36 +40,42 @@ export default function OrderConfirmation() {
           quantity: 1,
           image: 'https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=600&q=80',
           description: 'Garden roses in deep rose & dusty mauve.'
-        },
-        {
-          id: 'p7',
-          name: 'Tulip Letter',
-          price: 999,
-          quantity: 2,
-          image: 'https://images.unsplash.com/photo-1520763185298-1b434c919102?w=600&q=80',
-          description: 'Pastel tulips wrapped in kraft & ribbon.'
         }
       ],
       pricing: {
-        subtotal: 3897,
+        subtotal: 1899,
         deliveryCharge: 0,
-        total: 3897
+        total: 1899
       },
       shippingDetails: {
-        fullName: 'Ananya Roy',
-        email: 'ananya@example.com',
+        fullName: 'Valued Customer',
+        email: 'customer@example.com',
         phone: '9876543210',
-        address: 'Apartment 5B, Willow Heights, Gomti Nagar',
+        address: 'Main Street',
         city: 'Lucknow',
         state: 'Uttar Pradesh',
-        pincode: '226010'
+        pincode: '226001'
       },
       deliveryEstimation: {
-        range: '31 May – 5 Jun, 2026',
+        range: '3–5 Business Days',
         isLucknow: true
       }
     };
   }, [stateDetails]);
+
+  const items = order?.items || [];
+  const fullName = order?.shippingDetails?.fullName || order?.shippingDetails?.name || 'Valued Customer';
+  const address = order?.shippingDetails?.address || '';
+  const city = order?.shippingDetails?.city || '';
+  const state = order?.shippingDetails?.state || '';
+  const pincode = order?.shippingDetails?.pincode || '';
+  const phone = order?.shippingDetails?.phone || '';
+  const orderId = order?.orderId || 'FSS-ORDER';
+  const deliveryRange = order?.deliveryEstimation?.range || '3–5 Business Days';
+  const subtotal = order?.pricing?.subtotal || 0;
+  const deliveryCharge = order?.pricing?.deliveryCharge || 0;
+  const total = order?.pricing?.total || subtotal + deliveryCharge;
+  const discountAmount = order?.pricing?.discountAmount || 0;
 
   return (
     <div className="min-h-screen pt-20 sm:pt-24 md:pt-28 pb-12 sm:pb-20 px-4 sm:px-6 lg:px-10 max-w-4xl mx-auto w-full flex flex-col items-center justify-center animate-fade-in-up">
@@ -62,7 +87,7 @@ export default function OrderConfirmation() {
         </div>
         <h1 className="text-3xl sm:text-4xl font-serif text-brand-heading mb-3">Order Confirmed</h1>
         <p className="text-sm text-brand-body/75 font-sans leading-relaxed">
-          Thank you for choosing Fuzzy Soft Studio, <span className="font-semibold text-brand-heading">{order.shippingDetails.fullName}</span>. Your custom arrangement is now scheduled for hand-crafting.
+          Thank you for choosing Fuzzy Soft Studio, <span className="font-semibold text-brand-heading">{fullName}</span>. Your custom arrangement is now scheduled for hand-crafting.
         </p>
       </div>
 
@@ -74,7 +99,7 @@ export default function OrderConfirmation() {
           <div className="text-center sm:text-left select-none">
             <span className="text-[10px] uppercase tracking-widest font-semibold text-brand-body/50">Order Reference</span>
             <div className="text-xl font-bold text-brand-heading mt-0.5 tracking-wider font-sans">
-              {order.orderId}
+              {orderId}
             </div>
           </div>
           
@@ -82,7 +107,7 @@ export default function OrderConfirmation() {
             <span className="text-[10px] uppercase tracking-widest font-semibold text-brand-body/50 font-sans">Estimated Delivery</span>
             <div className="text-sm font-semibold text-brand-heading mt-0.5 flex items-center justify-center sm:justify-end gap-1.5">
               <Calendar size={14} className="text-[#C9A84C]" />
-              <span>{order.deliveryEstimation.range}</span>
+              <span>{deliveryRange}</span>
             </div>
           </div>
         </div>
@@ -97,10 +122,10 @@ export default function OrderConfirmation() {
               <span>Shipping Address</span>
             </h3>
             <div className="text-sm font-sans text-brand-body/90 space-y-1">
-              <div className="font-semibold text-brand-heading">{order.shippingDetails.fullName}</div>
-              <div>{order.shippingDetails.address}</div>
-              <div>{order.shippingDetails.city}, {order.shippingDetails.state} - {order.shippingDetails.pincode}</div>
-              <div className="text-xs text-brand-body/70 mt-1 select-none">Phone: {order.shippingDetails.phone}</div>
+              <div className="font-semibold text-brand-heading">{fullName}</div>
+              {address && <div>{address}</div>}
+              <div>{city}{state ? `, ${state}` : ''}{pincode ? ` - ${pincode}` : ''}</div>
+              {phone && <div className="text-xs text-brand-body/70 mt-1 select-none">Phone: {phone}</div>}
             </div>
           </div>
 
@@ -111,11 +136,11 @@ export default function OrderConfirmation() {
               <span>Payment Details</span>
             </h3>
             <div className="text-sm font-sans text-brand-body/90 space-y-1">
-              <div className="font-semibold text-brand-heading">Cash on Delivery (COD)</div>
-              <div className="text-xs text-brand-body/70 select-none">Please prepare exact cash for receipt verification.</div>
+              <div className="font-semibold text-brand-heading">UPI Payment (Verified)</div>
+              <div className="text-xs text-brand-body/70 select-none">Order recorded and scheduled for dispatch.</div>
               <div className="pt-2 select-none">
                 <span className="text-[10px] uppercase tracking-wider font-semibold text-[#8FA088] border border-[#8FA088]/30 bg-[#8FA088]/5 px-2 py-0.5 rounded-md">
-                  Pending Delivery Payment
+                  Order Received & Verified
                 </span>
               </div>
             </div>
@@ -131,8 +156,8 @@ export default function OrderConfirmation() {
           </h3>
 
           <div className="space-y-4 max-h-[220px] overflow-y-auto pr-1 border-b border-brand-border/20 pb-5 no-scrollbar">
-            {order.items.map((item: any) => (
-              <div key={item.id} className="flex gap-4 items-center">
+            {items.map((item: any, idx: number) => (
+              <div key={item.id || idx} className="flex gap-4 items-center">
                 <div className="w-10 h-14 rounded-lg overflow-hidden bg-brand-cream border border-brand-border/30 shrink-0 select-none">
                   <img
                     src={item.image}
@@ -145,11 +170,11 @@ export default function OrderConfirmation() {
                     {item.name}
                   </h4>
                   <div className="text-xs text-brand-body/65 mt-0.5">
-                    Qty: {item.quantity} &times; ₹{item.price.toLocaleString('en-IN')}
+                    Qty: {item.quantity || 1} &times; ₹{(item.price || 0).toLocaleString('en-IN')}
                   </div>
                 </div>
                 <div className="font-sans font-semibold text-sm text-brand-heading shrink-0 text-right">
-                  ₹{(item.price * item.quantity).toLocaleString('en-IN')}
+                  ₹{((item.price || 0) * (item.quantity || 1)).toLocaleString('en-IN')}
                 </div>
               </div>
             ))}
@@ -159,29 +184,23 @@ export default function OrderConfirmation() {
           <div className="pt-5 space-y-3 font-sans text-xs text-brand-body/80 max-w-sm ml-auto text-right">
             <div className="flex justify-between">
               <span>Subtotal:</span>
-              <span className="font-semibold text-brand-heading">₹{order.pricing.subtotal.toLocaleString('en-IN')}</span>
+              <span className="font-semibold text-brand-heading">₹{subtotal.toLocaleString('en-IN')}</span>
             </div>
             <div className="flex justify-between">
               <span>Delivery Charges:</span>
               <span className="font-semibold text-brand-heading">
-                {order.pricing.deliveryCharge === 0 ? 'Free' : `₹${order.pricing.deliveryCharge}`}
+                {deliveryCharge === 0 ? 'Free' : `₹${deliveryCharge}`}
               </span>
             </div>
-            {order.pricing.giftWrappingCharge > 0 && (
-              <div className="flex justify-between">
-                <span>Gift Wrapping:</span>
-                <span className="font-semibold text-brand-heading">₹{order.pricing.giftWrappingCharge}</span>
-              </div>
-            )}
-            {order.pricing.discountAmount && (
+            {discountAmount > 0 && (
               <div className="flex justify-between text-green-700">
                 <span>Discount Applied:</span>
-                <span className="font-semibold">-₹{order.pricing.discountAmount.toLocaleString('en-IN')}</span>
+                <span className="font-semibold">-₹{discountAmount.toLocaleString('en-IN')}</span>
               </div>
             )}
             <div className="flex justify-between border-t border-brand-border/40 pt-3 text-sm text-brand-heading font-bold select-none">
-              <span>Amount Paid (COD):</span>
-              <span className="text-base text-brand-heading">₹{order.pricing.total.toLocaleString('en-IN')}</span>
+              <span>Total Amount:</span>
+              <span className="text-base text-brand-heading">₹{total.toLocaleString('en-IN')}</span>
             </div>
           </div>
 
@@ -208,7 +227,7 @@ export default function OrderConfirmation() {
         </button>
 
         <a
-          href={`https://wa.me/916386422660?text=${encodeURIComponent(`Hi Fuzzy Soft Studio! I have a question regarding my order ${order.orderId}`)}`}
+          href={`https://wa.me/916386422660?text=${encodeURIComponent(`Hi Fuzzy Soft Studio! I have a question regarding my order ${orderId}`)}`}
           target="_blank"
           rel="noopener noreferrer"
           className="no-print flex items-center gap-2 border border-[#8FA088]/40 bg-[#8FA088]/10 hover:bg-[#8FA088]/20 text-[#2C1810] rounded-full px-5 py-3 text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer shadow-sm"
