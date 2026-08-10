@@ -112,12 +112,19 @@ export default function Orders() {
         updatePayload.delivered_at = nowString;
       }
 
-      const { error } = await supabase
+      let { error } = await supabase
         .from('orders')
         .update(updatePayload)
         .eq('order_id', orderId);
       
-      if (error) throw error;
+      if (error) {
+        // Retry with uppercase status for Postgres check constraint compliance
+        const upperRes = await supabase
+          .from('orders')
+          .update({ ...updatePayload, status: status.toUpperCase() as any })
+          .eq('order_id', orderId);
+        if (upperRes.error) throw error;
+      }
 
       // Update locally
       const updatedOrders = orders.map(o => o.order_id === orderId ? { ...o, ...updatePayload } : o);

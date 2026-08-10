@@ -165,7 +165,7 @@ export default function Checkout() {
 
       const cleanUtr = utrNumber.trim();
 
-      // 1. Insert order to database with UTR mapped to all potential column aliases
+      // 1. Insert order to database with status: 'PENDING' for orders_status_check constraint
       const orderPayload: any = {
         order_id: orderNumber,
         user_id: userId,
@@ -178,7 +178,7 @@ export default function Checkout() {
         utr_number: cleanUtr,
         transaction_id: cleanUtr,
         transaction_utr: cleanUtr,
-        status: 'Pending',
+        status: 'PENDING',
         created_at: new Date().toISOString(),
         gifting_info: giftWrapped ? {
           gift_wrapped: true,
@@ -191,11 +191,11 @@ export default function Checkout() {
         .from('orders')
         .insert(orderPayload);
 
-      // Resilient fallback handling if database columns (utr_number, gifting_info, etc.) are missing in schema cache
+      // Resilient fallback handling if database columns or casing differ in schema
       if (insertError) {
         console.warn('Primary order payload insert warning:', insertError.message);
         
-        // Fallback Step 1: Standard columns without custom gifting_info
+        // Fallback Step 1: Standard columns with uppercase PENDING
         const fallbackPayload: any = {
           order_id: orderNumber,
           user_id: userId,
@@ -206,7 +206,7 @@ export default function Checkout() {
           items: cart,
           total_amount: total,
           utr_number: cleanUtr,
-          status: 'Pending',
+          status: 'PENDING',
           created_at: new Date().toISOString()
         };
 
@@ -215,24 +215,26 @@ export default function Checkout() {
         if (fallbackRes.error) {
           console.warn('Secondary fallback insert warning:', fallbackRes.error.message);
           
-          // Fallback Step 2: Include UTR in status string if custom UTR column does not exist
-          const minimalPayload: any = {
-            order_id: orderNumber,
-            user_id: userId,
-            customer_name: name.trim(),
-            customer_phone: phone.trim(),
-            customer_email: email.trim() || null,
-            shipping_address: `${address.trim()}, ${city.trim()} - ${pincode.trim()}`,
-            items: cart,
-            total_amount: total,
-            status: `Pending (UTR: ${cleanUtr})`,
-            created_at: new Date().toISOString()
+          // Fallback Step 2: Try titlecase 'Pending' if constraint expects TitleCase
+          const titleCasePayload: any = {
+            ...fallbackPayload,
+            status: 'Pending'
           };
-          const minimalRes = await supabase.from('orders').insert(minimalPayload);
+          const titleCaseRes = await supabase.from('orders').insert(titleCasePayload);
 
-          if (minimalRes.error) {
-            console.warn('Minimal fallback insert warning:', minimalRes.error.message);
-            throw new Error(minimalRes.error.message || insertError.message);
+          if (titleCaseRes.error) {
+            console.warn('TitleCase fallback insert warning:', titleCaseRes.error.message);
+            // Fallback Step 3: Try lowercase 'pending' if constraint expects lowercase
+            const lowerCasePayload: any = {
+              ...fallbackPayload,
+              status: 'pending'
+            };
+            const lowerCaseRes = await supabase.from('orders').insert(lowerCasePayload);
+
+            if (lowerCaseRes.error) {
+              console.error('All DB status insert attempts failed:', lowerCaseRes.error.message);
+              throw new Error(lowerCaseRes.error.message || titleCaseRes.error.message || fallbackRes.error.message || insertError.message);
+            }
           }
         }
       }
