@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
-import { MessageCircle, ArrowLeft, ShieldCheck, Tag, Copy, Check } from 'lucide-react';
+import { MessageCircle, ArrowLeft, ShieldCheck, Tag, Copy, Check, Gift } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useStore } from '../store/useStore';
 import { supabase } from '../lib/supabaseClient';
@@ -35,6 +35,7 @@ export default function Checkout() {
   // Gifting Add-On States
   const [giftWrapped, setGiftWrapped] = useState(false);
   const [giftMessage, setGiftMessage] = useState('');
+  const [messageSaved, setMessageSaved] = useState(false);
 
   // UPI Payment States
   const [utrNumber, setUtrNumber] = useState('');
@@ -441,34 +442,53 @@ export default function Checkout() {
             </div>
 
             {/* Global Gift Add-on Card */}
-            <div className="bg-[#FCFAF8] border border-brand-border/40 rounded-xl p-4 space-y-3 select-none shadow-3xs transition duration-200 hover:border-brand-accent/25">
-              <label className="flex items-center gap-3 cursor-pointer">
+            <div className="bg-[#FAF7F5] border border-brand-border/40 rounded-2xl p-4.5 space-y-3.5 select-none shadow-3xs transition duration-200 hover:border-[#B76E79]/40">
+              <label className="flex items-start gap-3 cursor-pointer">
                 <input 
                   type="checkbox"
                   checked={giftWrapped}
                   onChange={(e) => setGiftWrapped(e.target.checked)}
-                  className="w-4 h-4 accent-brand-accent cursor-pointer rounded border-brand-border/50"
+                  className="w-4 h-4 mt-0.5 accent-[#B76E79] cursor-pointer rounded border-brand-border/50"
                 />
-                <div>
-                  <span className="block text-xs font-bold text-brand-heading">🎁 Add Luxury Gift Wrapping (+₹49)</span>
-                  <span className="block text-[9px] text-brand-body/50 mt-0.5">Satin ribbon tie, designer wrapping, and a handwritten card.</span>
+                <div className="flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <Gift className="text-[#B76E79]" size={16} strokeWidth={1.5} />
+                    <span className="font-serif text-xs font-bold text-brand-heading">Luxury Gift Wrapping (+₹49)</span>
+                  </div>
+                  <span className="block text-[10px] text-brand-body/60 mt-1 font-sans">
+                    Signature satin ribbon finish, eco-friendly luxury wrap, and a bespoke handwritten note card.
+                  </span>
                 </div>
               </label>
 
               {giftWrapped && (
                 <div className="space-y-2 pt-3 border-t border-brand-border/25 animate-fade-in">
-                  {/* Gift Message Textarea */}
-                  <div className="space-y-1">
-                    <span className="block text-[9px] font-semibold uppercase tracking-wider text-brand-heading">Custom Gift Message</span>
-                    <textarea
-                      value={giftMessage}
-                      onChange={(e) => setGiftMessage(e.target.value)}
-                      placeholder="Write a heartfelt message for the recipient..."
-                      rows={3}
-                      maxLength={200}
-                      className="w-full p-2.5 bg-white border border-brand-border/60 rounded-xl text-xs font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition resize-none"
-                    />
+                  <div className="flex justify-between items-center">
+                    <span className="block text-[10px] font-bold uppercase tracking-wider text-brand-heading font-serif">
+                      Custom Gift Message
+                    </span>
+                    {messageSaved && (
+                      <span className="text-[10px] text-[#8FA088] font-semibold flex items-center gap-1 animate-fade-in">
+                        ✓ Message noted
+                      </span>
+                    )}
                   </div>
+                  <textarea
+                    value={giftMessage}
+                    onChange={(e) => {
+                      setGiftMessage(e.target.value);
+                      if (messageSaved) setMessageSaved(false);
+                    }}
+                    onBlur={() => {
+                      if (giftMessage.trim()) {
+                        setMessageSaved(true);
+                      }
+                    }}
+                    placeholder="Write your heartfelt message for the recipient..."
+                    rows={3}
+                    maxLength={200}
+                    className="w-full p-3 bg-white/95 border border-brand-border/60 rounded-xl text-xs font-sans focus:outline-none focus:ring-1 focus:ring-[#B76E79] transition resize-none shadow-2xs"
+                  />
                 </div>
               )}
             </div>

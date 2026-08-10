@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabaseClient';
 import { useStore } from '../store/useStore';
 import { 
   User, LogOut, Package, Sparkles, 
-  MapPin, Heart, Plus, Edit2, Trash2 
+  Heart, Truck
 } from 'lucide-react';
 import { products as staticProducts } from '../data/products';
 import ProductCard from '../components/ProductCard';
@@ -14,17 +14,10 @@ interface Order {
   created_at?: string;
   total_amount: number;
   status: string;
+  cancellation_reason?: string | null;
+  carrier?: string | null;
+  tracking_number?: string | null;
   items: any[];
-}
-
-interface AddressItem {
-  id: string;
-  name: string;
-  phone: string;
-  address: string;
-  city: string;
-  pincode: string;
-  isDefault: boolean;
 }
 
 export default function Account() {
@@ -39,24 +32,12 @@ export default function Account() {
   const [productsList, setProductsList] = useState<any[]>(staticProducts);
 
   // Tab State
-  const [activeTab, setActiveTab] = useState<'orders' | 'profile' | 'addresses' | 'wishlist'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'profile' | 'track' | 'wishlist'>('orders');
 
   // Profile Settings Form State
   const [profileName, setProfileName] = useState('');
   const [profilePhone, setProfilePhone] = useState('');
   const [savingProfile, setSavingProfile] = useState(false);
-
-  // Address Book State
-  const [addresses, setAddresses] = useState<AddressItem[]>([]);
-  const [showAddressForm, setShowAddressForm] = useState(false);
-  const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
-  const [addrName, setAddrName] = useState('');
-  const [addrPhone, setAddrPhone] = useState('');
-  const [addrStreet, setAddrStreet] = useState('');
-  const [addrCity, setAddrCity] = useState('');
-  const [addrPincode, setAddrPincode] = useState('');
-  const [addrDefault, setAddrDefault] = useState(false);
-
   useEffect(() => {
     const loadProducts = async () => {
       try {
@@ -87,16 +68,6 @@ export default function Account() {
         const meta = session.user?.user_metadata || {};
         setProfileName(meta.full_name || meta.name || '');
         setProfilePhone(meta.phone || '');
-
-        // Load saved addresses from user metadata or local storage
-        if (Array.isArray(meta.addresses) && meta.addresses.length > 0) {
-          setAddresses(meta.addresses);
-        } else {
-          try {
-            const local = localStorage.getItem(`fss_addresses_${session.user.id}`);
-            if (local) setAddresses(JSON.parse(local));
-          } catch {}
-        }
 
         fetchOrders(session.user.id);
       }
@@ -130,6 +101,8 @@ export default function Account() {
           total_amount: typeof o.total_amount === 'number' ? o.total_amount : Number(o.total_amount) || 0,
           status: o.status || 'Processing',
           cancellation_reason: o.cancellation_reason || null,
+          carrier: o.carrier || null,
+          tracking_number: o.tracking_number || null,
           items: typeof o.items === 'string' ? JSON.parse(o.items) : o.items || []
         }));
         setOrders(mappedOrders);
@@ -193,98 +166,6 @@ export default function Account() {
     } finally {
       setSavingProfile(false);
     }
-  };
-
-  // Address CRUD Handlers
-  const saveAddressesToMeta = async (updated: AddressItem[]) => {
-    setAddresses(updated);
-    if (session?.user?.id) {
-      try {
-        localStorage.setItem(`fss_addresses_${session.user.id}`, JSON.stringify(updated));
-        await supabase.auth.updateUser({
-          data: { addresses: updated }
-        });
-      } catch (err) {
-        console.warn('Sync addresses error:', err);
-      }
-    }
-  };
-
-  const handleSaveAddress = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!addrName || !addrPhone || !addrStreet || !addrCity || !addrPincode) {
-      showToast('Please fill in all address fields', 'error');
-      return;
-    }
-
-    let updated: AddressItem[];
-    if (editingAddressId) {
-      updated = addresses.map((a) => {
-        if (a.id === editingAddressId) {
-          return {
-            id: a.id,
-            name: addrName,
-            phone: addrPhone,
-            address: addrStreet,
-            city: addrCity,
-            pincode: addrPincode,
-            isDefault: addrDefault
-          };
-        }
-        return addrDefault ? { ...a, isDefault: false } : a;
-      });
-    } else {
-      const newAddr: AddressItem = {
-        id: `addr_${Date.now()}`,
-        name: addrName,
-        phone: addrPhone,
-        address: addrStreet,
-        city: addrCity,
-        pincode: addrPincode,
-        isDefault: !!(addrDefault || addresses.length === 0)
-      };
-      updated = addrDefault 
-        ? [...addresses.map(a => ({ ...a, isDefault: false })), newAddr]
-        : [...addresses, newAddr];
-    }
-
-    saveAddressesToMeta(updated);
-    showToast(editingAddressId ? 'Address updated' : 'New address added', 'success');
-    resetAddressForm();
-  };
-
-  const handleDeleteAddress = (id: string) => {
-    const updated = addresses.filter(a => a.id !== id);
-    saveAddressesToMeta(updated);
-    showToast('Address deleted', 'success');
-  };
-
-  const handleSetDefaultAddress = (id: string) => {
-    const updated = addresses.map(a => ({ ...a, isDefault: a.id === id }));
-    saveAddressesToMeta(updated);
-    showToast('Default address updated', 'success');
-  };
-
-  const startEditAddress = (a: AddressItem) => {
-    setEditingAddressId(a.id);
-    setAddrName(a.name);
-    setAddrPhone(a.phone);
-    setAddrStreet(a.address);
-    setAddrCity(a.city);
-    setAddrPincode(a.pincode);
-    setAddrDefault(!!a.isDefault);
-    setShowAddressForm(true);
-  };
-
-  const resetAddressForm = () => {
-    setEditingAddressId(null);
-    setAddrName('');
-    setAddrPhone('');
-    setAddrStreet('');
-    setAddrCity('');
-    setAddrPincode('');
-    setAddrDefault(false);
-    setShowAddressForm(false);
   };
 
   if (loading) {
@@ -354,15 +235,15 @@ export default function Account() {
           </button>
 
           <button
-            onClick={() => setActiveTab('addresses')}
+            onClick={() => setActiveTab('track')}
             className={`w-full py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all duration-200 cursor-pointer ${
-              activeTab === 'addresses'
+              activeTab === 'track'
                 ? 'bg-brand-heading text-white shadow-xs'
                 : 'text-brand-body/75 hover:bg-brand-cream/80 hover:text-brand-heading'
             }`}
           >
-            <MapPin size={16} />
-            <span>Address Book</span>
+            <Truck size={16} />
+            <span>Track My Order</span>
           </button>
 
           <button
@@ -597,171 +478,71 @@ export default function Account() {
             </div>
           )}
 
-          {/* TAB 3: ADDRESS BOOK */}
-          {activeTab === 'addresses' && (
+          {/* TAB 3: TRACK MY ORDER */}
+          {activeTab === 'track' && (
             <div className="animate-fade-in space-y-6">
-              <div className="flex items-center justify-between border-b border-brand-border/20 pb-4">
+              <div className="border-b border-brand-border/20 pb-4">
                 <h2 className="font-serif text-xl font-bold text-brand-heading flex items-center gap-2 select-none">
-                  <MapPin size={20} className="text-[#C9A84C]" />
-                  <span>Saved Addresses</span>
+                  <Truck size={20} className="text-[#C9A84C]" />
+                  <span>Track My Order</span>
                 </h2>
-                {!showAddressForm && (
-                  <button
-                    onClick={() => { resetAddressForm(); setShowAddressForm(true); }}
-                    className="px-4 py-2 bg-brand-heading text-white rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition cursor-pointer hover:bg-brand-heading-hover shadow-2xs"
-                  >
-                    <Plus size={14} />
-                    <span>Add New Address</span>
-                  </button>
-                )}
+                <p className="text-xs text-brand-body/65 font-sans mt-1">
+                  View live courier dispatch, carrier partners, and consignment tracking numbers for your orders.
+                </p>
               </div>
 
-              {/* Address Form */}
-              {showAddressForm ? (
-                <form onSubmit={handleSaveAddress} className="bg-brand-cream/35 border border-brand-border/40 rounded-2xl p-5 space-y-4 max-w-xl">
-                  <h3 className="font-serif text-sm font-bold text-brand-heading">
-                    {editingAddressId ? 'Edit Address' : 'Add New Delivery Address'}
-                  </h3>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <label className="block text-[10px] font-semibold uppercase tracking-wider text-brand-heading">Full Name *</label>
-                      <input
-                        type="text"
-                        required
-                        value={addrName}
-                        onChange={(e) => setAddrName(e.target.value)}
-                        className="w-full h-10 px-3 bg-white rounded-xl border border-brand-border/70 text-xs focus:outline-none focus:ring-1 focus:ring-brand-accent"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="block text-[10px] font-semibold uppercase tracking-wider text-brand-heading">Phone Number *</label>
-                      <input
-                        type="tel"
-                        required
-                        value={addrPhone}
-                        onChange={(e) => setAddrPhone(e.target.value)}
-                        className="w-full h-10 px-3 bg-white rounded-xl border border-brand-border/70 text-xs focus:outline-none focus:ring-1 focus:ring-brand-accent"
-                      />
-                    </div>
+              {orders.length === 0 ? (
+                <div className="py-12 text-center select-none space-y-3">
+                  <div className="bg-brand-cream inline-flex p-4 rounded-full text-brand-accent mb-2">
+                    <Truck size={28} />
                   </div>
-
-                  <div className="space-y-1">
-                    <label className="block text-[10px] font-semibold uppercase tracking-wider text-brand-heading">Street Address / House No. *</label>
-                    <input
-                      type="text"
-                      required
-                      value={addrStreet}
-                      onChange={(e) => setAddrStreet(e.target.value)}
-                      className="w-full h-10 px-3 bg-white rounded-xl border border-brand-border/70 text-xs focus:outline-none focus:ring-1 focus:ring-brand-accent"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <label className="block text-[10px] font-semibold uppercase tracking-wider text-brand-heading">City *</label>
-                      <input
-                        type="text"
-                        required
-                        value={addrCity}
-                        onChange={(e) => setAddrCity(e.target.value)}
-                        className="w-full h-10 px-3 bg-white rounded-xl border border-brand-border/70 text-xs focus:outline-none focus:ring-1 focus:ring-brand-accent"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="block text-[10px] font-semibold uppercase tracking-wider text-brand-heading">Pincode *</label>
-                      <input
-                        type="text"
-                        required
-                        value={addrPincode}
-                        onChange={(e) => setAddrPincode(e.target.value)}
-                        className="w-full h-10 px-3 bg-white rounded-xl border border-brand-border/70 text-xs focus:outline-none focus:ring-1 focus:ring-brand-accent"
-                      />
-                    </div>
-                  </div>
-
-                  <label className="flex items-center gap-2 cursor-pointer pt-1">
-                    <input
-                      type="checkbox"
-                      checked={addrDefault}
-                      onChange={(e) => setAddrDefault(e.target.checked)}
-                      className="w-4 h-4 accent-brand-accent cursor-pointer"
-                    />
-                    <span className="text-xs text-brand-heading font-medium">Set as Default Delivery Address</span>
-                  </label>
-
-                  <div className="flex gap-3 pt-2">
-                    <button
-                      type="submit"
-                      className="px-6 py-2.5 bg-brand-heading text-white rounded-full text-xs font-bold uppercase tracking-wider transition cursor-pointer hover:bg-brand-heading-hover"
-                    >
-                      Save Address
-                    </button>
-                    <button
-                      type="button"
-                      onClick={resetAddressForm}
-                      className="px-6 py-2.5 bg-white border border-brand-border text-brand-body/75 rounded-full text-xs font-bold uppercase tracking-wider transition cursor-pointer hover:bg-brand-cream"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              ) : null}
-
-              {/* Address Cards Grid */}
-              {addresses.length === 0 && !showAddressForm ? (
-                <div className="py-12 text-center select-none space-y-2">
-                  <p className="text-xs text-brand-body/60">No saved addresses found in your address book.</p>
+                  <h3 className="font-serif text-lg font-bold text-brand-heading">No Active Consignments</h3>
+                  <p className="text-xs text-brand-body/70 max-w-xs mx-auto">
+                    You don't have any placed orders yet. Place an order to track live delivery.
+                  </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {addresses.map((a) => (
-                    <div
-                      key={a.id}
-                      className={`p-4 rounded-2xl border transition-all duration-200 relative flex flex-col justify-between ${
-                        a.isDefault
-                          ? 'bg-white border-[#C9A84C] shadow-xs ring-1 ring-[#C9A84C]/30'
-                          : 'bg-white/80 border-brand-border/60 hover:border-brand-border'
-                      }`}
-                    >
-                      <div className="space-y-1.5">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-serif text-sm font-bold text-brand-heading">{a.name}</h4>
-                          {a.isDefault && (
-                            <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-                              Default
-                            </span>
-                          )}
+                <div className="space-y-4">
+                  {orders.map((order) => (
+                    <div key={order.orderId} className="bg-white border border-brand-border/40 rounded-2xl p-5 shadow-xs space-y-4">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-brand-border/20 pb-3">
+                        <div>
+                          <span className="text-[10px] text-brand-body/55 uppercase tracking-wider block font-semibold">Order ID</span>
+                          <span className="font-mono text-sm font-bold text-brand-heading">#{order.orderId}</span>
                         </div>
-                        <p className="text-xs text-brand-body/75 leading-relaxed">{a.address}</p>
-                        <p className="text-xs text-brand-body/75">{a.city} - {a.pincode}</p>
-                        <p className="text-[11px] text-brand-body/55 font-mono pt-1">Phone: {a.phone}</p>
+                        <span className={`px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider text-[9px] ${
+                          String(order.status).toUpperCase() === 'CANCELLED'
+                            ? 'bg-red-100 text-red-700 border border-red-200'
+                            : String(order.status).toUpperCase() === 'DELIVERED'
+                              ? 'bg-green-100 text-green-700 border border-green-200'
+                              : String(order.status).toUpperCase() === 'SHIPPED'
+                                ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                                : 'bg-amber-100 text-amber-800 border border-amber-200'
+                        }`}>
+                          {order.status}
+                        </span>
                       </div>
 
-                      <div className="flex items-center gap-3 pt-4 mt-3 border-t border-brand-border/20 text-xs">
-                        <button
-                          onClick={() => startEditAddress(a)}
-                          className="flex items-center gap-1 text-brand-heading font-semibold hover:text-brand-accent transition cursor-pointer"
-                        >
-                          <Edit2 size={12} />
-                          <span>Edit</span>
-                        </button>
-                        <button
-                          onClick={() => handleDeleteAddress(a.id)}
-                          className="flex items-center gap-1 text-red-500 font-semibold hover:text-red-700 transition cursor-pointer"
-                        >
-                          <Trash2 size={12} />
-                          <span>Delete</span>
-                        </button>
-                        {!a.isDefault && (
-                          <button
-                            onClick={() => handleSetDefaultAddress(a.id)}
-                            className="ml-auto text-[10px] font-bold text-[#8FA088] uppercase hover:underline cursor-pointer"
-                          >
-                            Set Default
-                          </button>
-                        )}
-                      </div>
+                      {order.tracking_number ? (
+                        <div className="bg-blue-50/70 border border-blue-200/80 rounded-xl p-4 space-y-2">
+                          <div className="flex items-center gap-2 text-xs font-bold text-blue-900">
+                            <Truck size={14} className="text-blue-600" />
+                            <span>Courier Partner: {order.carrier || 'Express Logistics'}</span>
+                          </div>
+                          <div className="flex flex-wrap justify-between items-center text-xs font-sans text-blue-950 pt-1">
+                            <span>AWB Tracking No: <strong className="font-mono text-sm">{order.tracking_number}</strong></span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="bg-stone-50 border border-stone-200/70 rounded-xl p-4 text-xs text-brand-body/70 font-sans space-y-1">
+                          <p className="font-semibold text-brand-heading">Processing & Quality Inspection</p>
+                          <p className="text-[11px]">
+                            {String(order.status).toUpperCase() === 'CANCELLED' 
+                              ? 'This consignment was cancelled.' 
+                              : 'Your handcrafted floral arrangement is being package-sealed. Tracking number will be assigned upon carrier pickup.'}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

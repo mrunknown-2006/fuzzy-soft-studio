@@ -98,23 +98,19 @@ export default function Orders() {
     return result;
   }, [orders, orderFilter, orderSearch]);
 
+  // State for Custom Cancel Modal
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelOrderId, setCancelOrderId] = useState<string | null>(null);
+  const [cancelReasonInput, setCancelReasonInput] = useState('');
+  const [submittingCancel, setSubmittingCancel] = useState(false);
+
   // Status updates mapping confirmed/shipped/delivered timestamps and cancellation reasons
-  const handleUpdateOrderStatus = async (orderId: string, status: SupabaseOrder['status']) => {
+  const handleUpdateOrderStatus = async (orderId: string, status: SupabaseOrder['status'], customCancelReason?: string) => {
     try {
       const nowString = new Date().toISOString();
-      let cancelReason: string | null = null;
-
-      if (String(status).toUpperCase() === 'CANCELLED') {
-        cancelReason = window.prompt('Enter cancellation reason for the customer:', 'Out of stock / Customer request');
-        if (cancelReason === null) {
-          // Admin pressed cancel on prompt, abort status update
-          return;
-        }
-      }
-
       const updatePayload: any = { 
         status,
-        ...(cancelReason ? { cancellation_reason: cancelReason.trim() } : {})
+        ...(customCancelReason ? { cancellation_reason: customCancelReason.trim() } : {})
       };
 
       if (status === 'Processing') {
@@ -165,6 +161,32 @@ export default function Orders() {
     } catch (err: any) {
       console.error('Status update rejection:', err);
       showToast(`Database error updating status: ${err.message || 'Status change rejected'}`, 'error');
+    }
+  };
+
+  // Intercept dropdown selection for Cancellation Modal
+  const handleStatusSelectChange = (orderId: string, selectedStatus: string) => {
+    if (selectedStatus.toUpperCase() === 'CANCELLED') {
+      setCancelOrderId(orderId);
+      setCancelReasonInput('');
+      setShowCancelModal(true);
+    } else {
+      handleUpdateOrderStatus(orderId, selectedStatus as any);
+    }
+  };
+
+  // Confirm cancel from custom modal
+  const handleExecuteCancel = async () => {
+    if (!cancelOrderId) return;
+    setSubmittingCancel(true);
+    try {
+      const reason = cancelReasonInput.trim() || 'Cancelled by Store Admin';
+      await handleUpdateOrderStatus(cancelOrderId, 'CANCELLED' as any, reason);
+      setShowCancelModal(false);
+      setCancelOrderId(null);
+      setCancelReasonInput('');
+    } finally {
+      setSubmittingCancel(false);
     }
   };
 
@@ -449,7 +471,7 @@ export default function Orders() {
                             <td className="py-4 px-2 text-center" onClick={e => e.stopPropagation()}>
                               <select
                                 value={o.status}
-                                onChange={(e) => handleUpdateOrderStatus(o.order_id, e.target.value as any)}
+                                onChange={(e) => handleStatusSelectChange(o.order_id, e.target.value)}
                                 className={`px-2.5 h-6 rounded-full font-bold uppercase tracking-wider text-[8px] border text-center cursor-pointer focus:outline-none ${
                                   String(o.status).toUpperCase() === 'CANCELLED'
                                     ? 'bg-red-100 text-red-700 border-red-200 font-extrabold'
@@ -604,7 +626,7 @@ export default function Orders() {
                     <label className="text-[9px] font-sans font-bold uppercase tracking-wider text-brand-body/60 block mb-1">Status</label>
                     <select
                       value={viewingOrder.status}
-                      onChange={(e) => handleUpdateOrderStatus(viewingOrder.order_id, e.target.value as any)}
+                      onChange={(e) => handleStatusSelectChange(viewingOrder.order_id, e.target.value)}
                       className="h-8 w-full bg-white border border-brand-border/50 rounded-lg text-xs font-sans px-2 focus:outline-none"
                     >
                       <option value="Pending">Pending</option>
@@ -814,6 +836,57 @@ export default function Orders() {
           </div>
         )}
       </div>
+
+      {/* Custom Cancellation Modal */}
+      {showCancelModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in select-none">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-brand-border/40 space-y-5 animate-scale-up">
+            <div className="flex justify-between items-center border-b border-brand-border/20 pb-3">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-red-600">Cancel Order</span>
+                <h3 className="font-mono text-lg font-bold text-brand-heading mt-0.5">#{cancelOrderId}</h3>
+              </div>
+              <button
+                onClick={() => { setShowCancelModal(false); setCancelOrderId(null); }}
+                className="p-1.5 text-brand-body/40 hover:text-brand-heading rounded-full transition cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-brand-heading uppercase tracking-wider font-serif">
+                Cancellation Reason
+              </label>
+              <textarea
+                value={cancelReasonInput}
+                onChange={(e) => setCancelReasonInput(e.target.value)}
+                placeholder="Enter reason for customer (e.g. Item out of stock, Address unserviceable)..."
+                rows={3}
+                className="w-full p-3 bg-stone-50 border border-brand-border/60 rounded-xl text-xs font-sans focus:outline-none focus:ring-1 focus:ring-red-400 transition resize-none shadow-2xs"
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => { setShowCancelModal(false); setCancelOrderId(null); }}
+                className="px-5 h-10 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl text-xs font-semibold uppercase tracking-wider transition cursor-pointer"
+              >
+                Keep Order
+              </button>
+              <button
+                type="button"
+                disabled={submittingCancel}
+                onClick={handleExecuteCancel}
+                className="px-5 h-10 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold uppercase tracking-wider transition cursor-pointer shadow-sm disabled:opacity-50"
+              >
+                {submittingCancel ? 'Cancelling...' : 'Confirm Cancellation'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
