@@ -156,7 +156,6 @@ export default function Checkout() {
         shipping_address: `${address.trim()}, ${city.trim()} - ${pincode.trim()}`,
         items: cart,
         total_amount: total,
-        payment_method: 'UPI',
         utr_number: utrNumber.trim(),
         status: 'Pending',
         created_at: new Date().toISOString(),
@@ -171,7 +170,7 @@ export default function Checkout() {
         .from('orders')
         .insert(orderPayload);
 
-      // Resilient fallback handling if database columns (payment_method, utr_number, gifting_info, etc.) are missing in schema cache
+      // Resilient fallback handling if database columns (utr_number, gifting_info, etc.) are missing in schema cache
       if (insertError) {
         console.warn('Primary order payload insert warning:', insertError.message);
         
@@ -185,7 +184,6 @@ export default function Checkout() {
           shipping_address: `${address.trim()}, ${city.trim()} - ${pincode.trim()}`,
           items: cart,
           total_amount: total,
-          payment_method: 'UPI',
           utr_number: utrNumber.trim(),
           status: 'Pending',
           created_at: new Date().toISOString()
@@ -196,7 +194,7 @@ export default function Checkout() {
         if (fallbackRes.error) {
           console.warn('Secondary fallback insert warning:', fallbackRes.error.message);
           
-          // Fallback Step 2: Core columns with explicit status: Pending
+          // Fallback Step 2: Absolute core columns (order_id, user_id, name, phone, address, items, total, status, created_at)
           const minimalPayload: any = {
             order_id: orderNumber,
             user_id: userId,
@@ -206,8 +204,6 @@ export default function Checkout() {
             shipping_address: `${address.trim()}, ${city.trim()} - ${pincode.trim()}`,
             items: cart,
             total_amount: total,
-            payment_method: 'UPI',
-            utr_number: utrNumber.trim(),
             status: 'Pending',
             created_at: new Date().toISOString()
           };
