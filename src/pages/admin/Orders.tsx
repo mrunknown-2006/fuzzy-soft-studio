@@ -21,20 +21,34 @@ export default function Orders() {
   const [updatingNotes, setUpdatingNotes] = useState(false);
   const [updatingTracking, setUpdatingTracking] = useState(false);
 
-  // Secure Delete Order handler
+  // Secure Hard Delete Order handler
   const handleDeleteOrder = async (orderId: string) => {
-    if (!window.confirm(`Are you sure you want to delete order #${orderId}? This action cannot be undone.`)) {
+    if (!window.confirm(`Are you sure you want to permanently delete order #${orderId}? This action cannot be undone.`)) {
       return;
     }
 
     try {
-      // Execute delete by order_id, with fallback to id
+      // Execute strict hard deletion by order_id AND id
       const { error: err1 } = await supabase.from('orders').delete().eq('order_id', orderId);
-      if (err1) {
-        await supabase.from('orders').delete().eq('id', orderId);
+      const { error: err2 } = await supabase.from('orders').delete().eq('id', orderId);
+
+      if (err1 && err2) {
+        throw new Error(err1.message || err2.message);
       }
 
-      // Remove locally
+      // Purge any ghost local storage copies across application
+      try {
+        const local = localStorage.getItem('fuzzy-soft-studio-local-orders');
+        if (local) {
+          const parsed = JSON.parse(local);
+          const filtered = parsed.filter((o: any) => o.orderId !== orderId && o.order_id !== orderId && o.id !== orderId);
+          localStorage.setItem('fuzzy-soft-studio-local-orders', JSON.stringify(filtered));
+        }
+      } catch (e) {
+        console.warn('Ghost localStorage cleanup warning:', e);
+      }
+
+      // Remove locally from React state immediately
       const updated = orders.filter(o => o.order_id !== orderId && o.id !== orderId);
       setOrders(updated);
 
@@ -42,7 +56,7 @@ export default function Orders() {
         setViewingOrder(null);
       }
 
-      showToast(`Order #${orderId} permanently deleted`, 'success');
+      showToast(`Order #${orderId} permanently deleted from database`, 'success');
     } catch (err: any) {
       console.error('Delete order error:', err);
       showToast(err.message || 'Failed to delete order', 'error');

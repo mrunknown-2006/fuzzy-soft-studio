@@ -83,6 +83,14 @@ export default function Account() {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  // Refetch live orders whenever customer visits Orders or Track tabs
+  useEffect(() => {
+    if (session?.user?.id && (activeTab === 'orders' || activeTab === 'track')) {
+      fetchOrders(session.user.id);
+    }
+  }, [activeTab]);
+
+  // Fetch orders directly from Supabase database with zero stale caching
   const fetchOrders = async (userId: string) => {
     setLoadingOrders(true);
     try {
@@ -107,31 +115,12 @@ export default function Account() {
         }));
         setOrders(mappedOrders);
       } else {
-        const local = localStorage.getItem('fuzzy-soft-studio-local-orders');
-        if (local) {
-          const parsed = JSON.parse(local);
-          setOrders(parsed.map((item: any) => ({
-            orderId: item.orderId,
-            created_at: item.date || new Date().toISOString(),
-            total_amount: typeof item.pricing?.total === 'number' ? item.pricing.total : Number(item.pricing?.total) || 0,
-            status: 'Processing',
-            items: item.items
-          })));
-        }
+        // Strict database sync: if row was deleted in database, show zero orders
+        setOrders([]);
       }
     } catch (err: any) {
       console.warn('Supabase orders query warning:', err.message);
-      const local = localStorage.getItem('fuzzy-soft-studio-local-orders');
-      if (local) {
-        const parsed = JSON.parse(local);
-        setOrders(parsed.map((item: any) => ({
-          orderId: item.orderId,
-          created_at: item.date || new Date().toISOString(),
-          total_amount: typeof item.pricing?.total === 'number' ? item.pricing.total : Number(item.pricing?.total) || 0,
-          status: 'Processing',
-          items: item.items
-        })));
-      }
+      setOrders([]);
     } finally {
       setLoadingOrders(false);
     }
