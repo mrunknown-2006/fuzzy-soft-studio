@@ -438,13 +438,15 @@ export default function Orders() {
                                 value={o.status}
                                 onChange={(e) => handleUpdateOrderStatus(o.order_id, e.target.value as any)}
                                 className={`px-2.5 h-6 rounded-full font-bold uppercase tracking-wider text-[8px] border text-center cursor-pointer focus:outline-none ${
-                                  o.status === 'Delivered' 
-                                    ? 'bg-green-100 text-green-700 border-green-200'
-                                    : o.status === 'Shipped'
-                                      ? 'bg-blue-100 text-blue-700 border-blue-200'
-                                      : o.status === 'Processing'
-                                        ? 'bg-amber-100 text-amber-700 border-amber-200'
-                                        : 'bg-gray-100 text-gray-700 border-gray-200'
+                                  String(o.status).toUpperCase() === 'CANCELLED'
+                                    ? 'bg-red-100 text-red-700 border-red-200 font-extrabold'
+                                    : o.status === 'Delivered' 
+                                      ? 'bg-green-100 text-green-700 border-green-200'
+                                      : o.status === 'Shipped'
+                                        ? 'bg-blue-100 text-blue-700 border-blue-200'
+                                        : o.status === 'Processing'
+                                          ? 'bg-amber-100 text-amber-700 border-amber-200'
+                                          : 'bg-gray-100 text-gray-700 border-gray-200'
                                 }`}
                               >
                                 <option value="Pending">Pending</option>
@@ -534,13 +536,15 @@ export default function Orders() {
                         <div className="text-right">
                           <span className="block text-xs font-bold text-brand-heading">₹{o.total_amount}</span>
                           <span className={`inline-block px-2 py-0.5 rounded-full font-bold uppercase tracking-wider text-[7px] border mt-1 ${
-                            o.status === 'Delivered' 
-                              ? 'bg-green-50 text-green-700 border-green-200'
-                              : o.status === 'Shipped'
-                                ? 'bg-blue-50 text-blue-700 border-blue-200'
-                                : o.status === 'Processing'
-                                  ? 'bg-amber-50 text-amber-700 border-amber-200'
-                                  : 'bg-gray-50 text-gray-700 border-gray-200'
+                            String(o.status).toUpperCase() === 'CANCELLED'
+                              ? 'bg-red-100 text-red-700 border-red-200'
+                              : o.status === 'Delivered' 
+                                ? 'bg-green-50 text-green-700 border-green-200'
+                                : o.status === 'Shipped'
+                                  ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                  : o.status === 'Processing'
+                                    ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                    : 'bg-gray-50 text-gray-700 border-gray-200'
                           }`}>
                             {o.status}
                           </span>
