@@ -182,10 +182,29 @@ export default function Admin() {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  // Fetch all admin tables
+  // Fetch all admin tables & listen to Realtime orders
   useEffect(() => {
     if (session) {
       loadAllData();
+
+      const ordersChannel = supabase
+        .channel('admin-realtime-orders')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'orders'
+          },
+          () => {
+            loadOrders();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(ordersChannel);
+      };
     }
   }, [session]);
 
