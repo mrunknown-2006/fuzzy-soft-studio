@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useOutletContext, useLocation } from 'react-router-dom';
-import { FileText, Search, X, Truck, User, DollarSign, Edit2, Printer, Trash2, XCircle } from 'lucide-react';
+import { FileText, Search, X, Truck, User, DollarSign, Edit2, Printer, Trash2 } from 'lucide-react';
 import type { AdminContext } from './types';
 import type { SupabaseOrder } from '../../types/database';
 import { supabase } from '../../lib/supabaseClient';
@@ -101,8 +101,8 @@ export default function Orders() {
   // Status updates mapping confirmed/shipped/delivered timestamps
   const handleUpdateOrderStatus = async (orderId: string, status: SupabaseOrder['status']) => {
     try {
-      const updatePayload: Partial<SupabaseOrder> = { status };
       const nowString = new Date().toISOString();
+      const updatePayload: Partial<SupabaseOrder> = { status };
 
       if (status === 'Processing') {
         updatePayload.confirmed_at = nowString;
@@ -112,18 +112,32 @@ export default function Orders() {
         updatePayload.delivered_at = nowString;
       }
 
+      // Try status as passed first
       let { error } = await supabase
         .from('orders')
         .update(updatePayload)
         .eq('order_id', orderId);
       
+      // Fallback 1: Uppercase status (e.g. 'CANCELLED', 'PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED')
       if (error) {
-        // Retry with uppercase status for Postgres check constraint compliance
+        const upperStatus = String(status).toUpperCase();
         const upperRes = await supabase
           .from('orders')
-          .update({ ...updatePayload, status: status.toUpperCase() as any })
+          .update({ ...updatePayload, status: upperStatus as any })
           .eq('order_id', orderId);
-        if (upperRes.error) throw error;
+        
+        // Fallback 2: Titlecase status (e.g. 'Cancelled', 'Pending', 'Processing', 'Shipped', 'Delivered')
+        if (upperRes.error) {
+          const titleStatus = String(status).charAt(0).toUpperCase() + String(status).slice(1).toLowerCase();
+          const titleRes = await supabase
+            .from('orders')
+            .update({ ...updatePayload, status: titleStatus as any })
+            .eq('order_id', orderId);
+
+          if (titleRes.error) {
+            throw new Error(titleRes.error.message || upperRes.error.message || error.message);
+          }
+        }
       }
 
       // Update locally
@@ -136,7 +150,8 @@ export default function Orders() {
 
       showToast(`Order status updated to ${status}`, 'success');
     } catch (err: any) {
-      showToast(`Failed to update status: ${err.message}`, 'error');
+      console.error('Status update rejection:', err);
+      showToast(`Database error updating status: ${err.message || 'Status change rejected'}`, 'error');
     }
   };
 
@@ -548,19 +563,6 @@ export default function Orders() {
                     <h3 className="font-mono font-bold text-brand-heading text-lg mt-0.5">#{viewingOrder.order_id}</h3>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (window.confirm(`Are you sure you want to cancel order #${viewingOrder.order_id}?`)) {
-                          handleUpdateOrderStatus(viewingOrder.order_id, 'CANCELLED' as any);
-                        }
-                      }}
-                      title="Cancel Order"
-                      className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
-                    >
-                      <XCircle size={13} />
-                      <span>Cancel</span>
-                    </button>
                     <button
                       type="button"
                       onClick={() => handleDeleteOrder(viewingOrder.order_id)}
