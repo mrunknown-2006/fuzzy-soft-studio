@@ -76,6 +76,49 @@ export default function OrderConfirmation() {
   const deliveryCharge = order?.pricing?.deliveryCharge || 0;
   const total = order?.pricing?.total || subtotal + deliveryCharge;
   const discountAmount = order?.pricing?.discountAmount || 0;
+  const currentStatus = String(order?.status || 'PENDING').toUpperCase();
+
+  const statusInfo = useMemo(() => {
+    if (currentStatus === 'VERIFIED' || currentStatus === 'PROCESSING') {
+      return {
+        title: 'UPI Payment Verified',
+        sub: 'Payment verified! Scheduled for hand-crafting & dispatch.',
+        badge: 'Payment Verified',
+        badgeBg: 'bg-green-50 text-green-700 border-green-200'
+      };
+    }
+    if (currentStatus === 'SHIPPED') {
+      return {
+        title: 'Order Shipped',
+        sub: 'Your arrangement is package-sealed and out for delivery.',
+        badge: 'Shipped',
+        badgeBg: 'bg-blue-50 text-blue-700 border-blue-200'
+      };
+    }
+    if (currentStatus === 'DELIVERED') {
+      return {
+        title: 'Order Delivered',
+        sub: 'Delivered with care to recipient address.',
+        badge: 'Delivered',
+        badgeBg: 'bg-emerald-50 text-emerald-800 border-emerald-300'
+      };
+    }
+    if (currentStatus === 'CANCELLED') {
+      return {
+        title: 'Order Cancelled',
+        sub: 'This order has been cancelled.',
+        badge: 'Cancelled',
+        badgeBg: 'bg-red-50 text-red-700 border-red-200'
+      };
+    }
+    // Default PENDING
+    return {
+      title: 'UPI Payment Submitted',
+      sub: 'Order Received. Awaiting Payment Verification.',
+      badge: 'Awaiting Verification',
+      badgeBg: 'bg-amber-50 text-amber-800 border-amber-200'
+    };
+  }, [currentStatus]);
 
   return (
     <div className="min-h-screen pt-20 sm:pt-24 md:pt-28 pb-12 sm:pb-20 px-4 sm:px-6 lg:px-10 max-w-4xl mx-auto w-full flex flex-col items-center justify-center animate-fade-in-up">
@@ -85,9 +128,9 @@ export default function OrderConfirmation() {
         <div className="inline-flex items-center justify-center bg-[#8FA088]/15 text-[#8FA088] p-5 rounded-full mb-6 shadow-sm select-none bloom">
           <CheckCircle2 className="w-12 h-12" strokeWidth={1.5} />
         </div>
-        <h1 className="text-3xl sm:text-4xl font-serif text-brand-heading mb-3">Order Confirmed</h1>
+        <h1 className="text-3xl sm:text-4xl font-serif text-brand-heading mb-3">Order Received</h1>
         <p className="text-sm text-brand-body/75 font-sans leading-relaxed">
-          Thank you for choosing Fuzzy Soft Studio, <span className="font-semibold text-brand-heading">{fullName}</span>. Your custom arrangement is now scheduled for hand-crafting.
+          Thank you for choosing Fuzzy Soft Studio, <span className="font-semibold text-brand-heading">{fullName}</span>. {statusInfo.sub}
         </p>
       </div>
 
@@ -129,18 +172,18 @@ export default function OrderConfirmation() {
             </div>
           </div>
 
-          {/* Payment Method info */}
+          {/* Payment Method & Status info */}
           <div className="space-y-3">
             <h3 className="text-xs uppercase tracking-widest font-semibold text-brand-body/60 flex items-center gap-1.5 select-none">
               <CreditCard size={13} className="text-brand-accent" />
-              <span>Payment Details</span>
+              <span>Payment & Order Status</span>
             </h3>
             <div className="text-sm font-sans text-brand-body/90 space-y-1">
-              <div className="font-semibold text-brand-heading">UPI Payment (Verified)</div>
-              <div className="text-xs text-brand-body/70 select-none">Order recorded and scheduled for dispatch.</div>
+              <div className="font-semibold text-brand-heading">{statusInfo.title}</div>
+              <div className="text-xs text-brand-body/70 select-none">{statusInfo.sub}</div>
               <div className="pt-2 select-none">
-                <span className="text-[10px] uppercase tracking-wider font-semibold text-[#8FA088] border border-[#8FA088]/30 bg-[#8FA088]/5 px-2 py-0.5 rounded-md">
-                  Order Received & Verified
+                <span className={`text-[10px] uppercase tracking-wider font-semibold border px-2.5 py-0.5 rounded-full ${statusInfo.badgeBg}`}>
+                  {statusInfo.badge}
                 </span>
               </div>
             </div>

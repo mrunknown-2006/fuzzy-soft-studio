@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useOutletContext, useLocation } from 'react-router-dom';
-import { FileText, Search, X, Truck, User, DollarSign, Edit2, Printer, Trash2 } from 'lucide-react';
+import { FileText, Search, X, Truck, User, DollarSign, Edit2, Printer, Trash2, XCircle } from 'lucide-react';
 import type { AdminContext } from './types';
 import type { SupabaseOrder } from '../../types/database';
 import { supabase } from '../../lib/supabaseClient';
@@ -11,7 +11,7 @@ export default function Orders() {
 
   // State
   const [orderSearch, setOrderSearch] = useState('');
-  const [orderFilter, setOrderFilter] = useState<'All' | 'Pending' | 'Processing' | 'Shipped' | 'Delivered'>('All');
+  const [orderFilter, setOrderFilter] = useState<'All' | 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'CANCELLED'>('All');
   const [viewingOrder, setViewingOrder] = useState<SupabaseOrder | null>(null);
   
   // Drawer edits
@@ -436,6 +436,7 @@ export default function Orders() {
                                 <option value="Processing">Processing</option>
                                 <option value="Shipped">Shipped</option>
                                 <option value="Delivered">Delivered</option>
+                                <option value="CANCELLED">Cancelled</option>
                               </select>
                             </td>
                             <td className="py-4 pl-2 text-right select-none">
@@ -549,6 +550,19 @@ export default function Orders() {
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
+                      onClick={() => {
+                        if (window.confirm(`Are you sure you want to cancel order #${viewingOrder.order_id}?`)) {
+                          handleUpdateOrderStatus(viewingOrder.order_id, 'CANCELLED' as any);
+                        }
+                      }}
+                      title="Cancel Order"
+                      className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
+                    >
+                      <XCircle size={13} />
+                      <span>Cancel</span>
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => handleDeleteOrder(viewingOrder.order_id)}
                       title="Delete Order"
                       className="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
@@ -578,6 +592,7 @@ export default function Orders() {
                       <option value="Processing">Processing</option>
                       <option value="Shipped">Shipped</option>
                       <option value="Delivered">Delivered</option>
+                      <option value="CANCELLED">Cancelled</option>
                     </select>
                   </div>
                   <div className="text-right pt-4">
