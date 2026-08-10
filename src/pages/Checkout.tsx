@@ -273,8 +273,8 @@ export default function Checkout() {
   }
 
   return (
-    <div className="min-h-screen pt-24 sm:pt-28 pb-20 px-6 lg:px-10 max-w-7xl mx-auto w-full flex flex-col animate-fade-in-up">
-      <div className="mb-10 flex items-center justify-between">
+    <div className="min-h-screen pt-20 sm:pt-24 md:pt-28 pb-12 sm:pb-20 px-4 sm:px-6 lg:px-10 max-w-7xl mx-auto w-full flex flex-col animate-fade-in-up">
+      <div className="mb-4 sm:mb-10 flex items-center justify-between">
         <div>
           <h1 className="text-3xl sm:text-4xl font-serif text-brand-heading mb-2">Checkout</h1>
           <div className="h-0.5 w-16 bg-[#C9A84C] mt-2"></div>

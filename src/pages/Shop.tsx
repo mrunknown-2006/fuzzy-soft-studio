@@ -214,20 +214,20 @@ export default function Shop() {
   );
 
   return (
-    <div className="min-h-screen pt-24 sm:pt-28 pb-20 px-6 lg:px-10 max-w-7xl mx-auto w-full flex flex-col">
+    <div className="min-h-screen pt-20 sm:pt-24 md:pt-28 pb-12 sm:pb-20 px-4 sm:px-6 lg:px-10 max-w-7xl mx-auto w-full flex flex-col">
       {/* Breadcrumbs */}
-      <div className="flex items-center gap-1.5 text-[11px] text-brand-body/50 font-sans tracking-wide mb-6 mt-2 select-none animate-fade-in-up">
+      <div className="flex items-center gap-1.5 text-[11px] text-brand-body/50 font-sans tracking-wide mb-3 sm:mb-6 mt-0 select-none animate-fade-in-up">
         <Link to="/" className="hover:text-brand-accent transition-colors">Home</Link>
         <span>/</span>
         <span className="text-brand-heading font-medium">Shop</span>
       </div>
 
       {/* Page Header */}
-      <div className="text-center mb-10 animate-fade-in-up">
-        <h1 className="text-4xl sm:text-5xl font-serif text-brand-heading mb-2 font-medium">
+      <div className="text-center mb-5 sm:mb-10 animate-fade-in-up">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif text-brand-heading mb-1 sm:mb-2 font-medium">
           Our Collection
         </h1>
-        <p className="text-lg font-script text-[#8FA088] text-2xl select-none italic">
+        <p className="text-lg font-script text-[#8FA088] text-xl sm:text-2xl select-none italic">
           blooms for every story
         </p>
       </div>

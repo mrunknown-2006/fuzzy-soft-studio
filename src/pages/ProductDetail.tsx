@@ -341,9 +341,9 @@ export default function ProductDetail() {
   }
 
   return (
-    <div className="min-h-screen pt-24 sm:pt-28 pb-20 px-6 lg:px-10 max-w-7xl mx-auto w-full flex flex-col">
+    <div className="min-h-screen pt-20 sm:pt-24 md:pt-28 pb-12 sm:pb-20 px-4 sm:px-6 lg:px-10 max-w-7xl mx-auto w-full flex flex-col">
       {/* Breadcrumbs */}
-      <div className="flex items-center gap-1.5 text-[11px] text-brand-body/50 font-sans tracking-wide mb-6 select-none animate-fade-in-up">
+      <div className="flex items-center gap-1.5 text-[11px] text-brand-body/50 font-sans tracking-wide mb-3 sm:mb-6 select-none animate-fade-in-up">
         <Link to="/" className="hover:text-brand-accent transition-colors">Home</Link>
         <span>/</span>
         <Link to="/shop" className="hover:text-brand-accent transition-colors">Shop</Link>

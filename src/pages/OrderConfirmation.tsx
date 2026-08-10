@@ -53,7 +53,7 @@ export default function OrderConfirmation() {
   }, [stateDetails]);
 
   return (
-    <div className="min-h-screen pt-24 sm:pt-28 pb-20 px-6 lg:px-10 max-w-4xl mx-auto w-full flex flex-col items-center justify-center animate-fade-in-up">
+    <div className="min-h-screen pt-20 sm:pt-24 md:pt-28 pb-12 sm:pb-20 px-4 sm:px-6 lg:px-10 max-w-4xl mx-auto w-full flex flex-col items-center justify-center animate-fade-in-up">
       
       {/* Header Success Section */}
       <div className="text-center mb-8 max-w-md">
