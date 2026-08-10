@@ -458,14 +458,21 @@ export default function Home() {
                 animation: 'fadeInUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards'
               }}
             >
-              {heroBadge}
+              {heroBadge === 'FLORAL LIFESTYLE · EST. 2026' || heroBadge === 'FLORAL LIFESTYLE - EST. 2026' ? (
+                <>
+                  FLORAL LIFESTYLE · EST.<br className="block sm:hidden" /> 2026
+                </>
+              ) : (
+                heroBadge
+              )}
             </p>
             
             <h1 
-              className="text-5xl md:text-7xl lg:text-[8rem] leading-none tracking-tight text-brand-heading font-serif text-center max-w-5xl drop-shadow-[0_0_15px_rgba(255,255,255,0.25)]"
+              className="text-5xl md:text-7xl lg:text-[8rem] leading-none tracking-tight text-brand-heading font-serif text-center max-w-5xl"
               style={{ 
                 animation: 'fadeInUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards',
-                opacity: 0
+                opacity: 0,
+                textShadow: '0px 0px 12px rgba(255, 255, 255, 0.4)'
               }}
             >
               {heroMainTitle ? (
