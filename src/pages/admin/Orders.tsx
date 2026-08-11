@@ -4,6 +4,7 @@ import { FileText, Search, X, Truck, User, DollarSign, Edit2, Printer, Trash2 } 
 import type { AdminContext } from './types';
 import type { SupabaseOrder } from '../../types/database';
 import { supabase } from '../../lib/supabaseClient';
+import { sendOrderProcessingEmail } from '../../lib/emailService';
 
 export default function Orders() {
   const { orders, setOrders, showToast } = useOutletContext<AdminContext>();
@@ -169,6 +170,45 @@ export default function Orders() {
 
       if (viewingOrder && viewingOrder.order_id === orderId) {
         setViewingOrder({ ...viewingOrder, ...updatePayload });
+      }
+
+      // Trigger automated Resend order processing & payment verification email
+      if (String(status).toLowerCase() === 'processing') {
+        try {
+          const targetOrder = orders.find(o => o.order_id === orderId || o.id === orderId) || viewingOrder;
+          const targetEmail = targetOrder?.customer_email || (targetOrder as any)?.user_email || (targetOrder as any)?.email;
+          if (targetEmail) {
+            const rawItems = targetOrder?.items;
+            const items = typeof rawItems === 'string' ? JSON.parse(rawItems) : (Array.isArray(rawItems) ? rawItems : []);
+            
+            sendOrderProcessingEmail({
+              orderId: targetOrder?.order_id || orderId,
+              customerName: targetOrder?.customer_name || 'Valued Customer',
+              customerEmail: targetEmail,
+              customerPhone: targetOrder?.customer_phone || '',
+              shippingAddress: targetOrder?.shipping_address || 'Delivery address on file',
+              totalAmount: typeof targetOrder?.total_amount === 'number' ? targetOrder.total_amount : Number(targetOrder?.total_amount) || 0,
+              items: items.map((item: any) => ({
+                name: item.name || 'Floral Arrangement',
+                quantity: item.quantity || 1,
+                price: item.price || 0,
+                image: item.image
+              })),
+              isGiftWrapped: (targetOrder as any)?.is_gift_wrapped || (targetOrder as any)?.gifting_info?.gift_wrapped,
+              giftMessage: (targetOrder as any)?.gift_message || (targetOrder as any)?.gifting_info?.gift_message
+            }).then(res => {
+              if (res.success) {
+                showToast(`Processing confirmation email dispatched to ${targetEmail}`, 'success');
+              } else {
+                console.warn('Processing notification email notice:', res.error);
+              }
+            }).catch(eErr => {
+              console.warn('Processing email dispatch note:', eErr);
+            });
+          }
+        } catch (eCatch) {
+          console.warn('Processing email trigger exception:', eCatch);
+        }
       }
 
       showToast(`Order status updated to ${status}`, 'success');
