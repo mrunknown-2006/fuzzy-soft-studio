@@ -4,6 +4,7 @@ import { MessageCircle, ArrowLeft, ShieldCheck, Tag, Copy, Check, Gift } from 'l
 import { QRCodeSVG } from 'qrcode.react';
 import { useStore } from '../store/useStore';
 import { supabase } from '../lib/supabaseClient';
+import { sendOrderConfirmationEmail } from '../lib/emailService';
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -240,6 +241,39 @@ export default function Checkout() {
             }
           }
         }
+      }
+
+      // Fire automated Resend order confirmation email (non-blocking)
+      try {
+        const targetEmail = email.trim();
+        if (targetEmail) {
+          sendOrderConfirmationEmail({
+            orderId: orderNumber,
+            customerName: name,
+            customerEmail: targetEmail,
+            customerPhone: phone,
+            shippingAddress: `${address}, ${city} - ${pincode}`,
+            totalAmount: total,
+            items: cart.map(item => ({
+              name: item.name,
+              quantity: item.quantity,
+              price: item.price,
+              image: item.image
+            })),
+            isGiftWrapped: giftWrapped,
+            giftMessage: giftWrapped ? giftMessage.trim() : undefined
+          }).then(res => {
+            if (res.success) {
+              console.log('Automated confirmation email dispatched via Resend to:', targetEmail);
+            } else {
+              console.warn('Resend email notice:', res.error);
+            }
+          }).catch(eErr => {
+            console.warn('Automated email dispatch note:', eErr);
+          });
+        }
+      } catch (eCatch) {
+        console.warn('Automated email trigger caught:', eCatch);
       }
 
       // Backup order in local storage so customer order details are preserved
