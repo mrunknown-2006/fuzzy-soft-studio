@@ -4,6 +4,7 @@ import { MessageCircle, ArrowLeft, ShieldCheck, Tag, Copy, Check, Gift } from 'l
 import { QRCodeSVG } from 'qrcode.react';
 import { useStore } from '../store/useStore';
 import { supabase } from '../lib/supabaseClient';
+import { sendAdminNewOrderAlert } from '../lib/emailService';
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -240,6 +241,28 @@ export default function Checkout() {
             }
           }
         }
+      }
+
+      // Non-blocking trigger: Send instant Admin notification alert to mrunknownhipe@gmail.com for manual UTR verification
+      try {
+        sendAdminNewOrderAlert({
+          orderId: orderNumber,
+          customerName: name,
+          customerEmail: email.trim(),
+          customerPhone: phone,
+          totalAmount: total,
+          utrNumber: cleanUtr,
+          shippingAddress: `${address}, ${city} - ${pincode}`,
+          items: cart.map(item => ({
+            name: item.name,
+            quantity: item.quantity,
+            price: item.price
+          })),
+          isGiftWrapped: giftWrapped,
+          giftMessage: giftWrapped ? giftMessage.trim() : undefined
+        }).catch(aErr => console.warn('Admin new order alert dispatch note:', aErr));
+      } catch (aCatch) {
+        console.warn('Admin alert dispatch caught:', aCatch);
       }
 
       // Backup order in local storage so customer order details are preserved

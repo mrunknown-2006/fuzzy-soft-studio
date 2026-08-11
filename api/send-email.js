@@ -23,8 +23,134 @@ export default async function handler(req, res) {
 
   try {
     const details = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-    const { orderId, customerName, customerEmail, totalAmount, shippingAddress, items, isGiftWrapped, giftMessage } = details || {};
+    const { 
+      type, 
+      orderId, 
+      customerName, 
+      customerEmail, 
+      customerPhone,
+      totalAmount, 
+      shippingAddress, 
+      utrNumber,
+      items, 
+      isGiftWrapped, 
+      giftMessage 
+    } = details || {};
 
+    const resend = new Resend(resendApiKey);
+
+    // 1. ADMIN ALERT EMAIL DISPATCH (Triggers on new checkout creation for manual UTR verification)
+    if (type === 'admin_alert') {
+      const adminEmail = 'mrunknownhipe@gmail.com';
+      
+      const adminItemsHtml = items && items.length > 0
+        ? items.map(item => `
+            <tr>
+              <td style="padding: 8px 0; border-bottom: 1px solid #EBE3D5; font-family: 'Georgia', serif; font-size: 13px; color: #2C1810;">
+                ${item.name || 'Floral Arrangement'} <span style="color: #7A6258; font-size: 11px;">(x${item.quantity || 1})</span>
+              </td>
+              <td style="padding: 8px 0; border-bottom: 1px solid #EBE3D5; font-family: sans-serif; font-size: 13px; color: #2C1810; text-align: right; font-weight: bold;">
+                ₹${((item.price || 0) * (item.quantity || 1)).toLocaleString('en-IN')}
+              </td>
+            </tr>
+          `).join('')
+        : '<tr><td colspan="2" style="padding: 8px 0; font-family: sans-serif; font-size: 13px; color: #2C1810;">Order Items</td></tr>';
+
+      const adminGiftHtml = isGiftWrapped
+        ? `
+          <div style="margin-top: 14px; padding: 12px; background-color: #FAF7F2; border: 1px solid #EBE3D5; border-radius: 10px;">
+            <strong style="font-size: 12px; color: #2C1810;">🎁 Luxury Gift Wrap Requested</strong>
+            <p style="margin: 4px 0 0 0; font-size: 11px; color: #7A6258; font-style: italic;">
+              ${giftMessage ? `"${giftMessage}"` : 'Handwritten note card requested.'}
+            </p>
+          </div>
+        `
+        : '';
+
+      const adminHtml = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <title>🚨 NEW ORDER RECEIVED: #${orderId}</title>
+          </head>
+          <body style="margin: 0; padding: 0; background-color: #FAF7F5; font-family: sans-serif;">
+            <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #FAF7F5; padding: 30px 10px;">
+              <tr>
+                <td align="center">
+                  <table width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #FFFFFF; border-radius: 16px; border: 1px solid #EBE3D5; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.04);">
+                    <!-- Admin Alert Header -->
+                    <tr>
+                      <td style="background-color: #2C1810; padding: 24px; text-align: center;">
+                        <h1 style="margin: 0; font-family: 'Georgia', serif; font-size: 22px; color: #FDFBF7; font-weight: normal; letter-spacing: 1px;">
+                          🚨 New Order Received: #${orderId}
+                        </h1>
+                        <p style="margin: 6px 0 0 0; font-family: sans-serif; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #DCA29A;">
+                          Action Required: Manual UTR Verification
+                        </p>
+                      </td>
+                    </tr>
+                    <!-- Admin Body -->
+                    <tr>
+                      <td style="padding: 28px;">
+                        <div style="background-color: #FAF7F2; padding: 16px; border-radius: 12px; border: 1px solid #EBE3D5; margin-bottom: 20px;">
+                          <table width="100%" border="0" cellspacing="0" cellpadding="0" style="font-size: 14px; color: #2C1810;">
+                            <tr>
+                              <td style="padding: 4px 0;"><strong>Customer:</strong> ${customerName || 'N/A'}</td>
+                              <td align="right" style="padding: 4px 0;"><strong>Total Amount:</strong> ₹${(totalAmount || 0).toLocaleString('en-IN')}</td>
+                            </tr>
+                            <tr>
+                              <td style="padding: 4px 0;"><strong>Email:</strong> ${customerEmail || 'N/A'}</td>
+                              <td align="right" style="padding: 4px 0;"><strong>UTR / Txn ID:</strong> <span style="font-family: monospace; background: #EAE3D9; padding: 2px 6px; border-radius: 4px; font-weight: bold; color: #2C1810;">${utrNumber || 'N/A'}</span></td>
+                            </tr>
+                            <tr>
+                              <td colspan="2" style="padding: 4px 0;"><strong>Phone:</strong> ${customerPhone || 'N/A'}</td>
+                            </tr>
+                          </table>
+                        </div>
+
+                        <h3 style="margin: 0 0 10px 0; font-family: 'Georgia', serif; font-size: 15px; color: #2C1810;">Order Items Summary</h3>
+                        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 20px; font-size: 13px;">
+                          ${adminItemsHtml}
+                        </table>
+
+                        <div style="padding: 14px; border: 1px dashed #EBE3D5; border-radius: 12px; font-size: 12px; color: #5C463D; margin-bottom: 20px;">
+                          <strong>Delivery Address:</strong><br>
+                          ${shippingAddress || 'N/A'}
+                        </div>
+
+                        ${adminGiftHtml}
+
+                        <div style="text-align: center; margin-top: 24px;">
+                          <a href="https://fuzzysoftstudio.com/admin" style="display: inline-block; background-color: #2C1810; color: #FDFBF7; text-decoration: none; padding: 12px 24px; border-radius: 30px; font-weight: bold; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">
+                            Review Order in Admin Dashboard →
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </body>
+        </html>
+      `;
+
+      const result = await resend.emails.send({
+        from: 'Fuzzy Soft Studio <orders@fuzzysoftstudio.com>',
+        to: [adminEmail],
+        subject: `🚨 NEW ORDER RECEIVED: #${orderId} - Fuzzy Soft Studio`,
+        html: adminHtml
+      });
+
+      if (result.data) {
+        return res.status(200).json({ success: true, data: result.data });
+      } else {
+        return res.status(400).json({ success: false, error: result.error });
+      }
+    }
+
+    // 2. CUSTOMER PROCESSING EMAIL DISPATCH (Triggers on Admin status change to 'Processing')
     if (!customerEmail) {
       return res.status(400).json({ success: false, error: 'No customer email address provided' });
     }
@@ -141,7 +267,6 @@ export default async function handler(req, res) {
       </html>
     `;
 
-    const resend = new Resend(resendApiKey);
     const result = await resend.emails.send({
       from: 'Fuzzy Soft Studio <orders@fuzzysoftstudio.com>',
       to: [customerEmail],
