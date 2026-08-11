@@ -200,14 +200,21 @@ export default function Orders() {
               if (res.success) {
                 showToast(`Processing confirmation email dispatched to ${targetEmail}`, 'success');
               } else {
-                console.warn('Processing notification email notice:', res.error);
+                console.error('[Resend Email Failure Debug]:', res.error);
+                const errMsg = typeof res.error === 'string' ? res.error : (res.error?.message || res.error?.name || 'API error dispatching email');
+                showToast(`Email Alert: Failed to send email to ${targetEmail} (${errMsg})`, 'error');
               }
             }).catch(eErr => {
-              console.warn('Processing email dispatch note:', eErr);
+              console.error('[Resend Email Exception Debug]:', eErr);
+              showToast(`Email Exception: ${eErr?.message || 'Error communicating with Resend service'}`, 'error');
             });
+          } else {
+            console.warn('[Resend Email Skipped]: Order does not contain a customer email address.');
+            showToast('Email Alert: Order has no customer email address registered to receive notification.', 'error');
           }
-        } catch (eCatch) {
-          console.warn('Processing email trigger exception:', eCatch);
+        } catch (eCatch: any) {
+          console.error('[Resend Email Outer Try/Catch Exception]:', eCatch);
+          showToast(`Email Failure: ${eCatch?.message || 'Email trigger initialization failed'}`, 'error');
         }
       }
 

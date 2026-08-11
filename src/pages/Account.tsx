@@ -280,92 +280,170 @@ export default function Account() {
                   </Link>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse text-left font-sans text-xs">
-                    <thead>
-                      <tr className="border-b border-brand-border/30 text-brand-body/55 uppercase font-semibold tracking-wider select-none">
-                        <th className="pb-3 pr-2">Order ID</th>
-                        <th className="pb-3 px-2">Date</th>
-                        <th className="pb-3 px-2">Items</th>
-                        <th className="pb-3 px-2 text-right">Total</th>
-                        <th className="pb-3 pl-2 text-right">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-brand-border/20 text-brand-body/85">
-                      {orders.map((order) => (
-                        <tr key={order.orderId} className="hover:bg-brand-cream/35 transition-colors">
-                          <td className="py-4 pr-2 font-semibold text-brand-heading font-mono">{order.orderId}</td>
-                          <td className="py-4 px-2 text-brand-body/70 select-none">
-                            {new Date(order.created_at || '').toLocaleDateString('en-IN', {
-                              day: 'numeric',
-                              month: 'short',
-                              year: 'numeric'
-                            })}
-                          </td>
-                          <td className="py-4 px-2">
-                            <div className="flex flex-col gap-2 max-w-[280px]">
-                              {order.items.map((item, idx) => {
-                                const productSlug = getProductSlug(item.id);
-                                return (
-                                  <div key={idx} className="flex items-center justify-between gap-3 py-1 border-b border-brand-border/10 last:border-b-0">
-                                    <div className="truncate text-brand-body/85 font-medium text-xs">
-                                      {productSlug ? (
-                                        <Link 
-                                          to={`/product/${productSlug}`} 
-                                          className="text-[#8FA088] hover:text-brand-accent font-semibold transition"
-                                        >
-                                          {item.name}
-                                        </Link>
-                                      ) : (
-                                        <span className="text-brand-heading font-semibold">{item.name}</span>
-                                      )}
-                                      <span className="text-brand-body/50 text-[10px] ml-1.5 font-normal select-none">
-                                        (&times;{item.quantity})
-                                      </span>
-                                    </div>
-                                    {productSlug && (
-                                      <Link
-                                        to={`/product/${productSlug}?write_review=true`}
-                                        className="px-2.5 py-0.5 bg-white hover:bg-brand-cream border border-[#C9A84C]/60 text-[#C9A84C] rounded-full text-[9px] uppercase tracking-wider font-semibold transition shrink-0"
-                                      >
-                                        Review
-                                      </Link>
-                                    )}
-                                  </div>
-                                );
+                <div className="space-y-4">
+                  {/* Mobile View: Vertical Stacked Cards (Zero horizontal scroll) */}
+                  <div className="block md:hidden space-y-4">
+                    {orders.map((order) => (
+                      <div key={order.orderId} className="bg-white/80 border border-brand-border/40 rounded-2xl p-4 space-y-3.5 shadow-3xs">
+                        <div className="flex items-center justify-between border-b border-brand-border/20 pb-2.5">
+                          <div>
+                            <span className="font-mono text-xs font-bold text-brand-heading block">#{order.orderId}</span>
+                            <span className="text-[10px] text-brand-body/60 font-sans">
+                              {new Date(order.created_at || '').toLocaleDateString('en-IN', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric'
                               })}
-                            </div>
-                          </td>
+                            </span>
+                          </div>
+                          <span className={`px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider text-[9px] ${
+                            String(order.status).toUpperCase() === 'CANCELLED' || String(order.status).toUpperCase() === 'CANCELED'
+                              ? 'bg-red-100 text-red-700 border border-red-200 font-extrabold'
+                              : String(order.status).toUpperCase() === 'DELIVERED' 
+                                ? 'bg-green-100 text-green-700 border border-green-200'
+                                : String(order.status).toUpperCase() === 'SHIPPED'
+                                  ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                                  : String(order.status).toUpperCase() === 'PROCESSING' || String(order.status).toUpperCase() === 'VERIFIED'
+                                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                    : 'bg-amber-100 text-amber-800 border border-amber-200'
+                          }`}>
+                            {order.status}
+                          </span>
+                        </div>
 
-                          <td className="py-4 px-2 text-right font-semibold text-brand-heading select-none">
-                            ₹{(order.total_amount ?? 0).toLocaleString('en-IN')}
-                          </td>
-                          <td className="py-4 pl-2 text-right select-none">
-                            <div className="flex flex-col items-end">
-                              <span className={`inline-block px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider text-[9px] ${
-                                String(order.status).toUpperCase() === 'CANCELLED' || String(order.status).toUpperCase() === 'CANCELED'
-                                  ? 'bg-red-100 text-red-700 border border-red-200 font-extrabold'
-                                  : String(order.status).toUpperCase() === 'DELIVERED' 
-                                    ? 'bg-green-100 text-green-700 border border-green-200'
-                                    : String(order.status).toUpperCase() === 'SHIPPED'
-                                      ? 'bg-blue-100 text-blue-700 border border-blue-200'
-                                      : String(order.status).toUpperCase() === 'PROCESSING' || String(order.status).toUpperCase() === 'VERIFIED'
-                                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                                        : 'bg-amber-100 text-amber-800 border border-amber-200'
-                              }`}>
-                                {order.status}
-                              </span>
-                              {(String(order.status).toUpperCase() === 'CANCELLED' || String(order.status).toUpperCase() === 'CANCELED') && (order as any).cancellation_reason && (
-                                <div className="text-[10px] text-red-600 font-sans mt-1 text-right max-w-[180px] leading-tight font-medium">
-                                  <span className="font-semibold">Reason:</span> {(order as any).cancellation_reason}
+                        {/* Items */}
+                        <div className="space-y-2">
+                          {order.items.map((item, idx) => {
+                            const productSlug = getProductSlug(item.id);
+                            return (
+                              <div key={idx} className="flex items-center justify-between gap-2 text-xs font-sans">
+                                <div className="truncate text-brand-body/85">
+                                  {productSlug ? (
+                                    <Link to={`/product/${productSlug}`} className="text-[#8FA088] hover:text-brand-accent font-semibold">
+                                      {item.name}
+                                    </Link>
+                                  ) : (
+                                    <span className="text-brand-heading font-semibold">{item.name}</span>
+                                  )}
+                                  <span className="text-brand-body/50 text-[10px] ml-1">(&times;{item.quantity})</span>
                                 </div>
-                              )}
-                            </div>
-                          </td>
+                                {productSlug && (
+                                  <Link
+                                    to={`/product/${productSlug}?write_review=true`}
+                                    className="px-2.5 py-0.5 bg-white border border-[#C9A84C]/60 text-[#C9A84C] rounded-full text-[9px] uppercase tracking-wider font-semibold shrink-0"
+                                  >
+                                    Review
+                                  </Link>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Cancellation Reason if cancelled */}
+                        {(String(order.status).toUpperCase() === 'CANCELLED' || String(order.status).toUpperCase() === 'CANCELED') && (order as any).cancellation_reason && (
+                          <div className="bg-red-50 border border-red-200/70 p-2.5 rounded-xl text-[10px] text-red-700 font-sans">
+                            <span className="font-bold">Reason:</span> {(order as any).cancellation_reason}
+                          </div>
+                        )}
+
+                        {/* Footer Total */}
+                        <div className="flex justify-between items-center pt-2 border-t border-brand-border/20 text-xs">
+                          <span className="text-brand-body/60 font-semibold uppercase tracking-wider text-[10px]">Total Amount</span>
+                          <span className="font-bold text-brand-heading text-sm">₹{(order.total_amount ?? 0).toLocaleString('en-IN')}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Desktop View: Table */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full border-collapse text-left font-sans text-xs">
+                      <thead>
+                        <tr className="border-b border-brand-border/30 text-brand-body/55 uppercase font-semibold tracking-wider select-none">
+                          <th className="pb-3 pr-2">Order ID</th>
+                          <th className="pb-3 px-2">Date</th>
+                          <th className="pb-3 px-2">Items</th>
+                          <th className="pb-3 px-2 text-right">Total</th>
+                          <th className="pb-3 pl-2 text-right">Status</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-brand-border/20 text-brand-body/85">
+                        {orders.map((order) => (
+                          <tr key={order.orderId} className="hover:bg-brand-cream/35 transition-colors">
+                            <td className="py-4 pr-2 font-semibold text-brand-heading font-mono">{order.orderId}</td>
+                            <td className="py-4 px-2 text-brand-body/70 select-none">
+                              {new Date(order.created_at || '').toLocaleDateString('en-IN', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric'
+                              })}
+                            </td>
+                            <td className="py-4 px-2">
+                              <div className="flex flex-col gap-2 max-w-[280px]">
+                                {order.items.map((item, idx) => {
+                                  const productSlug = getProductSlug(item.id);
+                                  return (
+                                    <div key={idx} className="flex items-center justify-between gap-3 py-1 border-b border-brand-border/10 last:border-b-0">
+                                      <div className="truncate text-brand-body/85 font-medium text-xs">
+                                        {productSlug ? (
+                                          <Link 
+                                            to={`/product/${productSlug}`} 
+                                            className="text-[#8FA088] hover:text-brand-accent font-semibold transition"
+                                          >
+                                            {item.name}
+                                          </Link>
+                                        ) : (
+                                          <span className="text-brand-heading font-semibold">{item.name}</span>
+                                        )}
+                                        <span className="text-brand-body/50 text-[10px] ml-1.5 font-normal select-none">
+                                          (&times;{item.quantity})
+                                        </span>
+                                      </div>
+                                      {productSlug && (
+                                        <Link
+                                          to={`/product/${productSlug}?write_review=true`}
+                                          className="px-2.5 py-0.5 bg-white hover:bg-brand-cream border border-[#C9A84C]/60 text-[#C9A84C] rounded-full text-[9px] uppercase tracking-wider font-semibold transition shrink-0"
+                                        >
+                                          Review
+                                        </Link>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </td>
+
+                            <td className="py-4 px-2 text-right font-semibold text-brand-heading select-none">
+                              ₹{(order.total_amount ?? 0).toLocaleString('en-IN')}
+                            </td>
+                            <td className="py-4 pl-2 text-right select-none">
+                              <div className="flex flex-col items-end">
+                                <span className={`inline-block px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider text-[9px] ${
+                                  String(order.status).toUpperCase() === 'CANCELLED' || String(order.status).toUpperCase() === 'CANCELED'
+                                    ? 'bg-red-100 text-red-700 border border-red-200 font-extrabold'
+                                    : String(order.status).toUpperCase() === 'DELIVERED' 
+                                      ? 'bg-green-100 text-green-700 border border-green-200'
+                                      : String(order.status).toUpperCase() === 'SHIPPED'
+                                        ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                                        : String(order.status).toUpperCase() === 'PROCESSING' || String(order.status).toUpperCase() === 'VERIFIED'
+                                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                          : 'bg-amber-100 text-amber-800 border border-amber-200'
+                                }`}>
+                                  {order.status}
+                                </span>
+                                {(String(order.status).toUpperCase() === 'CANCELLED' || String(order.status).toUpperCase() === 'CANCELED') && (order as any).cancellation_reason && (
+                                  <div className="text-[10px] text-red-600 font-sans mt-1 text-right max-w-[180px] leading-tight font-medium">
+                                    <span className="font-semibold">Reason:</span> {(order as any).cancellation_reason}
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
             </div>
