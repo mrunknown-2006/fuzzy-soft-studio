@@ -20,7 +20,7 @@ export default function Login() {
   const [resetSent, setResetSent] = useState(false);
 
   // If user is already authenticated, redirect based on role
-  const ADMIN_EMAIL = 'angrybird@fuzzysoftstudio.com';
+  const ADMIN_EMAIL = 'mrunknownhipe@gmail.com';
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {

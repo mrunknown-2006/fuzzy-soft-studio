@@ -141,7 +141,7 @@ export default function Admin() {
       setSession(session);
       if (session) {
         const email = session.user?.email || '';
-        const isAuthorized = email === 'angrybird@fuzzysoftstudio.com';
+        const isAuthorized = email === 'mrunknownhipe@gmail.com';
         
         if (isAuthorized) {
           setIsAdmin(true);
@@ -161,7 +161,7 @@ export default function Admin() {
       setSession(session);
       if (session) {
         const email = session.user?.email || '';
-        const isAuthorized = email === 'angrybird@fuzzysoftstudio.com';
+        const isAuthorized = email === 'mrunknownhipe@gmail.com';
         
         if (isAuthorized) {
           setIsAdmin(true);
