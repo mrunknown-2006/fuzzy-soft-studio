@@ -15,9 +15,31 @@ export default function Footer() {
   const [footerNote, setFooterNote] = useState('Made with love in Lucknow 🌸');
 
   const [footerLogoUrl, setFooterLogoUrl] = useState<string | null>(null);
+  const [dynamicCategories, setDynamicCategories] = useState<Array<{ name: string; slug: string }>>([
+    { name: 'Bouquets', slug: 'bouquets' },
+    { name: 'Arrangements', slug: 'arrangements' },
+    { name: 'Gift Boxes', slug: 'gift-boxes' },
+    { name: 'Dried Flowers', slug: 'dried-flowers' }
+  ]);
 
   useEffect(() => {
     const loadFooterData = async () => {
+      // Fetch dynamic categories from products table
+      try {
+        const { data: prodData } = await supabase.from('products').select('category');
+        if (prodData && prodData.length > 0) {
+          const uniqueCats = Array.from(new Set(prodData.map(p => p.category).filter(Boolean)));
+          if (uniqueCats.length > 0) {
+            setDynamicCategories(uniqueCats.map(c => ({
+              name: c,
+              slug: c.toLowerCase().replace(/\s+/g, '-')
+            })));
+          }
+        }
+      } catch (cErr) {
+        console.warn('Failed to load categories for footer:', cErr);
+      }
+
       // Fetch footer site content
       try {
         const { data } = await supabase
@@ -143,25 +165,20 @@ export default function Footer() {
             </h3>
             <ul className="flex flex-col space-y-2.5 text-[13px] font-sans text-brand-body/75">
               <li>
-                <Link to="/shop" className="hover:text-brand-accent hover:translate-x-0.5 transition-all duration-300 inline-block">
+                <Link to="/shop" className="hover:text-brand-accent hover:translate-x-0.5 transition-all duration-300 inline-block font-semibold">
                   All Products
                 </Link>
               </li>
-              <li>
-                <Link to="/shop?sort=best-sellers" className="hover:text-brand-accent hover:translate-x-0.5 transition-all duration-300 inline-block">
-                  Best Sellers
-                </Link>
-              </li>
-              <li>
-                <Link to="/shop?sort=new-arrivals" className="hover:text-brand-accent hover:translate-x-0.5 transition-all duration-300 inline-block">
-                  New Arrivals
-                </Link>
-              </li>
-              <li>
-                <Link to="/shop?collection=gift-bouquets" className="hover:text-brand-accent hover:translate-x-0.5 transition-all duration-300 inline-block">
-                  Gift Sets
-                </Link>
-              </li>
+              {dynamicCategories.map((cat) => (
+                <li key={cat.slug}>
+                  <Link 
+                    to={`/shop?category=${encodeURIComponent(cat.slug)}`} 
+                    className="hover:text-brand-accent hover:translate-x-0.5 transition-all duration-300 inline-block capitalize"
+                  >
+                    {cat.name}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
