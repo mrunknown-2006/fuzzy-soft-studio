@@ -11,6 +11,7 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState('');
   const [logoUrl, setLogoUrl] = useState<string>('/logo.png?v=2');
   const [mobileLogoUrl, setMobileLogoUrl] = useState<string>('');
+  const [isLogoLoaded, setIsLogoLoaded] = useState(false);
   const navigate = useNavigate();
 
   const cart = useStore((state) => state.cart);
@@ -107,8 +108,10 @@ export default function Navbar() {
                 decoding="async"
                 loading="eager"
                 fetchPriority="high"
-                onError={(e) => { e.currentTarget.src = '/logo.png'; }}
-                className="hidden md:block h-full w-auto object-contain mix-blend-multiply contrast-125 brightness-95 drop-shadow-sm [image-rendering:_crisp-edges] [image-rendering:_-webkit-optimize-contrast] transition-opacity duration-300" 
+                onLoad={() => setIsLogoLoaded(true)}
+                onError={(e) => { e.currentTarget.src = '/logo.png'; setIsLogoLoaded(true); }}
+                style={{ color: 'transparent', textIndent: '-10000px' }}
+                className={`hidden md:block h-full w-auto object-contain mix-blend-multiply contrast-125 brightness-95 drop-shadow-sm [image-rendering:_crisp-edges] [image-rendering:_-webkit-optimize-contrast] transition-opacity duration-300 ${isLogoLoaded ? 'opacity-100' : 'opacity-0'}`} 
               />
               {/* Mobile Version — Dedicated Admin Mobile Image Only (Maximized Size & Impact) */}
               <img 
@@ -117,8 +120,10 @@ export default function Navbar() {
                 decoding="async"
                 loading="eager"
                 fetchPriority="high"
-                onError={(e) => { e.currentTarget.src = '/logo.png'; }}
-                className="block md:hidden h-16 sm:h-18 max-h-20 w-auto object-contain scale-110 origin-left mix-blend-multiply contrast-125 brightness-95 drop-shadow-sm [image-rendering:_crisp-edges] [image-rendering:_-webkit-optimize-contrast] py-0 my-0 transition-opacity duration-300" 
+                onLoad={() => setIsLogoLoaded(true)}
+                onError={(e) => { e.currentTarget.src = '/logo.png'; setIsLogoLoaded(true); }}
+                style={{ color: 'transparent', textIndent: '-10000px' }}
+                className={`block md:hidden h-16 sm:h-18 max-h-20 w-auto object-contain scale-110 origin-left mix-blend-multiply contrast-125 brightness-95 drop-shadow-sm [image-rendering:_crisp-edges] [image-rendering:_-webkit-optimize-contrast] py-0 my-0 transition-opacity duration-300 ${isLogoLoaded ? 'opacity-100' : 'opacity-0'}`} 
               />
             </Link>
           </div>

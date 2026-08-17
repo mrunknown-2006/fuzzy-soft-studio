@@ -15,6 +15,7 @@ export default function Footer() {
   const [footerNote, setFooterNote] = useState('Made with love in Lucknow 🌸');
 
   const [footerLogoUrl, setFooterLogoUrl] = useState<string | null>(null);
+  const [isFooterLogoLoaded, setIsFooterLogoLoaded] = useState(false);
   const [dynamicCategories, setDynamicCategories] = useState<Array<{ name: string; slug: string }>>([
     { name: 'Bouquets', slug: 'bouquets' },
     { name: 'Arrangements', slug: 'arrangements' },
@@ -99,8 +100,10 @@ export default function Footer() {
               alt="Fuzzy Soft Studio" 
               loading="eager"
               fetchPriority="high"
-              onError={(e) => { e.currentTarget.src = '/logo.png'; }}
-              className="h-20 sm:h-24 md:h-28 lg:h-36 w-auto object-contain mix-blend-multiply contrast-125 brightness-95 drop-shadow-sm [image-rendering:_crisp-edges] [image-rendering:_-webkit-optimize-contrast] transition-opacity duration-300" 
+              onLoad={() => setIsFooterLogoLoaded(true)}
+              onError={(e) => { e.currentTarget.src = '/logo.png'; setIsFooterLogoLoaded(true); }}
+              style={{ color: 'transparent', textIndent: '-10000px' }}
+              className={`h-20 sm:h-24 md:h-28 lg:h-36 w-auto object-contain mix-blend-multiply contrast-125 brightness-95 drop-shadow-sm [image-rendering:_crisp-edges] [image-rendering:_-webkit-optimize-contrast] transition-opacity duration-300 ${isFooterLogoLoaded ? 'opacity-100' : 'opacity-0'}`} 
             />
           </Link>
           <p className="mt-3 text-xs font-serif italic text-brand-body/75 max-w-sm">
