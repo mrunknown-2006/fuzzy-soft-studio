@@ -107,7 +107,8 @@ export default function Navbar() {
                 decoding="async"
                 loading="eager"
                 fetchPriority="high"
-                className="hidden md:block h-full w-auto object-contain mix-blend-multiply contrast-125 brightness-95 drop-shadow-sm [image-rendering:_crisp-edges] [image-rendering:_-webkit-optimize-contrast]" 
+                onError={(e) => { e.currentTarget.src = '/logo.png'; }}
+                className="hidden md:block h-full w-auto object-contain mix-blend-multiply contrast-125 brightness-95 drop-shadow-sm [image-rendering:_crisp-edges] [image-rendering:_-webkit-optimize-contrast] transition-opacity duration-300" 
               />
               {/* Mobile Version — Dedicated Admin Mobile Image Only (Maximized Size & Impact) */}
               <img 
@@ -116,7 +117,8 @@ export default function Navbar() {
                 decoding="async"
                 loading="eager"
                 fetchPriority="high"
-                className="block md:hidden h-16 sm:h-18 max-h-20 w-auto object-contain scale-110 origin-left mix-blend-multiply contrast-125 brightness-95 drop-shadow-sm [image-rendering:_crisp-edges] [image-rendering:_-webkit-optimize-contrast] py-0 my-0" 
+                onError={(e) => { e.currentTarget.src = '/logo.png'; }}
+                className="block md:hidden h-16 sm:h-18 max-h-20 w-auto object-contain scale-110 origin-left mix-blend-multiply contrast-125 brightness-95 drop-shadow-sm [image-rendering:_crisp-edges] [image-rendering:_-webkit-optimize-contrast] py-0 my-0 transition-opacity duration-300" 
               />
             </Link>
           </div>

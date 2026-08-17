@@ -97,7 +97,10 @@ export default function Footer() {
             <img 
               src={footerLogoUrl || "/logo.png?v=2"} 
               alt="Fuzzy Soft Studio" 
-              className="h-20 sm:h-24 md:h-28 lg:h-36 w-auto object-contain mix-blend-multiply contrast-125 brightness-95 drop-shadow-sm [image-rendering:_crisp-edges] [image-rendering:_-webkit-optimize-contrast]" 
+              loading="eager"
+              fetchPriority="high"
+              onError={(e) => { e.currentTarget.src = '/logo.png'; }}
+              className="h-20 sm:h-24 md:h-28 lg:h-36 w-auto object-contain mix-blend-multiply contrast-125 brightness-95 drop-shadow-sm [image-rendering:_crisp-edges] [image-rendering:_-webkit-optimize-contrast] transition-opacity duration-300" 
             />
           </Link>
           <p className="mt-3 text-xs font-serif italic text-brand-body/75 max-w-sm">
