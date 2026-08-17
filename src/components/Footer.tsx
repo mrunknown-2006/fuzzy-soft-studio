@@ -24,6 +24,18 @@ export default function Footer() {
   ]);
 
   useEffect(() => {
+    const src = footerLogoUrl || "/logo.png?v=2";
+    const img = new window.Image();
+    img.src = src;
+    img.onload = () => setIsFooterLogoLoaded(true);
+    img.onerror = () => {
+      const fb = new window.Image();
+      fb.src = "/logo.png";
+      fb.onload = () => setIsFooterLogoLoaded(true);
+    };
+  }, [footerLogoUrl]);
+
+  useEffect(() => {
     const loadFooterData = async () => {
       // Fetch dynamic categories from products table
       try {
@@ -95,16 +107,19 @@ export default function Footer() {
         {/* Top: Logo & Tagline Centered */}
         <div className="flex flex-col items-center justify-center text-center mb-8 select-none">
           <Link to="/" className="inline-flex items-center leading-none transition-transform duration-300 hover:scale-[1.02]">
-            <img 
-              src={footerLogoUrl || "/logo.png?v=2"} 
-              alt="Fuzzy Soft Studio" 
-              loading="eager"
-              fetchPriority="high"
-              onLoad={() => setIsFooterLogoLoaded(true)}
-              onError={(e) => { e.currentTarget.src = '/logo.png'; setIsFooterLogoLoaded(true); }}
-              style={{ color: 'transparent', textIndent: '-10000px' }}
-              className={`h-20 sm:h-24 md:h-28 lg:h-36 w-auto object-contain mix-blend-multiply contrast-125 brightness-95 drop-shadow-sm [image-rendering:_crisp-edges] [image-rendering:_-webkit-optimize-contrast] transition-opacity duration-300 ${isFooterLogoLoaded ? 'opacity-100' : 'opacity-0'}`} 
-            />
+            {isFooterLogoLoaded ? (
+              <img 
+                src={footerLogoUrl || "/logo.png?v=2"} 
+                alt="Fuzzy Soft Studio" 
+                loading="eager"
+                fetchPriority="high"
+                onError={(e) => { e.currentTarget.src = '/logo.png'; }}
+                style={{ color: 'transparent', textIndent: '-10000px' }}
+                className="h-20 sm:h-24 md:h-28 lg:h-36 w-auto object-contain mix-blend-multiply contrast-125 brightness-95 drop-shadow-sm [image-rendering:_crisp-edges] [image-rendering:_-webkit-optimize-contrast] transition-opacity duration-300 opacity-100" 
+              />
+            ) : (
+              <div className="h-20 sm:h-24 md:h-28 lg:h-36 w-36 sm:w-44 bg-transparent" />
+            )}
           </Link>
           <p className="mt-3 text-xs font-serif italic text-brand-body/75 max-w-sm">
             {footerTagline}

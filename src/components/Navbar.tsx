@@ -12,6 +12,7 @@ export default function Navbar() {
   const [logoUrl, setLogoUrl] = useState<string>('/logo.png?v=2');
   const [mobileLogoUrl, setMobileLogoUrl] = useState<string>('');
   const [isLogoLoaded, setIsLogoLoaded] = useState(false);
+  const [isMobileLogoLoaded, setIsMobileLogoLoaded] = useState(false);
   const navigate = useNavigate();
 
   const cart = useStore((state) => state.cart);
@@ -19,6 +20,28 @@ export default function Navbar() {
 
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
   const wishlistCount = wishlist.length;
+
+  useEffect(() => {
+    const desktopSrc = logoUrl || "/logo.png?v=2";
+    const dImg = new window.Image();
+    dImg.src = desktopSrc;
+    dImg.onload = () => setIsLogoLoaded(true);
+    dImg.onerror = () => {
+      const fb = new window.Image();
+      fb.src = "/logo.png";
+      fb.onload = () => setIsLogoLoaded(true);
+    };
+
+    const mobileSrc = mobileLogoUrl || logoUrl || "/logo.png?v=2";
+    const mImg = new window.Image();
+    mImg.src = mobileSrc;
+    mImg.onload = () => setIsMobileLogoLoaded(true);
+    mImg.onerror = () => {
+      const fbM = new window.Image();
+      fbM.src = "/logo.png";
+      fbM.onload = () => setIsMobileLogoLoaded(true);
+    };
+  }, [logoUrl, mobileLogoUrl]);
 
   useEffect(() => {
     const fetchLogo = async () => {
@@ -102,29 +125,36 @@ export default function Navbar() {
               className="flex items-center select-none shrink-0 justify-start h-16 sm:h-20 lg:h-24 w-auto max-w-[280px] sm:max-w-[360px] py-1"
             >
               {/* Desktop Version */}
-              <img 
-                src={logoUrl || "/logo.png?v=2"} 
-                alt="Fuzzy Soft Studio" 
-                decoding="async"
-                loading="eager"
-                fetchPriority="high"
-                onLoad={() => setIsLogoLoaded(true)}
-                onError={(e) => { e.currentTarget.src = '/logo.png'; setIsLogoLoaded(true); }}
-                style={{ color: 'transparent', textIndent: '-10000px' }}
-                className={`hidden md:block h-full w-auto object-contain mix-blend-multiply contrast-125 brightness-95 drop-shadow-sm [image-rendering:_crisp-edges] [image-rendering:_-webkit-optimize-contrast] transition-opacity duration-300 ${isLogoLoaded ? 'opacity-100' : 'opacity-0'}`} 
-              />
+              {isLogoLoaded ? (
+                <img 
+                  src={logoUrl || "/logo.png?v=2"} 
+                  alt="Fuzzy Soft Studio" 
+                  decoding="async"
+                  loading="eager"
+                  fetchPriority="high"
+                  onError={(e) => { e.currentTarget.src = '/logo.png'; }}
+                  style={{ color: 'transparent', textIndent: '-10000px' }}
+                  className="hidden md:block h-full w-auto object-contain mix-blend-multiply contrast-125 brightness-95 drop-shadow-sm [image-rendering:_crisp-edges] [image-rendering:_-webkit-optimize-contrast] transition-opacity duration-300 opacity-100" 
+                />
+              ) : (
+                <div className="hidden md:block h-full w-36 bg-transparent" />
+              )}
+
               {/* Mobile Version — Dedicated Admin Mobile Image Only (Maximized Size & Impact) */}
-              <img 
-                src={mobileLogoUrl || logoUrl || "/logo.png?v=2"} 
-                alt="Fuzzy Soft Studio" 
-                decoding="async"
-                loading="eager"
-                fetchPriority="high"
-                onLoad={() => setIsLogoLoaded(true)}
-                onError={(e) => { e.currentTarget.src = '/logo.png'; setIsLogoLoaded(true); }}
-                style={{ color: 'transparent', textIndent: '-10000px' }}
-                className={`block md:hidden h-16 sm:h-18 max-h-20 w-auto object-contain scale-110 origin-left mix-blend-multiply contrast-125 brightness-95 drop-shadow-sm [image-rendering:_crisp-edges] [image-rendering:_-webkit-optimize-contrast] py-0 my-0 transition-opacity duration-300 ${isLogoLoaded ? 'opacity-100' : 'opacity-0'}`} 
-              />
+              {isMobileLogoLoaded ? (
+                <img 
+                  src={mobileLogoUrl || logoUrl || "/logo.png?v=2"} 
+                  alt="Fuzzy Soft Studio" 
+                  decoding="async"
+                  loading="eager"
+                  fetchPriority="high"
+                  onError={(e) => { e.currentTarget.src = '/logo.png'; }}
+                  style={{ color: 'transparent', textIndent: '-10000px' }}
+                  className="block md:hidden h-16 sm:h-18 max-h-20 w-auto object-contain scale-110 origin-left mix-blend-multiply contrast-125 brightness-95 drop-shadow-sm [image-rendering:_crisp-edges] [image-rendering:_-webkit-optimize-contrast] py-0 my-0 transition-opacity duration-300 opacity-100" 
+                />
+              ) : (
+                <div className="block md:hidden h-16 w-28 bg-transparent" />
+              )}
             </Link>
           </div>
 
