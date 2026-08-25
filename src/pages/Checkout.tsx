@@ -481,7 +481,7 @@ export default function Checkout() {
                       <Gift className="text-[#B76E79] shrink-0" size={16} strokeWidth={1.5} />
                       <span className="font-serif text-xs font-bold text-brand-heading truncate">Luxury Gift Wrapping</span>
                     </div>
-                    <span className="font-sans text-xs font-bold text-brand-heading shrink-0 ml-2">₹49</span>
+                    <span className="font-sans text-xs font-bold text-brand-heading shrink-0 ml-2">₹{giftPackagingCharge}</span>
                   </div>
                   <span className="block text-[10px] text-brand-body/60 mt-1 font-sans">
                     Make it special for a special one.
