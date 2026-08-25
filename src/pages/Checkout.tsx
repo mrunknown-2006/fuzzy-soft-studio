@@ -32,6 +32,7 @@ export default function Checkout() {
   const [orderIdPrefix, setOrderIdPrefix] = useState('FSS-');
   const [shippingFee, setShippingFee] = useState(99);
   const [freeThreshold, setFreeThreshold] = useState(999);
+  const [giftPackagingCharge, setGiftPackagingCharge] = useState(49);
 
   // Gifting Add-On States
   const [giftWrapped, setGiftWrapped] = useState(false);
@@ -66,6 +67,7 @@ export default function Checkout() {
             if (val.order_id_prefix) setOrderIdPrefix(String(val.order_id_prefix));
             if (val.shipping_charges !== undefined) setShippingFee(Number(val.shipping_charges));
             if (val.free_delivery_threshold !== undefined) setFreeThreshold(Number(val.free_delivery_threshold));
+            if (val.gift_packaging_charge !== undefined) setGiftPackagingCharge(Number(val.gift_packaging_charge));
           }
         }
       } catch (err) {
@@ -107,7 +109,7 @@ export default function Checkout() {
     return Math.round(subtotal * (appliedDiscount.value || 0) / 100);
   }, [subtotal, appliedDiscount]);
 
-  const giftingFee = giftWrapped ? 49 : 0;
+  const giftingFee = giftWrapped ? giftPackagingCharge : 0;
   const total = Math.max(0, subtotal + finalShipping + giftingFee - discountAmount);
 
   const validateForm = (): Record<string, string> => {

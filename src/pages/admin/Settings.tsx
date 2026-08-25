@@ -22,6 +22,7 @@ export default function Settings() {
   // Operational form state
   const [freeThreshold, setFreeThreshold] = useState(999);
   const [shippingFee, setShippingFee] = useState(99);
+  const [giftPackagingCharge, setGiftPackagingCharge] = useState(49);
   const [whatsapp, setWhatsapp] = useState('');
   const [email, setEmail] = useState('');
   const [desktopLogoUrl, setDesktopLogoUrl] = useState('');
@@ -81,6 +82,7 @@ export default function Settings() {
             const openVal = val.store_open === true || val.store_open === 'true';
             const ft = Number(val.free_delivery_threshold) || 999;
             const sf = Number(val.shipping_charges) || 99;
+            const gpc = Number(val.gift_packaging_charge) ?? 49;
             const wa = String(val.whatsapp_number || '');
             const em = String(val.contact_email || '');
             const cod = val.cod_available === true || val.cod_available === 'true';
@@ -98,6 +100,7 @@ export default function Settings() {
             setStoreOpen(openVal);
             setFreeThreshold(ft);
             setShippingFee(sf);
+            setGiftPackagingCharge(gpc);
             setWhatsapp(wa);
             setEmail(em);
             setCodAvailable(cod);
@@ -115,6 +118,7 @@ export default function Settings() {
               storeOpen: openVal,
               freeThreshold: ft,
               shippingFee: sf,
+              giftPackagingCharge: gpc,
               whatsapp: wa,
               email: em,
               codAvailable: cod,
@@ -144,6 +148,7 @@ export default function Settings() {
       storeOpen !== initialState.storeOpen ||
       freeThreshold !== initialState.freeThreshold ||
       shippingFee !== initialState.shippingFee ||
+      giftPackagingCharge !== initialState.giftPackagingCharge ||
       whatsapp !== initialState.whatsapp ||
       email !== initialState.email ||
       codAvailable !== initialState.codAvailable ||
@@ -164,6 +169,7 @@ export default function Settings() {
     setStoreOpen(initialState.storeOpen);
     setFreeThreshold(initialState.freeThreshold);
     setShippingFee(initialState.shippingFee);
+    setGiftPackagingCharge(initialState.giftPackagingCharge);
     setWhatsapp(initialState.whatsapp);
     setEmail(initialState.email);
     setCodAvailable(initialState.codAvailable);
@@ -185,6 +191,7 @@ export default function Settings() {
       store_open: storeOpen,
       free_delivery_threshold: freeThreshold,
       shipping_charges: shippingFee,
+      gift_packaging_charge: giftPackagingCharge,
       whatsapp_number: whatsapp.trim(),
       contact_email: email.trim(),
       cod_available: codAvailable,
@@ -229,6 +236,7 @@ export default function Settings() {
         storeOpen,
         freeThreshold,
         shippingFee,
+        giftPackagingCharge,
         whatsapp,
         email,
         codAvailable,
@@ -728,6 +736,28 @@ export default function Settings() {
                     />
                   </div>
                 )}
+              </div>
+            </div>
+
+            {/* Gift Packaging Charge */}
+            <div className="bg-white/60 border border-brand-border/40 rounded-3xl p-6 shadow-xs backdrop-blur-xs space-y-4">
+              <div>
+                <h4 className="text-sm font-semibold text-brand-heading">Gift Packaging Add-On</h4>
+                <p className="text-xs text-brand-body/60 font-sans mt-0.5">Set the extra fee charged when a customer selects Luxury Gift Wrapping at checkout.</p>
+              </div>
+              <div className="space-y-1.5">
+                <label className="block text-[10px] font-semibold uppercase tracking-wider text-brand-heading">Gift Packaging Charge (₹)</label>
+                <input
+                  type="number"
+                  value={giftPackagingCharge}
+                  min={0}
+                  onChange={(e) => setGiftPackagingCharge(Number(e.target.value))}
+                  className="w-full sm:w-64 h-11 px-4 bg-white rounded-xl border border-brand-border/70 text-xs font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition-all"
+                  placeholder="e.g. 49"
+                />
+                <p className="text-[10px] text-brand-body/50 font-sans">
+                  Currently charged: <strong className="text-brand-heading">₹{giftPackagingCharge}</strong> per order when gift wrapping is selected.
+                </p>
               </div>
             </div>
 
