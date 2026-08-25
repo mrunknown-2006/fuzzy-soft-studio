@@ -19,12 +19,13 @@ export default function Login() {
   const [resetEmail, setResetEmail] = useState('');
   const [resetSent, setResetSent] = useState(false);
 
-  // If user is already authenticated, redirect based on role
-  const ADMIN_EMAIL = 'mrunknownhipe@gmail.com';
+  // Authorized admin emails — must match Admin.tsx
+  const ADMIN_EMAILS = ['mrunknownhipe@gmail.com', 'misteramaansid@gmail.com'];
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        if (session.user.email === ADMIN_EMAIL) {
+        if (ADMIN_EMAILS.includes(session.user.email || '')) {
           navigate('/admin', { replace: true });
         } else {
           navigate('/account', { replace: true });
@@ -56,7 +57,7 @@ export default function Login() {
         const locState = (location as any).state;
         const redirectTo = searchParams.get('redirectTo') || locState?.redirectTo;
 
-        if (session?.user.email === ADMIN_EMAIL) {
+        if (ADMIN_EMAILS.includes(session?.user.email || '')) {
           navigate('/admin', { replace: true });
         } else if (redirectTo) {
           navigate(redirectTo, { replace: true, state: locState });

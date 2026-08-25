@@ -135,13 +135,16 @@ export default function Admin() {
     }
   };
 
+  // Authorized admin emails
+  const ADMIN_EMAILS = ['mrunknownhipe@gmail.com', 'misteramaansid@gmail.com'];
+
   // Check auth session
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session) {
         const email = session.user?.email || '';
-        const isAuthorized = email === 'mrunknownhipe@gmail.com';
+        const isAuthorized = ADMIN_EMAILS.includes(email);
         
         if (isAuthorized) {
           setIsAdmin(true);
@@ -161,7 +164,7 @@ export default function Admin() {
       setSession(session);
       if (session) {
         const email = session.user?.email || '';
-        const isAuthorized = email === 'mrunknownhipe@gmail.com';
+        const isAuthorized = ADMIN_EMAILS.includes(email);
         
         if (isAuthorized) {
           setIsAdmin(true);
