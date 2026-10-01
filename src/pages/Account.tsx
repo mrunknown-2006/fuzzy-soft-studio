@@ -161,18 +161,26 @@ export default function Account() {
   // Profile Update Handler
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    const cleanName = profileName.trim().replace(/<[^>]*>/g, '').replace(/[<>"'`]/g, '').slice(0, 100);
+    const cleanPhone = profilePhone.replace(/\D/g, '').slice(0, 15);
+
+    if (cleanPhone && cleanPhone.length !== 10) {
+      showToast('Please enter a valid 10-digit mobile number.', 'error');
+      return;
+    }
+
     setSavingProfile(true);
     try {
       const { error } = await supabase.auth.updateUser({
         data: {
-          full_name: profileName.trim(),
-          phone: profilePhone.trim()
+          full_name: cleanName,
+          phone: cleanPhone
         }
       });
       if (error) throw error;
       showToast('Profile settings updated successfully!', 'success');
-    } catch (err: any) {
-      showToast(err.message || 'Failed to update profile', 'error');
+    } catch (_err: any) {
+      showToast('Unable to update profile settings. Please try again.', 'error');
     } finally {
       setSavingProfile(false);
     }
@@ -192,8 +200,7 @@ export default function Account() {
         .order('is_default', { ascending: false });
       if (error) throw error;
       setAddresses(data || []);
-    } catch (err: any) {
-      console.warn('fetchAddresses error:', err.message);
+    } catch (_err: any) {
       setAddresses([]);
     } finally {
       setLoadingAddresses(false);
@@ -227,23 +234,45 @@ export default function Account() {
   const handleSaveAddress = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!session?.user?.id) return;
-    if (!addrHouseNo.trim() || !addrArea.trim() || !addrCity.trim() || !addrState.trim() || !addrPincode.trim()) {
+
+    const cleanPhone = addrPhone.replace(/\D/g, '').slice(0, 15);
+    const cleanPincode = addrPincode.replace(/\D/g, '').slice(0, 6);
+
+    if (!cleanPhone || cleanPhone.length !== 10) {
+      showToast('Please enter a valid 10-digit mobile number.', 'error');
+      return;
+    }
+
+    if (!/^\d{6}$/.test(cleanPincode)) {
+      showToast('Please enter a valid 6-digit pincode.', 'error');
+      return;
+    }
+
+    const cleanHouseNo = addrHouseNo.trim().replace(/<[^>]*>/g, '').replace(/[<>"'`]/g, '').slice(0, 150);
+    const cleanArea = addrArea.trim().replace(/<[^>]*>/g, '').replace(/[<>"'`]/g, '').slice(0, 150);
+    const cleanLandmark = addrLandmark.trim().replace(/<[^>]*>/g, '').replace(/[<>"'`]/g, '').slice(0, 150);
+    const cleanCity = addrCity.trim().replace(/<[^>]*>/g, '').replace(/[<>"'`]/g, '').slice(0, 100);
+    const cleanState = addrState.trim().replace(/<[^>]*>/g, '').replace(/[<>"'`]/g, '').slice(0, 100);
+    const cleanLabel = addrLabel.trim().replace(/<[^>]*>/g, '').replace(/[<>"'`]/g, '').slice(0, 50);
+
+    if (!cleanHouseNo || !cleanArea || !cleanCity || !cleanState) {
       showToast('Please fill all required address fields.', 'error');
       return;
     }
+
     setSavingAddress(true);
     try {
       const payload = {
         user_id: session.user.id,
-        label: addrLabel,
-        full_name: profileName || session.user.user_metadata?.full_name || '',
-        phone: addrPhone.trim(),
-        house_no: addrHouseNo.trim(),
-        area: addrArea.trim(),
-        landmark: addrLandmark.trim() || null,
-        city: addrCity.trim(),
-        state: addrState.trim(),
-        pincode: addrPincode.trim(),
+        label: cleanLabel || 'Home',
+        full_name: (profileName || session.user.user_metadata?.full_name || '').trim().replace(/<[^>]*>/g, '').replace(/[<>"'`]/g, '').slice(0, 100),
+        phone: cleanPhone,
+        house_no: cleanHouseNo,
+        area: cleanArea,
+        landmark: cleanLandmark || null,
+        city: cleanCity,
+        state: cleanState,
+        pincode: cleanPincode,
         is_default: addrIsDefault,
         updated_at: new Date().toISOString()
       };
@@ -258,8 +287,8 @@ export default function Account() {
       }
       resetAddressForm();
       fetchAddresses();
-    } catch (err: any) {
-      showToast(err.message || 'Failed to save address', 'error');
+    } catch (_err: any) {
+      showToast('Unable to save address. Please check your details and try again.', 'error');
     } finally {
       setSavingAddress(false);
     }

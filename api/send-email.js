@@ -4,9 +4,18 @@ const fallbackKey = ['re_', 'TBYd3s9G_', 'juH7ANN8ga9DfXTJdhtSgk3x'].join('');
 const resendApiKey = process.env.RESEND_API_KEY || process.env.VITE_RESEND_API_KEY || fallbackKey;
 
 export default async function handler(req, res) {
-  // CORS Headers for API accessibility
+  // CORS Headers restricted to authorized origins
+  const allowedOrigins = [
+    'https://www.fuzzysoftstudio.com',
+    'https://fuzzysoftstudio.com'
+  ];
+  const origin = req.headers.origin;
+  if (origin && (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app') || origin.startsWith('http://localhost:'))) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', 'https://www.fuzzysoftstudio.com');
+  }
   res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader(
     'Access-Control-Allow-Headers',
@@ -279,8 +288,7 @@ export default async function handler(req, res) {
     } else {
       return res.status(400).json({ success: false, error: result.error });
     }
-  } catch (err) {
-    console.error('[Vercel Serverless Email Exception]:', err);
-    return res.status(500).json({ success: false, error: err.message || 'Internal Server Error' });
+  } catch (_err) {
+    return res.status(500).json({ success: false, error: 'Internal Server Error' });
   }
 }

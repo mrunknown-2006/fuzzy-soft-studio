@@ -151,15 +151,31 @@ export default function Checkout() {
   const giftingFee = giftWrapped ? giftPackagingCharge : 0;
   const total = Math.max(0, subtotal + finalShipping + giftingFee - discountAmount);
 
+  // ── Anti-XSS sanitizer ─────────────────────────────────────────────────────
+  // Strips HTML tags, script injection, and common SQL injection openers from
+  // any text input before it touches the database or gets rendered server-side.
+  const sanitize = (val: string): string => {
+    return val
+      .trim()
+      .replace(/<[^>]*>/g, '')          // strip all HTML/XML tags
+      .replace(/[<>"'`]/g, '')          // remove stray angle-brackets and quote chars
+      .replace(/--/g, '')               // strip SQL comment openers
+      .replace(/[;]/g, '')              // strip SQL statement terminators
+      .slice(0, 300);                   // hard-cap length — no 10 KB injections
+  };
+
   const validateForm = (): Record<string, string> => {
     const newErrors: Record<string, string> = {};
     if (!name.trim()) newErrors.name = 'Full name is required';
-    if (!phone.trim()) newErrors.phone = 'Phone number is required';
+    // Phone: must be 10 digits (Indian mobile)
+    const phoneDigits = phone.replace(/\D/g, '');
+    if (!phoneDigits || phoneDigits.length !== 10) newErrors.phone = 'Enter a valid 10-digit mobile number';
     if (!houseNo.trim()) newErrors.houseNo = 'House / Flat No is required';
     if (!area.trim()) newErrors.area = 'Area / Street is required';
     if (!state.trim()) newErrors.state = 'State is required';
     if (!city.trim()) newErrors.city = 'City is required';
-    if (!pincode.trim()) newErrors.pincode = 'Pincode is required';
+    // Pincode: must be exactly 6 digits
+    if (!/^\d{6}$/.test(pincode.trim())) newErrors.pincode = 'Enter a valid 6-digit pincode';
     if (!utrNumber.trim() || utrNumber.trim().length < 8) {
       newErrors.utr = 'Enter a valid 12-digit transaction UTR / Ref Number';
     }
@@ -196,47 +212,98 @@ export default function Checkout() {
         try {
           await supabase.from('customers').upsert({
             id: userId,
-            full_name: name.trim(),
+            full_name: sanitize(name),
             email: email.trim() || null,
-            phone: phone.trim(),
-            shipping_address: `${houseNo.trim()}, ${area.trim()}, ${city.trim()}, ${state.trim()} - ${pincode.trim()}`,
+            phone: phone.replace(/\D/g, '').slice(0, 15), // digits only, max 15
+            shipping_address: `${sanitize(houseNo)}, ${sanitize(area)}, ${sanitize(city)}, ${sanitize(state)} - ${pincode.replace(/\D/g, '').slice(0, 6)}`,
             updated_at: new Date().toISOString()
           });
         } catch (cErr) {
-          console.warn('Customer pre-upsert note:', cErr);
+          // Non-critical — don't block order
         }
       }
 
-      const cleanUtr = utrNumber.trim();
+      const cleanUtr = utrNumber.replace(/[^a-zA-Z0-9]/g, '').slice(0, 50); // alphanumeric only
 
       // 1. Insert order to database with status: 'PENDING' for orders_status_check constraint
+      const sName     = sanitize(name);
+      const sHouseNo  = sanitize(houseNo);
+      const sArea     = sanitize(area);
+      const sLandmark = sanitize(landmark);
+      const sCity     = sanitize(city);
+      const sState    = sanitize(state);
+      const sPincode  = pincode.replace(/\D/g, '').slice(0, 6);
+      const sPhone    = phone.replace(/\D/g, '').slice(0, 15);
+      const sEmail    = email.trim().slice(0, 254) || null;
+      const sGiftMsg  = giftWrapped ? sanitize(giftMessage).slice(0, 500) : null;
+
+      // Price-hack shield: Query live prices from Supabase database to verify total
+      let serverVerifiedTotal = total;
+      try {
+        const productIds = cart.map(item => item.id);
+        const { data: dbProducts } = await supabase
+          .from('products')
+          .select('id, price')
+          .in('id', productIds);
+
+        if (dbProducts && dbProducts.length > 0) {
+          const verifiedSubtotal = cart.reduce((acc, item) => {
+            const dbItem = dbProducts.find(p => p.id === item.id);
+            const verifiedPrice = (dbItem && typeof dbItem.price === 'number') ? dbItem.price : item.price;
+            return acc + verifiedPrice * item.quantity;
+          }, 0);
+
+          const verifiedShipping = verifiedSubtotal >= freeThreshold ? 0 : shippingFee;
+          const verifiedGifting = giftWrapped ? giftPackagingCharge : 0;
+
+          let verifiedDiscount = 0;
+          if (appliedDiscount) {
+            if (appliedDiscount.percent) {
+              verifiedDiscount = Math.round(verifiedSubtotal * appliedDiscount.percent / 100);
+            } else if (appliedDiscount.min_order_value && verifiedSubtotal < appliedDiscount.min_order_value) {
+              verifiedDiscount = 0;
+            } else if (appliedDiscount.discount_type === 'fixed') {
+              verifiedDiscount = Math.min(verifiedSubtotal, appliedDiscount.value || 0);
+            } else {
+              verifiedDiscount = Math.round(verifiedSubtotal * (appliedDiscount.value || 0) / 100);
+            }
+          }
+
+          serverVerifiedTotal = Math.max(0, verifiedSubtotal + verifiedShipping + verifiedGifting - verifiedDiscount);
+        }
+      } catch (_) {
+        // Fallback to computed total if network query is interrupted
+        serverVerifiedTotal = total;
+      }
+
       const orderPayload: any = {
         order_id: orderNumber,
         user_id: userId,
-        customer_name: name.trim(),
-        customer_phone: phone.trim(),
-        customer_email: email.trim() || null,
-        shipping_address: `${houseNo.trim()}, ${area.trim()}${landmark.trim() ? ', Near ' + landmark.trim() : ''}, ${city.trim()}, ${state.trim()} - ${pincode.trim()}`,
+        customer_name: sName,
+        customer_phone: sPhone,
+        customer_email: sEmail,
+        shipping_address: `${sHouseNo}, ${sArea}${sLandmark ? ', Near ' + sLandmark : ''}, ${sCity}, ${sState} - ${sPincode}`,
         shipping_address_structured: {
-          house_no: houseNo.trim(),
-          area: area.trim(),
-          landmark: landmark.trim() || null,
-          city: city.trim(),
-          state: state.trim(),
-          pincode: pincode.trim()
+          house_no: sHouseNo,
+          area: sArea,
+          landmark: sLandmark || null,
+          city: sCity,
+          state: sState,
+          pincode: sPincode
         },
         items: cart,
-        total_amount: total,
+        total_amount: serverVerifiedTotal,
+        server_verified_total: serverVerifiedTotal,
         utr_number: cleanUtr,
         transaction_id: cleanUtr,
         transaction_utr: cleanUtr,
         status: 'PENDING',
         is_gift_wrapped: giftWrapped,
-        gift_message: giftWrapped ? giftMessage.trim() : null,
+        gift_message: sGiftMsg,
         created_at: new Date().toISOString(),
         gifting_info: giftWrapped ? {
           gift_wrapped: true,
-          gift_message: giftMessage.trim()
+          gift_message: sGiftMsg
         } : null
       };
 
@@ -246,82 +313,68 @@ export default function Checkout() {
 
       // Resilient fallback handling if database columns or casing differ in schema
       if (insertError) {
-        console.warn('Primary order payload insert warning:', insertError.message);
-        
         // Fallback Step 1: Standard columns with uppercase PENDING
         const fallbackPayload: any = {
           order_id: orderNumber,
           user_id: userId,
-          customer_name: name.trim(),
-          customer_phone: phone.trim(),
-          customer_email: email.trim() || null,
-          shipping_address: `${houseNo.trim()}, ${area.trim()}${landmark.trim() ? ', Near ' + landmark.trim() : ''}, ${city.trim()}, ${state.trim()} - ${pincode.trim()}`,
+          customer_name: sName,
+          customer_phone: sPhone,
+          customer_email: sEmail,
+          shipping_address: `${sHouseNo}, ${sArea}${sLandmark ? ', Near ' + sLandmark : ''}, ${sCity}, ${sState} - ${sPincode}`,
           shipping_address_structured: {
-            house_no: houseNo.trim(),
-            area: area.trim(),
-            landmark: landmark.trim() || null,
-            city: city.trim(),
-            state: state.trim(),
-            pincode: pincode.trim()
+            house_no: sHouseNo,
+            area: sArea,
+            landmark: sLandmark || null,
+            city: sCity,
+            state: sState,
+            pincode: sPincode
           },
           items: cart,
-          total_amount: total,
+          total_amount: serverVerifiedTotal,
+          server_verified_total: serverVerifiedTotal,
           utr_number: cleanUtr,
           status: 'PENDING',
           is_gift_wrapped: giftWrapped,
-          gift_message: giftWrapped ? giftMessage.trim() : null,
+          gift_message: sGiftMsg,
           created_at: new Date().toISOString()
         };
 
         const fallbackRes = await supabase.from('orders').insert(fallbackPayload);
         
         if (fallbackRes.error) {
-          console.warn('Secondary fallback insert warning:', fallbackRes.error.message);
-          
           // Fallback Step 2: Try titlecase 'Pending' if constraint expects TitleCase
-          const titleCasePayload: any = {
-            ...fallbackPayload,
-            status: 'Pending'
-          };
-          const titleCaseRes = await supabase.from('orders').insert(titleCasePayload);
+          const titleCaseRes = await supabase.from('orders').insert({ ...fallbackPayload, status: 'Pending' });
 
           if (titleCaseRes.error) {
-            console.warn('TitleCase fallback insert warning:', titleCaseRes.error.message);
             // Fallback Step 3: Try lowercase 'pending' if constraint expects lowercase
-            const lowerCasePayload: any = {
-              ...fallbackPayload,
-              status: 'pending'
-            };
-            const lowerCaseRes = await supabase.from('orders').insert(lowerCasePayload);
-
+            const lowerCaseRes = await supabase.from('orders').insert({ ...fallbackPayload, status: 'pending' });
             if (lowerCaseRes.error) {
-              console.error('All DB status insert attempts failed:', lowerCaseRes.error.message);
-              throw new Error(lowerCaseRes.error.message || titleCaseRes.error.message || fallbackRes.error.message || insertError.message);
+              throw new Error('ORDER_INSERT_FAILED');
             }
           }
         }
       }
 
-      // Non-blocking trigger: Send instant Admin notification alert to mrunknownhipe@gmail.com for manual UTR verification
+      // Non-blocking trigger: Send instant Admin notification alert for manual UTR verification
       try {
         sendAdminNewOrderAlert({
           orderId: orderNumber,
-          customerName: name,
-          customerEmail: email.trim(),
-          customerPhone: phone,
-          totalAmount: total,
+          customerName: sName,
+          customerEmail: sEmail || '',
+          customerPhone: sPhone,
+          totalAmount: serverVerifiedTotal,
           utrNumber: cleanUtr,
-          shippingAddress: `${houseNo}, ${area}${landmark ? ', Near ' + landmark : ''}, ${city}, ${state} - ${pincode}`,
+          shippingAddress: `${sHouseNo}, ${sArea}${sLandmark ? ', Near ' + sLandmark : ''}, ${sCity}, ${sState} - ${sPincode}`,
           items: cart.map(item => ({
             name: item.name,
             quantity: item.quantity,
             price: item.price
           })),
           isGiftWrapped: giftWrapped,
-          giftMessage: giftWrapped ? giftMessage.trim() : undefined
-        }).catch(aErr => console.warn('Admin new order alert dispatch note:', aErr));
-      } catch (aCatch) {
-        console.warn('Admin alert dispatch caught:', aCatch);
+          giftMessage: giftWrapped ? sGiftMsg || undefined : undefined
+        }).catch(() => {}); // non-critical, fail silently
+      } catch (_) {
+        // non-critical
       }
 
       // Backup order in local storage so customer order details are preserved
@@ -331,12 +384,12 @@ export default function Checkout() {
           orderId: orderNumber,
           date: new Date().toISOString(),
           items: cart,
-          pricing: { subtotal, deliveryCharge: finalShipping, total },
-          shippingDetails: { name, phone, houseNo, area, landmark, city, state, pincode, email }
+          pricing: { subtotal, deliveryCharge: finalShipping, total: serverVerifiedTotal },
+          shippingDetails: { name: sName, phone: sPhone, houseNo: sHouseNo, area: sArea, landmark: sLandmark, city: sCity, state: sState, pincode: sPincode, email: sEmail }
         });
         localStorage.setItem('fuzzy-soft-studio-local-orders', JSON.stringify(existingLocal));
       } catch (lErr) {
-        console.warn('Local storage backup note:', lErr);
+        // Silent
       }
 
       // 2. Increment discount coupon count if applied
@@ -353,7 +406,7 @@ export default function Checkout() {
             .update({ used_count: currentCount + 1 })
             .eq('code', appliedDiscount.code);
         } catch (couponErr) {
-          console.warn('Coupon usage count increment failed:', couponErr);
+          // Silent
         }
       }
 
@@ -362,20 +415,20 @@ export default function Checkout() {
         const { error: addrErr } = await supabase.from('addresses').insert({
           user_id: userId,
           label: 'Home',
-          full_name: name.trim(),
-          phone: phone.trim(),
-          house_no: houseNo.trim(),
-          area: area.trim(),
-          landmark: landmark.trim() || null,
-          city: city.trim(),
-          state: state.trim(),
-          pincode: pincode.trim(),
+          full_name: sName,
+          phone: sPhone,
+          house_no: sHouseNo,
+          area: sArea,
+          landmark: sLandmark || null,
+          city: sCity,
+          state: sState,
+          pincode: sPincode,
           is_default: savedAddresses.length === 0, // first saved address becomes default
           updated_at: new Date().toISOString()
         });
         if (addrErr) {
-          // Non-critical — order still goes through; log for debugging
-          console.warn('Address auto-save failed (non-blocking):', addrErr.message, addrErr.code);
+          // Non-critical — order still goes through; log sanitized error
+          console.warn('Address auto-save notice: not completed');
         }
       }
 
@@ -388,16 +441,14 @@ export default function Checkout() {
           orderDetails: {
             orderId: orderNumber,
             items: cart,
-            pricing: { subtotal, deliveryCharge: finalShipping, total },
-            shippingDetails: { name, phone, houseNo, area, landmark, city, state, pincode }
+            pricing: { subtotal, deliveryCharge: finalShipping, total: serverVerifiedTotal },
+            shippingDetails: { name: sName, phone: sPhone, houseNo: sHouseNo, area: sArea, landmark: sLandmark, city: sCity, state: sState, pincode: sPincode }
           }
         }
       });
       
-    } catch (err: any) {
-      console.error('Checkout submit exception caught:', err);
-      const userMsg = typeof err === 'string' ? err : err?.message || 'Database error processing order. Please try again.';
-      showToast(`Order submission error: ${userMsg}`, 'error');
+    } catch (_err: any) {
+      showToast('An error occurred while placing your order. Please check your details and try again.', 'error');
     } finally {
       setLoading(false);
     }

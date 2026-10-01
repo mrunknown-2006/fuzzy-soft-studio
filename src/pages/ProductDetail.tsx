@@ -273,14 +273,29 @@ export default function ProductDetail() {
     }
 
 
+    const cleanTitle = newReviewTitle
+      .trim()
+      .replace(/<[^>]*>/g, '')
+      .replace(/[<>"'`]/g, '')
+      .slice(0, 100);
+
+    const cleanComment = newReviewComment
+      .trim()
+      .replace(/<[^>]*>/g, '')
+      .replace(/[<>"'`]/g, '')
+      .slice(0, 1000);
+
+    const rawAuthor = currentUser?.user_metadata?.full_name || currentUser?.email?.split('@')[0] || 'Verified Buyer';
+    const cleanAuthor = rawAuthor.replace(/<[^>]*>/g, '').replace(/[<>"'`]/g, '').slice(0, 80);
+
     setSubmittingReview(true);
     try {
       const { error } = await supabase.from('reviews').insert({
         product_id: product.id,
-        customer_name: currentUser?.user_metadata?.full_name || currentUser?.email?.split('@')[0] || 'Verified Buyer',
-        rating: newReviewRating,
-        title: newReviewTitle.trim(),
-        comment: newReviewComment.trim()
+        customer_name: cleanAuthor,
+        rating: Math.min(5, Math.max(1, Number(newReviewRating) || 5)),
+        title: cleanTitle,
+        comment: cleanComment
       });
       if (error) throw error;
 
@@ -290,8 +305,8 @@ export default function ProductDetail() {
       setNewReviewRating(5);
       setShowReviewForm(false);
       loadReviews();
-    } catch (err: any) {
-      showToast(`Failed to submit review: ${err.message}`, 'error');
+    } catch (_err: any) {
+      showToast('Unable to submit your review at this time. Please try again later.', 'error');
     } finally {
       setSubmittingReview(false);
     }
