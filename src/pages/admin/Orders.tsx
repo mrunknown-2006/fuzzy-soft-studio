@@ -10,6 +10,13 @@ export default function Orders() {
   const { orders, setOrders, showToast } = useOutletContext<AdminContext>();
   const location = useLocation();
 
+  // Track data-loading state to prevent false empty-state flash
+  const [isLoading, setIsLoading] = useState(true);
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 800);
+    return () => clearTimeout(timer);
+  }, [orders]);
+
   // State
   const [orderSearch, setOrderSearch] = useState('');
   const [orderFilter, setOrderFilter] = useState<'All' | 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'CANCELLED'>('All');
@@ -462,7 +469,25 @@ export default function Orders() {
         </div>
 
         {/* Orders List Content */}
-        {filteredOrders.length === 0 ? (
+        {isLoading ? (
+          /* Skeleton loader — prevents false "No orders" flash on first load */
+          <div className="bg-white/60 border border-brand-border/40 rounded-2xl p-6 shadow-xs backdrop-blur-xs animate-pulse">
+            <div className="space-y-5">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <div key={n} className="flex items-center gap-4 border-b border-brand-border/10 pb-4 last:border-0 last:pb-0">
+                  <div className="h-3 bg-brand-cream/80 rounded w-24 shrink-0" />
+                  <div className="h-3 bg-brand-cream/60 rounded w-16 shrink-0" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="h-3 bg-brand-cream/80 rounded w-32" />
+                    <div className="h-2 bg-brand-cream/60 rounded w-20" />
+                  </div>
+                  <div className="h-3 bg-brand-cream/80 rounded w-20 shrink-0" />
+                  <div className="h-6 w-20 bg-brand-cream/80 rounded-full shrink-0" />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : filteredOrders.length === 0 ? (
           <div className="bg-white/60 border border-brand-border/40 rounded-2xl p-8 text-center space-y-2.5">
             <p className="text-sm text-brand-body/55 italic">No orders found.</p>
           </div>

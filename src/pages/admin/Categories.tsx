@@ -8,12 +8,14 @@ export default function Categories() {
   const { categories, setCategories, showToast } = useOutletContext<AdminContext>();
   const [dbCategories, setDbCategories] = useState<any[]>([]);
   const [newCategoryName, setNewCategoryName] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
   
   // Editing state
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingValue, setEditingValue] = useState('');
 
   const fetchDbCategories = async () => {
+    setIsLoading(true);
     try {
       const { data, error } = await supabase
         .from('categories')
@@ -24,6 +26,8 @@ export default function Categories() {
       setCategories((data || []).map((c: any) => c.name));
     } catch (err: any) {
       console.error('Failed to load categories:', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -162,7 +166,14 @@ export default function Categories() {
         <div className="space-y-2">
           <label className="block text-xs font-semibold uppercase tracking-wider text-brand-heading/60 select-none pl-1">Current Categories</label>
           
-          {dbCategories.length === 0 ? (
+          {isLoading ? (
+            /* Skeleton loader — prevents false "No categories" flash */
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 animate-pulse">
+              {[1, 2, 3, 4].map((n) => (
+                <div key={n} className="h-12 bg-brand-cream/80 rounded-xl border border-brand-border/20" />
+              ))}
+            </div>
+          ) : dbCategories.length === 0 ? (
             <p className="text-xs text-brand-body/65 italic pl-1">No categories defined yet.</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">

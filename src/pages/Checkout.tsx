@@ -31,6 +31,7 @@ export default function Checkout() {
   // Saved addresses
   const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
   const [showAddressPicker, setShowAddressPicker] = useState(false);
+  const [saveAddressForLater, setSaveAddressForLater] = useState(false);
 
   // Form errors
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -356,6 +357,28 @@ export default function Checkout() {
         }
       }
 
+      // Auto-save address to 'addresses' table if checkbox was checked
+      if (saveAddressForLater && userId) {
+        try {
+          await supabase.from('addresses').insert({
+            user_id: userId,
+            label: 'Home',
+            full_name: name.trim(),
+            phone: phone.trim(),
+            house_no: houseNo.trim(),
+            area: area.trim(),
+            landmark: landmark.trim() || null,
+            city: city.trim(),
+            state: state.trim(),
+            pincode: pincode.trim(),
+            is_default: savedAddresses.length === 0, // first saved address becomes default
+            updated_at: new Date().toISOString()
+          });
+        } catch (addrErr) {
+          console.warn('Address auto-save note:', addrErr); // non-critical, do not block order
+        }
+      }
+
       // 4. Clear local cart
       clearCart();
 
@@ -573,6 +596,19 @@ export default function Checkout() {
               />
             </div>
           </div>
+
+          {/* Save Address Checkbox */}
+          <label className="flex items-center gap-3 cursor-pointer select-none group">
+            <input
+              type="checkbox"
+              checked={saveAddressForLater}
+              onChange={(e) => setSaveAddressForLater(e.target.checked)}
+              className="w-4 h-4 rounded accent-[#B76E79] cursor-pointer shrink-0"
+            />
+            <span className="text-xs text-brand-body/75 group-hover:text-brand-heading transition-colors font-sans">
+              Save this address for next time
+            </span>
+          </label>
 
           {/* Secure details reminder */}
           <div className="bg-[#8FA088]/10 border border-[#8FA088]/30 rounded-2xl p-4 flex gap-3 items-center">

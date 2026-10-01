@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useOutletContext, useNavigate, Link } from 'react-router-dom';
 import { Plus, Edit2, Trash2, AlertTriangle } from 'lucide-react';
 import type { AdminContext } from './types';
@@ -8,6 +8,14 @@ import { supabase } from '../../lib/supabaseClient';
 export default function Products() {
   const navigate = useNavigate();
   const { products, setProducts, showToast, loadProducts } = useOutletContext<AdminContext>();
+
+  // Track whether initial data load has completed
+  const [isLoading, setIsLoading] = useState(true);
+  useEffect(() => {
+    // Admin.tsx loads data on mount; once products is set (even to []) we stop showing skeletons
+    const timer = setTimeout(() => setIsLoading(false), 800);
+    return () => clearTimeout(timer);
+  }, [products]);
 
   // State
   const [productSearch, setProductSearch] = useState('');
@@ -258,7 +266,25 @@ export default function Products() {
         </button>
       </div>
 
-      {filteredAdminProducts.length === 0 ? (
+      {isLoading ? (
+        /* Skeleton rows while Supabase data loads */
+        <div className="bg-white/60 border border-brand-border/40 rounded-2xl p-6 shadow-xs backdrop-blur-xs animate-pulse">
+          <div className="space-y-4">
+            {[1, 2, 3, 4, 5].map((n) => (
+              <div key={n} className="flex items-center gap-4">
+                <div className="w-9 h-12 rounded-lg bg-brand-cream/80 shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 bg-brand-cream/80 rounded w-2/5" />
+                  <div className="h-2 bg-brand-cream/60 rounded w-1/4" />
+                </div>
+                <div className="h-3 bg-brand-cream/80 rounded w-16" />
+                <div className="h-3 bg-brand-cream/80 rounded w-12" />
+                <div className="h-6 w-16 bg-brand-cream/80 rounded-full" />
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : filteredAdminProducts.length === 0 ? (
         <div className="bg-white/60 border border-brand-border/40 rounded-2xl p-8 text-center space-y-4 shadow-xs backdrop-blur-xs select-none">
           <div className="w-12 h-12 rounded-full bg-amber-50 border border-amber-200 text-amber-500 flex items-center justify-center mx-auto">
             <AlertTriangle size={24} />
