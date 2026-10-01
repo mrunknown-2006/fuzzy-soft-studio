@@ -19,10 +19,18 @@ export default function Checkout() {
   // Form Fields
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [address, setAddress] = useState('');
+  // India-specific address fields
+  const [houseNo, setHouseNo] = useState('');
+  const [area, setArea] = useState('');
+  const [landmark, setLandmark] = useState('');
   const [city, setCity] = useState('');
+  const [state, setState] = useState('');
   const [pincode, setPincode] = useState('');
   const [email, setEmail] = useState('');
+
+  // Saved addresses
+  const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
+  const [showAddressPicker, setShowAddressPicker] = useState(false);
 
   // Form errors
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -77,6 +85,36 @@ export default function Checkout() {
     loadStoreConfig();
   }, []);
 
+  // Load saved addresses for 1-click fill
+  useEffect(() => {
+    const loadSavedAddresses = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const uid = sessionData?.session?.user?.id;
+      if (!uid) return;
+      const { data } = await supabase
+        .from('addresses')
+        .select('*')
+        .eq('user_id', uid)
+        .order('is_default', { ascending: false });
+      if (data) setSavedAddresses(data);
+    };
+    loadSavedAddresses();
+  }, []);
+
+  const fillFromSavedAddress = (addr: any) => {
+    if (!addr) return;
+    setName(addr.full_name || name);
+    setPhone(addr.phone || phone);
+    setHouseNo(addr.house_no || '');
+    setArea(addr.area || '');
+    setLandmark(addr.landmark || '');
+    setCity(addr.city || '');
+    setState(addr.state || '');
+    setPincode(addr.pincode || '');
+    setShowAddressPicker(false);
+    setErrors({});
+  };
+
   const handleCopyUpi = () => {
     navigator.clipboard.writeText('9506228972@axl');
     setCopied(true);
@@ -116,7 +154,9 @@ export default function Checkout() {
     const newErrors: Record<string, string> = {};
     if (!name.trim()) newErrors.name = 'Full name is required';
     if (!phone.trim()) newErrors.phone = 'Phone number is required';
-    if (!address.trim()) newErrors.address = 'Street address is required';
+    if (!houseNo.trim()) newErrors.houseNo = 'House / Flat No is required';
+    if (!area.trim()) newErrors.area = 'Area / Street is required';
+    if (!state.trim()) newErrors.state = 'State is required';
     if (!city.trim()) newErrors.city = 'City is required';
     if (!pincode.trim()) newErrors.pincode = 'Pincode is required';
     if (!utrNumber.trim() || utrNumber.trim().length < 8) {
@@ -158,7 +198,7 @@ export default function Checkout() {
             full_name: name.trim(),
             email: email.trim() || null,
             phone: phone.trim(),
-            shipping_address: `${address.trim()}, ${city.trim()} - ${pincode.trim()}`,
+            shipping_address: `${houseNo.trim()}, ${area.trim()}, ${city.trim()}, ${state.trim()} - ${pincode.trim()}`,
             updated_at: new Date().toISOString()
           });
         } catch (cErr) {
@@ -175,7 +215,15 @@ export default function Checkout() {
         customer_name: name.trim(),
         customer_phone: phone.trim(),
         customer_email: email.trim() || null,
-        shipping_address: `${address.trim()}, ${city.trim()} - ${pincode.trim()}`,
+        shipping_address: `${houseNo.trim()}, ${area.trim()}${landmark.trim() ? ', Near ' + landmark.trim() : ''}, ${city.trim()}, ${state.trim()} - ${pincode.trim()}`,
+        shipping_address_structured: {
+          house_no: houseNo.trim(),
+          area: area.trim(),
+          landmark: landmark.trim() || null,
+          city: city.trim(),
+          state: state.trim(),
+          pincode: pincode.trim()
+        },
         items: cart,
         total_amount: total,
         utr_number: cleanUtr,
@@ -206,7 +254,15 @@ export default function Checkout() {
           customer_name: name.trim(),
           customer_phone: phone.trim(),
           customer_email: email.trim() || null,
-          shipping_address: `${address.trim()}, ${city.trim()} - ${pincode.trim()}`,
+          shipping_address: `${houseNo.trim()}, ${area.trim()}${landmark.trim() ? ', Near ' + landmark.trim() : ''}, ${city.trim()}, ${state.trim()} - ${pincode.trim()}`,
+          shipping_address_structured: {
+            house_no: houseNo.trim(),
+            area: area.trim(),
+            landmark: landmark.trim() || null,
+            city: city.trim(),
+            state: state.trim(),
+            pincode: pincode.trim()
+          },
           items: cart,
           total_amount: total,
           utr_number: cleanUtr,
@@ -254,7 +310,7 @@ export default function Checkout() {
           customerPhone: phone,
           totalAmount: total,
           utrNumber: cleanUtr,
-          shippingAddress: `${address}, ${city} - ${pincode}`,
+          shippingAddress: `${houseNo}, ${area}${landmark ? ', Near ' + landmark : ''}, ${city}, ${state} - ${pincode}`,
           items: cart.map(item => ({
             name: item.name,
             quantity: item.quantity,
@@ -275,7 +331,7 @@ export default function Checkout() {
           date: new Date().toISOString(),
           items: cart,
           pricing: { subtotal, deliveryCharge: finalShipping, total },
-          shippingDetails: { name, phone, address, city, pincode, email }
+          shippingDetails: { name, phone, houseNo, area, landmark, city, state, pincode, email }
         });
         localStorage.setItem('fuzzy-soft-studio-local-orders', JSON.stringify(existingLocal));
       } catch (lErr) {
@@ -310,7 +366,7 @@ export default function Checkout() {
             orderId: orderNumber,
             items: cart,
             pricing: { subtotal, deliveryCharge: finalShipping, total },
-            shippingDetails: { name, phone, address, city, pincode }
+            shippingDetails: { name, phone, houseNo, area, landmark, city, state, pincode }
           }
         }
       });
@@ -382,43 +438,129 @@ export default function Checkout() {
               </div>
             </div>
 
-            <div className="space-y-1.5" id="address">
-              <label className="block text-[10px] font-semibold uppercase tracking-wider text-brand-heading">Street Address *</label>
-              <input
-                type="text"
-                value={address}
-                onChange={(e) => { setAddress(e.target.value); if (errors.address) setErrors({...errors, address: ''}); }}
-                placeholder="House No, Building, Street Name, Area"
-                className={`w-full h-11 px-4 bg-white rounded-xl border ${errors.address ? 'border-red-400' : 'border-brand-border/70'} text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition shadow-xs`}
-              />
-              {errors.address && <p className="text-[10px] text-red-500 font-semibold">{errors.address}</p>}
-            </div>
+            <div className="grid grid-cols-2 gap-4">
+              {/* Saved Address Picker */}
+              {savedAddresses.length > 0 && (
+                <div className="col-span-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddressPicker(!showAddressPicker)}
+                    className="w-full h-11 border border-dashed border-brand-accent/60 rounded-xl text-xs font-semibold text-brand-accent hover:bg-brand-accent/5 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    {showAddressPicker ? 'Hide Saved Addresses' : '1-Click Fill from Saved Addresses'}
+                  </button>
+                  {showAddressPicker && (
+                    <div className="mt-2 border border-brand-border/40 rounded-2xl overflow-hidden divide-y divide-brand-border/20 bg-white/80">
+                      {savedAddresses.map((addr) => (
+                        <button
+                          key={addr.id}
+                          type="button"
+                          onClick={() => fillFromSavedAddress(addr)}
+                          className="w-full text-left px-4 py-3 hover:bg-brand-cream/60 transition-colors cursor-pointer"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-semibold text-brand-heading">{addr.label || 'Address'}</span>
+                            {addr.is_default && <span className="text-[9px] uppercase tracking-widest bg-brand-accent/10 text-brand-accent px-2 py-0.5 rounded-full font-bold">Default</span>}
+                          </div>
+                          <p className="text-[11px] text-brand-body/70 font-sans mt-0.5 leading-relaxed">
+                            {addr.house_no}, {addr.area}{addr.landmark ? `, Near ${addr.landmark}` : ''}, {addr.city}, {addr.state} - {addr.pincode}
+                          </p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5" id="city">
-                <label className="block text-[10px] font-semibold uppercase tracking-wider text-brand-heading">City *</label>
+              {/* House / Flat No */}
+              <div className="col-span-2 sm:col-span-1">
+                <label htmlFor="houseNo" className="block text-xs font-semibold uppercase tracking-wider text-brand-heading/80 mb-1.5">House / Flat No *</label>
                 <input
                   type="text"
+                  id="houseNo"
+                  value={houseNo}
+                  onChange={(e) => { setHouseNo(e.target.value); if (errors.houseNo) setErrors(p => ({ ...p, houseNo: '' })); }}
+                  placeholder="e.g. 4B, Sunrise Apartments"
+                  className={`w-full h-11 px-4 rounded-xl border text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition-all ${errors.houseNo ? 'border-red-400 bg-red-50' : 'border-brand-border/70 bg-white/95'}`}
+                />
+                {errors.houseNo && <p className="text-red-500 text-[10px] mt-1">{errors.houseNo}</p>}
+              </div>
+
+              {/* Area / Street */}
+              <div className="col-span-2 sm:col-span-1">
+                <label htmlFor="area" className="block text-xs font-semibold uppercase tracking-wider text-brand-heading/80 mb-1.5">Area / Street / Sector *</label>
+                <input
+                  type="text"
+                  id="area"
+                  value={area}
+                  onChange={(e) => { setArea(e.target.value); if (errors.area) setErrors(p => ({ ...p, area: '' })); }}
+                  placeholder="e.g. Sector 12, Rajajipuram"
+                  className={`w-full h-11 px-4 rounded-xl border text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition-all ${errors.area ? 'border-red-400 bg-red-50' : 'border-brand-border/70 bg-white/95'}`}
+                />
+                {errors.area && <p className="text-red-500 text-[10px] mt-1">{errors.area}</p>}
+              </div>
+
+              {/* Landmark */}
+              <div className="col-span-2">
+                <label htmlFor="landmark" className="block text-xs font-semibold uppercase tracking-wider text-brand-heading/80 mb-1.5">Landmark <span className="text-brand-body/40 normal-case font-normal">(Optional)</span></label>
+                <input
+                  type="text"
+                  id="landmark"
+                  value={landmark}
+                  onChange={(e) => setLandmark(e.target.value)}
+                  placeholder="e.g. Near City Mall, Opposite Bus Stand"
+                  className="w-full h-11 px-4 rounded-xl border border-brand-border/70 bg-white/95 text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition-all"
+                />
+              </div>
+
+              {/* City */}
+              <div>
+                <label htmlFor="city" className="block text-xs font-semibold uppercase tracking-wider text-brand-heading/80 mb-1.5">City *</label>
+                <input
+                  type="text"
+                  id="city"
                   value={city}
-                  onChange={(e) => { setCity(e.target.value); if (errors.city) setErrors({...errors, city: ''}); }}
+                  onChange={(e) => { setCity(e.target.value); if (errors.city) setErrors(p => ({ ...p, city: '' })); }}
                   placeholder="e.g. Lucknow"
-                  className={`w-full h-11 px-4 bg-white rounded-xl border ${errors.city ? 'border-red-400' : 'border-brand-border/70'} text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition shadow-xs`}
+                  className={`w-full h-11 px-4 rounded-xl border text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition-all ${errors.city ? 'border-red-400 bg-red-50' : 'border-brand-border/70 bg-white/95'}`}
                 />
-                {errors.city && <p className="text-[10px] text-red-500 font-semibold">{errors.city}</p>}
+                {errors.city && <p className="text-red-500 text-[10px] mt-1">{errors.city}</p>}
               </div>
 
-              <div className="space-y-1.5" id="pincode">
-                <label className="block text-[10px] font-semibold uppercase tracking-wider text-brand-heading">Pincode *</label>
+              {/* State */}
+              <div>
+                <label htmlFor="state" className="block text-xs font-semibold uppercase tracking-wider text-brand-heading/80 mb-1.5">State *</label>
+                <select
+                  id="state"
+                  value={state}
+                  onChange={(e) => { setState(e.target.value); if (errors.state) setErrors(p => ({ ...p, state: '' })); }}
+                  className={`w-full h-11 px-4 rounded-xl border text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition-all ${errors.state ? 'border-red-400 bg-red-50' : 'border-brand-border/70 bg-white/95'}`}
+                >
+                  <option value="">Select State</option>
+                  {['Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa','Gujarat','Haryana','Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh','Maharashtra','Manipur','Meghalaya','Mizoram','Nagaland','Odisha','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana','Tripura','Uttar Pradesh','Uttarakhand','West Bengal','Delhi','Jammu & Kashmir','Ladakh','Chandigarh','Puducherry'].map(s => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+                {errors.state && <p className="text-red-500 text-[10px] mt-1">{errors.state}</p>}
+              </div>
+
+              {/* Pincode */}
+              <div>
+                <label htmlFor="pincode" className="block text-xs font-semibold uppercase tracking-wider text-brand-heading/80 mb-1.5">Pincode *</label>
                 <input
                   type="text"
+                  id="pincode"
                   value={pincode}
-                  onChange={(e) => { setPincode(e.target.value); if (errors.pincode) setErrors({...errors, pincode: ''}); }}
+                  maxLength={6}
+                  onChange={(e) => { setPincode(e.target.value.replace(/\D/g, '')); if (errors.pincode) setErrors(p => ({ ...p, pincode: '' })); }}
                   placeholder="e.g. 226010"
-                  className={`w-full h-11 px-4 bg-white rounded-xl border ${errors.pincode ? 'border-red-400' : 'border-brand-border/70'} text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition shadow-xs`}
+                  className={`w-full h-11 px-4 rounded-xl border text-sm font-sans focus:outline-none focus:ring-1 focus:ring-brand-accent transition-all ${errors.pincode ? 'border-red-400 bg-red-50' : 'border-brand-border/70 bg-white/95'}`}
                 />
-                {errors.pincode && <p className="text-[10px] text-red-500 font-semibold">{errors.pincode}</p>}
+                {errors.pincode && <p className="text-red-500 text-[10px] mt-1">{errors.pincode}</p>}
               </div>
             </div>
+
 
             <div className="space-y-1.5">
               <label className="block text-[10px] font-semibold uppercase tracking-wider text-brand-heading">Email Address (Optional)</label>

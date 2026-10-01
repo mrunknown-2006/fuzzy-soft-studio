@@ -1,16 +1,68 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- =============================================
+         MODULE 3: FOUT Prevention — Font Preloads
+         Preload all Google Fonts BEFORE render so the
+         browser fetches them in parallel, eliminating
+         the Flash of Unstyled Text on slow connections.
+    ============================================= -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- Critical font stylesheet — loaded with display=swap but preloaded so it never blocks -->
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Lato:wght@300;400;700&family=Great+Vibes&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Lato:wght@300;400;700&family=Great+Vibes&display=swap"
+    />
+
+    <!-- Critical image preloads -->
     <link rel="preload" as="image" href="/hero-banner.jpg" />
     <link rel="preload" as="image" href="/logo.png?v=2" fetchpriority="high" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400;1,500&family=Lato:wght@300;400;700&family=Great+Vibes&display=swap" rel="stylesheet">
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Fuzzy Soft Studio offers luxury handmade crochet and artificial floral arrangements handcrafted with love. Each piece is made to order for life's quiet and grand moments." />
+
+    <!-- =============================================
+         MODULE 4: SEO & Open Graph Meta Tags
+         These power the WhatsApp / Instagram link preview
+         and Google search snippet.
+    ============================================= -->
+
+    <!-- Primary SEO -->
     <title>Fuzzy Soft Studio — Where Every Petal Tells a Story</title>
+    <meta name="description" content="Luxury handmade crochet and artificial floral arrangements, handcrafted to last forever. Shop unique bouquets, gift arrangements, and dried flower sets — made to order with love." />
+    <meta name="keywords" content="crochet flowers, handmade floral arrangements, artificial flowers, gift bouquets, dried flowers, luxury gifts, Fuzzy Soft Studio" />
+    <meta name="author" content="Fuzzy Soft Studio" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://www.fuzzysoftstudio.com/" />
+
+    <!-- Open Graph — WhatsApp / Instagram / Facebook link preview -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Fuzzy Soft Studio" />
+    <meta property="og:url" content="https://www.fuzzysoftstudio.com/" />
+    <meta property="og:title" content="Fuzzy Soft Studio — Luxury Handmade Crochet Florals" />
+    <meta property="og:description" content="Handcrafted crochet flowers and floral arrangements made to last forever. The perfect luxury gift for every occasion." />
+    <meta property="og:image" content="https://www.fuzzysoftstudio.com/og-banner.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Fuzzy Soft Studio — Luxury Crochet Flower Arrangements" />
+    <meta property="og:locale" content="en_IN" />
+
+    <!-- Twitter Card (also used by many apps for previews) -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Fuzzy Soft Studio — Luxury Handmade Crochet Florals" />
+    <meta name="twitter:description" content="Handcrafted crochet flowers and floral arrangements made to last forever." />
+    <meta name="twitter:image" content="https://www.fuzzysoftstudio.com/og-banner.jpg" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/logo.png" />
   </head>
   <body class="bg-brand-ivory text-gray-800 font-sans antialiased">
     <div id="root"></div>

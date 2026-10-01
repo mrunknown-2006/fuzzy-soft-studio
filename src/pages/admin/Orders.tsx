@@ -717,7 +717,25 @@ export default function Orders() {
                   <div className="text-xs space-y-1 bg-brand-cream/15 border border-brand-border/20 p-3.5 rounded-xl font-sans text-brand-body/80">
                     <p><strong className="text-brand-heading font-medium">Name:</strong> {viewingOrder.customer_name}</p>
                     <p><strong className="text-brand-heading font-medium">Phone:</strong> {viewingOrder.customer_phone}</p>
-                    <p className="whitespace-pre-wrap"><strong className="text-brand-heading font-medium">Delivery Address:</strong><br />{viewingOrder.shipping_address}</p>
+                    <div>
+                      <strong className="text-brand-heading font-medium">Delivery Address:</strong>
+                      <div className="mt-1">
+                        {/* Structured Delivery Address */}
+                        {(() => {
+                          const raw = (viewingOrder as any).shipping_address_structured;
+                          if (raw && typeof raw === 'object') {
+                            return (
+                              <div className="space-y-0.5">
+                                <p className="text-xs font-semibold text-brand-heading">{raw.house_no}</p>
+                                <p className="text-xs text-brand-body/75">{raw.area}{raw.landmark ? `, Near ${raw.landmark}` : ''}</p>
+                                <p className="text-xs text-brand-body/75">{raw.city}, {raw.state} — {raw.pincode}</p>
+                              </div>
+                            );
+                          }
+                          return <p className="text-xs text-brand-body/75 leading-relaxed">{viewingOrder.shipping_address}</p>;
+                        })()}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
