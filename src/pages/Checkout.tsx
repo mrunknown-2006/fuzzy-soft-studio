@@ -359,23 +359,23 @@ export default function Checkout() {
 
       // Auto-save address to 'addresses' table if checkbox was checked
       if (saveAddressForLater && userId) {
-        try {
-          await supabase.from('addresses').insert({
-            user_id: userId,
-            label: 'Home',
-            full_name: name.trim(),
-            phone: phone.trim(),
-            house_no: houseNo.trim(),
-            area: area.trim(),
-            landmark: landmark.trim() || null,
-            city: city.trim(),
-            state: state.trim(),
-            pincode: pincode.trim(),
-            is_default: savedAddresses.length === 0, // first saved address becomes default
-            updated_at: new Date().toISOString()
-          });
-        } catch (addrErr) {
-          console.warn('Address auto-save note:', addrErr); // non-critical, do not block order
+        const { error: addrErr } = await supabase.from('addresses').insert({
+          user_id: userId,
+          label: 'Home',
+          full_name: name.trim(),
+          phone: phone.trim(),
+          house_no: houseNo.trim(),
+          area: area.trim(),
+          landmark: landmark.trim() || null,
+          city: city.trim(),
+          state: state.trim(),
+          pincode: pincode.trim(),
+          is_default: savedAddresses.length === 0, // first saved address becomes default
+          updated_at: new Date().toISOString()
+        });
+        if (addrErr) {
+          // Non-critical — order still goes through; log for debugging
+          console.warn('Address auto-save failed (non-blocking):', addrErr.message, addrErr.code);
         }
       }
 

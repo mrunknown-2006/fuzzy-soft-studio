@@ -86,7 +86,7 @@ export default function Account() {
         setProfilePhone(meta.phone || '');
 
         fetchOrders(session.user.id);
-        fetchAddresses();
+        fetchAddresses(session.user.id); // pass uid directly — session state may not be set yet
       }
     });
 
@@ -100,10 +100,14 @@ export default function Account() {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  // Refetch live orders whenever customer visits Orders or Track tabs
+  // Refetch live data whenever customer switches tabs
   useEffect(() => {
-    if (session?.user?.id && (activeTab === 'orders' || activeTab === 'track')) {
+    if (!session?.user?.id) return;
+    if (activeTab === 'orders' || activeTab === 'track') {
       fetchOrders(session.user.id);
+    }
+    if (activeTab === 'addresses') {
+      fetchAddresses(session.user.id);
     }
   }, [activeTab]);
 
@@ -176,16 +180,24 @@ export default function Account() {
 
   const INDIAN_STATES = ['Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa','Gujarat','Haryana','Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh','Maharashtra','Manipur','Meghalaya','Mizoram','Nagaland','Odisha','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana','Tripura','Uttar Pradesh','Uttarakhand','West Bengal','Delhi','Jammu & Kashmir','Ladakh','Chandigarh','Puducherry'];
 
-  const fetchAddresses = async () => {
-    if (!session?.user?.id) return;
+  const fetchAddresses = async (userId?: string) => {
+    const uid = userId || session?.user?.id;
+    if (!uid) return;
     setLoadingAddresses(true);
-    const { data } = await supabase
-      .from('addresses')
-      .select('*')
-      .eq('user_id', session.user.id)
-      .order('is_default', { ascending: false });
-    setAddresses(data || []);
-    setLoadingAddresses(false);
+    try {
+      const { data, error } = await supabase
+        .from('addresses')
+        .select('*')
+        .eq('user_id', uid)
+        .order('is_default', { ascending: false });
+      if (error) throw error;
+      setAddresses(data || []);
+    } catch (err: any) {
+      console.warn('fetchAddresses error:', err.message);
+      setAddresses([]);
+    } finally {
+      setLoadingAddresses(false);
+    }
   };
 
   const resetAddressForm = () => {
