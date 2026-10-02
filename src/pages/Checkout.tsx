@@ -207,21 +207,7 @@ export default function Checkout() {
 
       const userId = rawUserId;
 
-      // Pre-checkout safeguard: Upsert customer record to guarantee foreign key integrity
-      if (userId) {
-        try {
-          await supabase.from('customers').upsert({
-            id: userId,
-            full_name: sanitize(name),
-            email: email.trim() || null,
-            phone: phone.replace(/\D/g, '').slice(0, 15), // digits only, max 15
-            shipping_address: `${sanitize(houseNo)}, ${sanitize(area)}, ${sanitize(city)}, ${sanitize(state)} - ${pincode.replace(/\D/g, '').slice(0, 6)}`,
-            updated_at: new Date().toISOString()
-          });
-        } catch (cErr) {
-          // Non-critical — don't block order
-        }
-      }
+
 
       const cleanUtr = utrNumber.replace(/[^a-zA-Z0-9]/g, '').slice(0, 50); // alphanumeric only
 
