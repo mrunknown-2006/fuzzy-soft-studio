@@ -5,7 +5,7 @@ import { useStore } from '../store/useStore';
 import type { WishlistItem } from '../store/useStore';
 import ProductCard from '../components/ProductCard';
 import { supabase } from '../lib/supabaseClient';
-
+import SEO from '../components/SEO';
 
 export default function ProductDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -327,6 +327,51 @@ export default function ProductDetail() {
     }));
   }, [dbReviews, product]);
 
+  // Google Rich Snippet: Schema.org/Product structured data
+  const productSchema = useMemo(() => {
+    if (!product) return undefined;
+    const desc = product.short_summary || product.description || product.full_description || `Luxury handmade ${product.name} handcrafted by Fuzzy Soft Studio.`;
+    const fullImg = product.image?.startsWith('http') ? product.image : `https://www.fuzzysoftstudio.com${product.image?.startsWith('/') ? '' : '/'}${product.image}`;
+
+    const schemaData: Record<string, any> = {
+      "@context": "https://schema.org/",
+      "@type": "Product",
+      "name": product.name,
+      "image": [fullImg],
+      "description": desc,
+      "sku": product.sku || product.id,
+      "brand": {
+        "@type": "Brand",
+        "name": "Fuzzy Soft Studio"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": `https://www.fuzzysoftstudio.com/product/${product.slug}`,
+        "priceCurrency": "INR",
+        "price": product.price,
+        "priceValidUntil": "2027-12-31",
+        "itemCondition": "https://schema.org/NewCondition",
+        "availability": (product.stock !== undefined && product.stock <= 0)
+          ? "https://schema.org/OutOfStock"
+          : "https://schema.org/InStock",
+        "seller": {
+          "@type": "Organization",
+          "name": "Fuzzy Soft Studio"
+        }
+      }
+    };
+
+    if (reviewsSummary.count > 0) {
+      schemaData.aggregateRating = {
+        "@type": "AggregateRating",
+        "ratingValue": reviewsSummary.average,
+        "reviewCount": reviewsSummary.count
+      };
+    }
+
+    return schemaData;
+  }, [product, reviewsSummary]);
+
   if (isLoadingProduct) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-brand-bg">
@@ -338,6 +383,7 @@ export default function ProductDetail() {
   if (!product) {
     return (
       <div className="min-h-screen pt-16 pb-20 px-6 flex flex-col items-center justify-center text-center">
+        <SEO title="Product Not Found" description="The arrangement you are looking for does not exist or has been removed." />
         <div className="bg-white border border-brand-border p-6 rounded-full text-brand-accent shadow-sm mb-6">
           <HeartCrack className="w-12 h-12" strokeWidth={1.2} />
         </div>
@@ -357,6 +403,16 @@ export default function ProductDetail() {
 
   return (
     <div className="min-h-screen pt-20 sm:pt-24 md:pt-28 pb-12 sm:pb-20 px-4 sm:px-6 lg:px-10 max-w-7xl mx-auto w-full flex flex-col">
+      {/* Dynamic Page Metadata & Rich Snippets */}
+      <SEO
+        title={product.name}
+        description={product.short_summary || product.description || `Handcrafted ${product.name} - Luxury crochet flowers & artificial arrangements from Fuzzy Soft Studio.`}
+        image={product.image}
+        url={`https://www.fuzzysoftstudio.com/product/${product.slug}`}
+        type="product"
+        schema={productSchema}
+      />
+
       {/* Breadcrumbs */}
       <div className="flex items-center gap-1.5 text-[11px] text-brand-body/50 font-sans tracking-wide mb-3 sm:mb-6 select-none animate-fade-in-up">
         <Link to="/" className="hover:text-brand-accent transition-colors">Home</Link>

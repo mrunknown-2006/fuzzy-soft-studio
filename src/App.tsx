@@ -155,6 +155,7 @@ export default function App() {
             <Route path="/shop" element={<Shop />} />
             <Route path="/product/:slug" element={<ProductDetail />} />
             <Route path="/about" element={<About />} />
+            <Route path="/our-story" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<Checkout />} />

@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Flower2, Sparkles, Leaf } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import { supabase } from '../lib/supabaseClient';
+import SEO from '../components/SEO';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -208,6 +209,11 @@ export default function Home() {
 
   return (
     <div className="flex flex-col pb-16">
+      <SEO
+        title="Where Every Petal Tells a Story"
+        description="Luxury handmade crochet and artificial floral arrangements handcrafted with love. Explore forever bouquets, bridal blooms, and gift sets."
+        url="https://www.fuzzysoftstudio.com/"
+      />
 
       {/* Ticker & Hero Container to avoid space-y gaps */}
       <div className="flex flex-col -mt-24">

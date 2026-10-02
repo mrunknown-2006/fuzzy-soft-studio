@@ -3,6 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { SlidersHorizontal, X, ChevronDown } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import { supabase } from '../lib/supabaseClient';
+import SEO from '../components/SEO';
 
 export default function Shop() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -215,6 +216,12 @@ export default function Shop() {
 
   return (
     <div className="min-h-screen pt-20 sm:pt-24 md:pt-28 pb-12 sm:pb-20 px-4 sm:px-6 lg:px-10 max-w-7xl mx-auto w-full flex flex-col">
+      <SEO
+        title="Shop Floral Arrangements & Bouquets"
+        description="Browse handcrafted crochet flowers, luxury faux bouquets, and custom everlasting floral gifts by Fuzzy Soft Studio."
+        url="https://www.fuzzysoftstudio.com/shop"
+      />
+
       {/* Breadcrumbs */}
       <div className="flex items-center gap-1.5 text-[11px] text-brand-body/50 font-sans tracking-wide mb-3 sm:mb-6 mt-0 select-none animate-fade-in-up">
         <Link to="/" className="hover:text-brand-accent transition-colors">Home</Link>
